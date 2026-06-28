@@ -1,0 +1,1035 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lista de Auditorias</title>
+<script>
+// Detecta iframe ANTES de qualquer render — adiciona classe ao html
+if(window.self !== window.top){
+  document.documentElement.classList.add('in-iframe');
+}
+</script>
+<style>
+/* Oculta topbar quando dentro de iframe — aplicado antes do render */
+html.in-iframe #lista-topbar { display: none !important; }
+
+:root {
+  --navy:   #0d2137;
+  --blue:   #1565c0;
+  --green:  #1b7e4a;
+  --orange: #c84b00;
+  --red:    #b91c1c;
+  --text:   #1e293b;
+  --text2:  #64748b;
+  --border: #e2e8f0;
+  --bg:     #f0f4f8;
+  --card:   #ffffff;
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Segoe UI', Arial, sans-serif; background: var(--bg); color: var(--text); font-size: 13px; }
+
+/* TOPBAR */
+.topbar {
+  background: var(--navy); color: #fff; padding: 0 24px; height: 52px;
+  display: flex; align-items: center; justify-content: space-between;
+  position: relative; z-index: 100; box-shadow: 0 2px 8px rgba(0,0,0,.25);
+}
+.topbar-left  { display: flex; align-items: center; gap: 10px; }
+.topbar-title { font-size: 15px; font-weight: 700; }
+.topbar-sub   { font-size: 11px; opacity: .5; }
+.btn-new {
+  padding: 7px 18px; background: var(--blue); color: #fff;
+  border: none; border-radius: 7px; font-size: 13px; font-weight: 600;
+  cursor: pointer; font-family: inherit; display: flex; align-items: center; gap: 6px;
+  transition: opacity .15s;
+}
+.btn-new:hover { opacity: .85; }
+
+/* SUMMARY CARDS */
+.summary-strip {
+  display: flex; gap: 12px; padding: 18px 24px 0;
+}
+.sum-card {
+  flex: 1; background: var(--card); border-radius: 10px;
+  border: 1px solid var(--border); padding: 14px 18px;
+  box-shadow: 0 1px 3px rgba(0,0,0,.05); display: flex; flex-direction: column; gap: 3px;
+}
+.sum-label { font-size: 10px; color: var(--text2); text-transform: uppercase; letter-spacing: .5px; font-weight: 600; }
+.sum-value { font-size: 22px; font-weight: 700; color: var(--navy); }
+.sum-value.green  { color: var(--green); }
+.sum-value.orange { color: var(--orange); }
+.sum-value.red    { color: var(--red); }
+
+/* TABLE CONTAINER */
+.table-wrap {
+  margin: 18px 24px 24px;
+  background: var(--card); border-radius: 12px;
+  border: 1px solid var(--border); box-shadow: 0 1px 4px rgba(0,0,0,.05);
+  overflow: hidden;
+}
+.table-header {
+  padding: 14px 18px; display: flex; justify-content: space-between; align-items: center;
+  border-bottom: 1px solid var(--border); background: #f8fafc;
+}
+.table-header h2 { font-size: 13px; font-weight: 700; color: var(--navy); }
+.search-box {
+  padding: 7px 12px; border: 1px solid var(--border); border-radius: 7px;
+  font-size: 12px; font-family: inherit; outline: none; width: 220px;
+  transition: border .15s;
+}
+.search-box:focus { border-color: var(--blue); }
+
+table { width: 100%; border-collapse: collapse; }
+thead th {
+  padding: 10px 14px; text-align: left; font-size: 10.5px; font-weight: 700;
+  color: var(--text2); text-transform: uppercase; letter-spacing: .4px;
+  background: #f8fafc; border-bottom: 1px solid var(--border);
+  white-space: nowrap;
+}
+thead th:first-child { padding-left: 18px; }
+tbody tr { transition: background .1s; }
+tbody tr:hover { background: #f0f7ff; }
+tbody tr + tr { border-top: 1px solid var(--border); }
+tbody td {
+  padding: 12px 14px; font-size: 12.5px; vertical-align: middle;
+}
+tbody td:first-child { padding-left: 18px; }
+
+/* CELLS */
+.cell-empresa   { font-weight: 600; color: var(--navy); }
+.cell-data      { color: var(--text2); font-size: 12px; white-space: nowrap; }
+.cell-auditores { max-width: 160px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cell-num       { text-align: center; font-weight: 600; color: var(--navy); }
+.cell-matur     { text-align: center; }
+.matur-badge {
+  display: inline-block; padding: 3px 9px; border-radius: 99px;
+  font-size: 11px; font-weight: 700; white-space: nowrap;
+}
+
+/* STATUS */
+.status-badge {
+  display: inline-flex; align-items: center; gap: 5px;
+  padding: 4px 10px; border-radius: 99px; font-size: 11px; font-weight: 700;
+}
+.status-aprovado  { background: #dcfce7; color: #15803d; }
+.status-reprovado { background: #fee2e2; color: #b91c1c; }
+.status-parcial   { background: #fef3c7; color: #92400e; }
+.status-pendente  { background: #f1f5f9; color: #64748b; }
+
+/* ACTIONS */
+.cell-actions { display: flex; gap: 6px; justify-content: flex-end; }
+.btn-action {
+  padding: 5px 10px; border-radius: 6px; border: 1px solid var(--border);
+  background: #fff; font-size: 11px; cursor: pointer; font-family: inherit;
+  transition: all .15s; white-space: nowrap; display: flex; align-items: center; gap: 4px;
+}
+.btn-action:hover { background: #f0f4f8; border-color: #cbd5e1; }
+.btn-action.view  { color: var(--blue); }
+.btn-action.del   { color: var(--red); }
+.btn-action.del:hover { background: #fee2e2; border-color: #fecaca; }
+
+/* EMPTY STATE */
+.empty-state {
+  padding: 60px 24px; text-align: center; color: var(--text2);
+}
+.empty-icon { font-size: 40px; margin-bottom: 12px; }
+.empty-title { font-size: 15px; font-weight: 600; color: var(--navy); margin-bottom: 6px; }
+.empty-sub   { font-size: 13px; margin-bottom: 20px; }
+
+/* MODAL OVERLAY */
+.modal-overlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,.55);
+  z-index: 500; display: none; align-items: center; justify-content: center;
+  padding: 10px; overflow-y: auto;
+}
+.modal-overlay.open { display: flex; }
+.modal-frame {
+  background: #fff; border-radius: 10px; width: 98vw; max-width: 100%;
+  height: 96vh; overflow: hidden; display: flex; flex-direction: column;
+  box-shadow: 0 25px 60px rgba(0,0,0,.35); position: relative;
+}
+.modal-frame-header {
+  background: var(--navy); color: #fff;
+  padding: 0 16px; height: 48px; display: flex; justify-content: space-between; align-items: center;
+  flex-shrink: 0; gap: 8px;
+}
+.modal-frame-title { font-size: 13px; font-weight: 700; white-space: nowrap; flex-shrink: 0; }
+.modal-frame-actions { display: flex; gap: 6px; align-items: center; flex-wrap: nowrap; overflow-x: auto; }
+.btn-aud {
+  padding: 5px 11px; border-radius: 6px; border: 1px solid rgba(255,255,255,.22);
+  background: rgba(255,255,255,.1); color: #fff; font-size: 11.5px; font-weight: 600;
+  cursor: pointer; font-family: inherit; white-space: nowrap; transition: all .15s; flex-shrink: 0;
+}
+.btn-aud:hover { background: rgba(255,255,255,.2); }
+.btn-aud.green  { background: #15803d; border-color: #15803d; }
+.btn-aud.green:hover { background: #166534; }
+.btn-aud.save   { background: #059669; border-color: #059669; }
+.btn-aud.save:hover { background: #047857; }
+.btn-aud.close  { background: rgba(220,38,38,.35); border-color: rgba(220,38,38,.5); }
+.btn-aud.close:hover { background: rgba(220,38,38,.55); }
+.btn-aud.blue   { background: #1565c0; border-color: #1565c0; }
+.btn-aud.blue:hover { background: #1251a3; }
+.btn-aud.purple { background: #7c3aed; border-color: #7c3aed; }
+.btn-aud.purple:hover { background: #6d28d9; }
+.btn-aud.orange { background: #c2410c; border-color: #c2410c; }
+.btn-aud.orange:hover { background: #9a3412; }
+
+/* Criterios global modal */
+.gcrit-overlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,.55);
+  z-index: 600; display: none; align-items: center; justify-content: center;
+}
+.gcrit-overlay.open { display: flex; }
+.gcrit-box {
+  background: #fff; border-radius: 14px; width: 680px; max-width: 95vw;
+  max-height: 85vh; display: flex; flex-direction: column;
+  box-shadow: 0 25px 60px rgba(0,0,0,.35);
+}
+.gcrit-header {
+  background: var(--navy); color: #fff; padding: 14px 20px;
+  display: flex; justify-content: space-between; align-items: center;
+  border-radius: 14px 14px 0 0; flex-shrink: 0;
+}
+.gcrit-header h2 { font-size: 14px; font-weight: 700; }
+.gcrit-body { padding: 20px; overflow-y: auto; flex: 1; }
+.gcrit-footer { padding: 12px 20px; border-top: 1px solid var(--border); display: flex; justify-content: flex-end; gap: 8px; background: #f8fafc; border-radius: 0 0 14px 14px; }
+.crit-table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+.crit-table th { padding: 8px 10px; text-align: left; font-size: 11px; font-weight: 700; color: var(--text2); text-transform: uppercase; letter-spacing: .4px; border-bottom: 1px solid var(--border); }
+.crit-table td { padding: 8px 10px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+.crit-badge { display: inline-block; padding: 3px 10px; border-radius: 99px; color: #fff; font-weight: 700; font-size: 11px; }
+.crit-input { padding: 5px 8px; border: 1px solid var(--border); border-radius: 5px; font-size: 12px; font-family: inherit; width: 100%; outline: none; }
+.crit-input:focus { border-color: var(--blue); }
+.global-badge { background: #dcfce7; color: #15803d; font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 99px; margin-left: 6px; }
+.modal-iframe {
+  flex: 1; border: none; width: 100%; display: block;
+  min-height: 0; height: 100%;
+}
+</style>
+</head>
+<body>
+
+<div class="topbar" id="lista-topbar">
+  <div class="topbar-left">
+    <span>📋</span>
+    <div>
+      <div class="topbar-title">Lista de Auditorias</div>
+      <div class="topbar-sub">Central SGI</div>
+    </div>
+  </div>
+  <div style="display:flex;gap:8px;align-items:center">
+    <button class="btn-new" style="background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.25)" onclick="openCriterios()">
+      ✏️ Critérios Globais
+    </button>
+    <button class="btn-new" onclick="openNovaAuditoria()">
+      ＋ Nova Auditoria
+    </button>
+  </div>
+</div>
+
+<!-- Action bar (visible inside dashboard iframe, hidden standalone) -->
+<div id="iframe-action-bar" style="display:none;padding:8px 20px;justify-content:flex-end;gap:8px;align-items:center;background:#f8fafc;border-bottom:1px solid #e2e8f0">
+  <button class="btn-new" style="background:rgba(13,33,55,.12);color:#0d2137;border:1px solid #e2e8f0;font-size:12px" onclick="openCriterios()">✏️ Critérios Globais</button>
+  <button class="btn-new" style="font-size:12px" onclick="openNovaAuditoria()">＋ Nova Auditoria</button>
+</div>
+
+<!-- Summary cards -->
+<div class="summary-strip" id="summary-strip">
+  <div class="sum-card">
+    <div class="sum-label">Total de Auditorias</div>
+    <div class="sum-value" id="sum-total">0</div>
+  </div>
+  <div class="sum-card">
+    <div class="sum-label">Aprovadas</div>
+    <div class="sum-value green" id="sum-aprovadas">0</div>
+  </div>
+  <div class="sum-card">
+    <div class="sum-label">Parciais</div>
+    <div class="sum-value orange" id="sum-parciais">0</div>
+  </div>
+  <div class="sum-card">
+    <div class="sum-label">Reprovadas</div>
+    <div class="sum-value red" id="sum-reprovadas">0</div>
+  </div>
+  <div class="sum-card">
+    <div class="sum-label">Maturidade Média</div>
+    <div class="sum-value" id="sum-matur" style="color:var(--navy)">—</div>
+  </div>
+</div>
+
+<!-- Table -->
+<div class="table-wrap">
+  <div class="table-header">
+    <h2>Histórico de Auditorias</h2>
+    <input class="search-box" type="text" id="search" placeholder="🔍  Buscar empresa, auditor..." oninput="renderTable()">
+  </div>
+  <div id="table-body">
+    <!-- rendered by JS -->
+  </div>
+</div>
+
+<!-- Modal: nova / visualizar auditoria -->
+<!-- Critérios Globais Modal -->
+<div class="gcrit-overlay" id="gcrit-overlay">
+  <div class="gcrit-box">
+    <div class="gcrit-header">
+      <h2>✏️ Critérios de Verificação <span class="global-badge">GLOBAL</span></h2>
+      <button class="btn-aud close" onclick="closeCriterios()" style="padding:5px 10px">✕ Fechar</button>
+    </div>
+    <div class="gcrit-body">
+      <p style="font-size:12px;color:#64748b;margin-bottom:16px">
+        Estes critérios são <strong>globais</strong> — valem para todos os formulários de auditoria criados a partir de agora.
+      </p>
+      <table class="crit-table">
+        <thead><tr>
+          <th style="width:130px">Código / Cor</th>
+          <th style="width:90px">Pontuação</th>
+          <th style="width:210px">Descrição</th>
+          <th>Definição</th>
+          <th style="width:36px"></th>
+        </tr></thead>
+        <tbody id="gcrit-tbody"></tbody>
+      </table>
+      <button onclick="addGlobalCriterio()" style="margin-top:12px;padding:7px 16px;background:var(--blue);color:#fff;border:none;border-radius:7px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit">+ Adicionar critério</button>
+    </div>
+    <div class="gcrit-footer">
+      <button onclick="saveGlobalCriterios()" class="btn-new">💾 Salvar Critérios</button>
+    </div>
+  </div>
+</div>
+
+<!-- Matriz Modal - abre auditoria com rota matriz -->
+<div class="gcrit-overlay" id="gmatriz-overlay">
+  <div class="gcrit-box" style="width:96vw;max-width:96vw;height:90vh">
+    <div class="gcrit-header">
+      <h2>📋 Matriz de Pontuação</h2>
+      <div style="display:flex;gap:8px;align-items:center">
+        <span id="gmatriz-subtitle" style="font-size:11px;opacity:.6"></span>
+        <button class="btn-aud close" onclick="closeMatriz()" style="padding:5px 10px">✕ Fechar</button>
+      </div>
+    </div>
+    <iframe id="gmatriz-iframe" style="flex:1;border:none;width:100%;height:calc(90vh - 52px);display:block"></iframe>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modal-overlay">
+  <div class="modal-frame">
+    <div class="modal-frame-header">
+      <span class="modal-frame-title" id="modal-title">Nova Auditoria</span>
+      <div class="modal-frame-actions">
+        <button class="btn-aud" onclick="callAuditoria('openHistory')">⌚ Histórico</button>
+        <button class="btn-aud" onclick="callAuditoria('exportPDF')">🖨 PDF</button>
+        <button class="btn-aud" onclick="callAuditoria('exportXLSX')">📊 Excel</button>
+        <button class="btn-aud blue" onclick="callAuditoria('route_matriz')">📋 Matriz</button>
+        <button class="btn-aud green" onclick="callAuditoria('exportarEstado')">📤 Exportar</button>
+        <button class="btn-aud orange" onclick="callAuditoria('triggerImport')">📥 Importar</button>
+        <button class="btn-aud" onclick="callAuditoria('gerarRelatorioFinal')" style="background:#152631;border-color:#152631">📝 Emitir relatório de auditoria</button>
+        <button class="btn-aud save" id="btn-salvar" onclick="salvarAuditoria()">💾 Salvar</button>
+        <button class="btn-aud close" onclick="closeModal()">✕ Fechar</button>
+      </div>
+    </div>
+    <iframe class="modal-iframe" id="modal-iframe" src="" allowfullscreen></iframe>
+  </div>
+</div>
+
+<script>
+// ── STATE ─────────────────────────────────────────────────────────
+var auditorias = [];    // lista de registros { id, empresa, ... }
+var editingIdx = null;
+var editingId  = null;  // ID da auditoria sendo editada no modal
+var manualSave = false; // true apenas quando usuário clica em Salvar
+
+
+var LISTA_KEY = 'lista_auditorias';
+var GLOBAL_CRITERIOS = [
+  { codigo:'X', pontuacao:'5,0', cor:'#1e7d32', descricao:'Conforme — atende plenamente ao requisito',
+    definicao:'Requisito atendido plenamente, com evidência objetiva nos três pilares (Qualidade, Meio Ambiente e SSO). Ex. (galvanização): processo conforme procedimento e registros (banhos, espessura de camada); licença ambiental/PGRS em dia; EPI e análise de risco evidenciados.' },
+  { codigo:'C', pontuacao:'3,0', cor:'#8bc34a', descricao:'NC Menor / Oportunidade de Melhoria',
+    definicao:'Desvio pontual e isolado, de baixo impacto, que NÃO compromete produto, meio ambiente ou segurança — lacuna de registro/organização ou melhoria possível. Tratada como melhoria, sem ação corretiva formal. Ex.: registro de inspeção incompleto num lote isolado; melhorar segregação de recicláveis; reforçar demarcação de piso / 5S.' },
+  { codigo:'B', pontuacao:'1,0', cor:'#f57c00', descricao:'NC Maior / Significativa — requer ação corretiva',
+    definicao:'Desvio que compromete a eficácia do processo/sistema ou o atendimento a um requisito, SEM risco iminente (falha sistêmica, ausência de procedimento/registro). Exige ação corretiva com prazo e responsável. Ex.: pré-tratamento sem controle/registro dos banhos; PGRS desatualizado; EPI para respingo de metal sem controle de entrega; falta de análise de risco (PGR) da cuba.' },
+  { codigo:'A', pontuacao:'0,0', cor:'#c62828', descricao:'NC Crítica / Grave — requer ação imediata',
+    definicao:'Desvio que viola requisito legal/normativo obrigatório OU gera risco iminente: produto não conforme ao cliente, dano ambiental significativo, ou risco grave à saúde/segurança. Exige contenção imediata. Ex.: lote fora da espessura mínima (NBR 6323) expedido sem liberação; efluente ácido / borra de zinco sem tratamento ou operar sem licença; atividade junto ao zinco fundido sem proteção; caldeira/vaso de pressão sem inspeção (NR-13).' },
+  { codigo:'NA', pontuacao:'—', cor:'#9e9e9e', descricao:'Não Aplicável ao setor / processo avaliado',
+    definicao:'Requisito não se aplica ao setor ou processo avaliado, portanto não pontua.' },
+];  // critérios globais de verificação
+
+// Gera ID único
+function genId() { return 'aud_' + Date.now() + '_' + Math.random().toString(36).slice(2,7); }
+
+
+
+
+
+
+
+
+
+
+
+
+// ── RENDER ────────────────────────────────────────────────────────
+function renderAll() {
+  renderSummary();
+  renderTable();
+}
+
+function renderSummary() {
+  var total = auditorias.length;
+  var aprov = auditorias.filter(function(a){ return getStatus(a) === 'aprovado'; }).length;
+  var parci = auditorias.filter(function(a){ return getStatus(a) === 'parcial'; }).length;
+  var reprov = auditorias.filter(function(a){ return getStatus(a) === 'reprovado'; }).length;
+  var mats  = auditorias.filter(function(a){ return a.maturidade > 0; }).map(function(a){ return a.maturidade; });
+  var avgMat = mats.length ? (mats.reduce(function(s,v){return s+v;}, 0) / mats.length).toFixed(2) : '—';
+
+  document.getElementById('sum-total').textContent    = total;
+  document.getElementById('sum-aprovadas').textContent = aprov;
+  document.getElementById('sum-parciais').textContent  = parci;
+  document.getElementById('sum-reprovadas').textContent = reprov;
+  document.getElementById('sum-matur').textContent     = avgMat !== '—' ? avgMat + ' / 5' : '—';
+}
+
+function getStatus(a) {
+  if (!a.maturidade) return 'pendente';
+  if (a.maturidade >= 4) return 'aprovado';
+  if (a.maturidade >= 2.5) return 'parcial';
+  return 'reprovado';
+}
+
+function statusBadge(a) {
+  var st = getStatus(a);
+  var map = {
+    aprovado:  { cls: 'status-aprovado',  label: '✅ Aprovado' },
+    parcial:   { cls: 'status-parcial',   label: '⚠️ Parcial' },
+    reprovado: { cls: 'status-reprovado', label: '❌ Reprovado' },
+    pendente:  { cls: 'status-pendente',  label: '⏳ Pendente' }
+  };
+  var s = map[st];
+  return '<span class="status-badge ' + s.cls + '">' + s.label + '</span>';
+}
+
+function maturBadge(matur) {
+  if (!matur) return '<span style="color:#94a3b8">—</span>';
+  var color = matur >= 4 ? '#15803d' : matur >= 2.5 ? '#92400e' : '#b91c1c';
+  var bg    = matur >= 4 ? '#dcfce7' : matur >= 2.5 ? '#fef3c7' : '#fee2e2';
+  return '<span class="matur-badge" style="background:' + bg + ';color:' + color + '">' + matur.toFixed(2) + ' / 5</span>';
+}
+
+function renderTable() {
+  var q   = (document.getElementById('search').value || '').toLowerCase();
+  var tbl = auditorias.filter(function(a) {
+    if (!q) return true;
+    return (a.empresa||'').toLowerCase().includes(q) ||
+           (a.auditores||'').toLowerCase().includes(q) ||
+           (a.data_abertura||a.data||'').toLowerCase().includes(q);
+  });
+
+  var body = document.getElementById('table-body');
+  if (!tbl.length) {
+    body.innerHTML = '<div class="empty-state">' +
+      '<div class="empty-icon">📋</div>' +
+      '<div class="empty-title">' + (auditorias.length ? 'Nenhuma auditoria encontrada' : 'Nenhuma auditoria registrada') + '</div>' +
+      '<div class="empty-sub">' + (auditorias.length ? 'Ajuste o filtro de busca.' : 'Clique em ＋ Nova Auditoria para começar.') + '</div>' +
+      (!auditorias.length ? '<button class="btn-new" onclick="openNovaAuditoria()" style="margin:0 auto">＋ Nova Auditoria</button>' : '') +
+      '</div>';
+    return;
+  }
+
+  var html = '<table><thead><tr>' +
+    '<th>Empresa Auditada</th>' +
+    '<th>Data / Hora</th>' +
+    '<th>Auditores</th>' +
+    '<th style="text-align:center">Itens</th>' +
+    '<th style="text-align:center">Conformes</th>' +
+    '<th style="text-align:center">Setores</th>' +
+    '<th style="text-align:center">Maturidade</th>' +
+    '<th style="text-align:center">Status</th>' +
+    '<th style="text-align:right;padding-right:18px">Ações</th>' +
+    '</tr></thead><tbody>';
+
+  tbl.forEach(function(a, i) {
+    var realIdx = auditorias.indexOf(a);
+    var dataStr = a.data_abertura || a.data || '—';
+    var horaStr = a.horario_inicio ? a.horario_inicio + (a.horario_fim ? ' – ' + a.horario_fim : '') : '—';
+
+    html += '<tr>' +
+      '<td class="cell-empresa">' + (a.empresa || '—') + '</td>' +
+      '<td class="cell-data">' + dataStr + '<br><small style="color:#94a3b8">' + horaStr + '</small></td>' +
+      '<td class="cell-auditores" title="' + (a.auditores||'') + '">' + (a.auditores || '—') + '</td>' +
+      '<td class="cell-num">' + (a.total_itens || 0) + '</td>' +
+      '<td class="cell-num">' + (a.conformes || 0) + '</td>' +
+      '<td class="cell-num">' + (a.setores || 0) + '</td>' +
+      '<td class="cell-matur">' + maturBadge(a.maturidade) + '</td>' +
+      '<td style="text-align:center">' + statusBadge(a) + '</td>' +
+      '<td>' +
+        '<div class="cell-actions">' +
+          '<button class="btn-action view" onclick="viewAuditoria(' + realIdx + ')">✏️ Editar</button>' +
+          '<button class="btn-action del"  onclick="deleteAuditoria(' + realIdx + ')">🗑 Excluir</button>' +
+        '</div>' +
+      '</td>' +
+      '</tr>';
+  });
+
+  html += '</tbody></table>';
+  body.innerHTML = html;
+}
+
+// ── MODAL ─────────────────────────────────────────────────────────
+function openNovaAuditoria() {
+  editingIdx = null;
+  editingId  = genId();
+  clearCloseTimer();
+  document.getElementById('modal-title').textContent = 'Nova Auditoria';
+    var frame = document.getElementById('modal-iframe');
+    var _origin = '';
+  // que sempre resolve para o servidor correto, sem depender de window.top
+  frame.src = 'auditoria.html?v=' + Date.now() + '&auditoria=' + editingId + '&origin=' + encodeURIComponent(_origin);
+  document.getElementById('modal-overlay').classList.add('open');
+  // Nova auditoria: baseline vazio + começa polling
+  _serverBaseline = {};
+  frame.onload = function() { startSyncPolling(); };
+}
+
+async function viewAuditoria(idx) {
+  editingIdx = idx;
+  editingId  = auditorias[idx].id;
+  var aud    = auditorias[idx];
+  clearCloseTimer();
+  document.getElementById('modal-title').textContent = 'Editando — ' + (aud.empresa || 'Auditoria');
+  var frame = document.getElementById('modal-iframe');
+
+  var _origin = '';
+  frame.src = 'auditoria.html?v=' + Date.now() + '&auditoria=' + editingId + '&origin=' + encodeURIComponent(_origin);
+  document.getElementById('modal-overlay').classList.add('open');
+
+  // Envia o STATE salvo de volta para o iframe assim que ele terminar de carregar
+  frame.onload = async function() {
+    // 1) Tenta carregar STATE da chave dedicada "auditoria:<id>" (novo formato)
+    var state = await loadAuditoriaState(editingId);
+    // 2) Fallback: STATE legacy que estava embutido no array (auditorias antigas)
+    if (!state && aud.state) state = aud.state;
+    // Define baseline do servidor (o que conhecemos como "estado remoto atual")
+    _serverBaseline = state ? JSON.parse(JSON.stringify(state)) : {};
+    if (state) {
+      try {
+        frame.contentWindow.postMessage({
+          type: 'load-auditoria-state',
+          state: state
+        }, '*');
+      } catch(ex) {
+        console.warn('Erro ao restaurar STATE:', ex);
+      }
+    }
+    startSyncPolling();
+  };
+}
+
+function callAuditoria(action) {
+  var frame = document.getElementById('modal-iframe');
+  if (!frame || !frame.contentWindow) return;
+  var win = frame.contentWindow;
+  if (action === 'triggerImport') {
+    var inp = frame.contentDocument && frame.contentDocument.getElementById('importFileInput');
+    if (inp) inp.click();
+    return;
+  }
+  if (action === 'route_matriz')    { if (typeof win.route === 'function') win.route('matriz'); return; }
+  if (action === 'route_criterios') { if (typeof win.route === 'function') win.route('criterios'); return; }
+  if (typeof win[action] === 'function') win[action]();
+}
+
+var _closeTimer = null;
+function clearCloseTimer(){ if (_closeTimer) { clearTimeout(_closeTimer); _closeTimer = null; } }
+function closeModal() {
+  stopSyncPolling();
+  document.getElementById('modal-overlay').classList.remove('open');
+  var frame = document.getElementById('modal-iframe');
+  clearCloseTimer();
+  _closeTimer = setTimeout(function() { frame.src = ''; _closeTimer = null; }, 1500);
+  editingIdx = null;
+}
+
+// ── SAVE AUDITORIA (extract data from iframe) ─────────────────────
+
+
+// ── SYNC AO VIVO: 3-way merge + polling (Abordagem 2) ──────────────
+var _serverBaseline = null;   // último snapshot que conhecemos do servidor
+var _syncTimer      = null;   // intervalo do polling
+
+// 3-way merge: para cada campo, se mudou localmente vs baseline → mantém local;
+// senão, se mudou no servidor vs baseline → adota o do servidor.
+function threeWayMerge(base, local, remote) {
+  if (local === undefined) return remote;
+  if (remote === undefined) return local;
+  if (local === null || remote === null) {
+    if (local !== (base === undefined ? null : base)) return local;
+    return remote;
+  }
+  // Arrays: se local diferente da baseline, mantém local; senão adota remote
+  if (Array.isArray(local) && Array.isArray(remote)) {
+    if (JSON.stringify(local) !== JSON.stringify(base)) return local;
+    return remote;
+  }
+  // Objetos: merge recursivo por chave
+  if (typeof local === 'object' && typeof remote === 'object') {
+    var out = {};
+    var baseObj = (base && typeof base === 'object') ? base : {};
+    var keys = {};
+    Object.keys(local).forEach(function(k){ keys[k] = 1; });
+    Object.keys(remote).forEach(function(k){ keys[k] = 1; });
+    Object.keys(baseObj).forEach(function(k){ keys[k] = 1; });
+    Object.keys(keys).forEach(function(k){
+      out[k] = threeWayMerge(baseObj[k], local[k], remote[k]);
+    });
+    return out;
+  }
+  // Primitivos: regra de prioridade
+  if (local === remote) return local;
+  if (local !== base) return local;   // usuário local editou → fica
+  return remote;                       // outro usuário editou → adota
+}
+
+async function syncPoll() {
+  if (!editingId) return;
+  var frame = document.getElementById('modal-iframe');
+  if (!frame || !frame.contentWindow) return;
+  try {
+    var remote = await loadAuditoriaState(editingId);
+    if (!remote) return;
+    var baseline = _serverBaseline || remote;
+    // Sem mudanças no servidor desde o último poll → nada a fazer
+    if (JSON.stringify(remote) === JSON.stringify(baseline)) return;
+    var local = frame.contentWindow.STATE || {};
+    var merged = threeWayMerge(baseline, local, remote);
+    // Só envia ao iframe se o merge mudou algo localmente
+    if (JSON.stringify(merged) !== JSON.stringify(local)) {
+      frame.contentWindow.postMessage({ type: 'sync-merge-state', state: merged }, '*');
+    }
+    _serverBaseline = JSON.parse(JSON.stringify(remote));
+  } catch (e) { /* silencioso */ }
+}
+
+function startSyncPolling() {
+  stopSyncPolling();
+  /* Polling de sincronizacao desativado: o autosave do editor cuida da persistencia/recarga (evita tela em branco e flicker). */
+}
+function stopSyncPolling() {
+  if (_syncTimer) { clearInterval(_syncTimer); _syncTimer = null; }
+  _serverBaseline = null;
+}
+
+async function extractAndSave(frame) {
+  // O editor (iframe) ja salvou no servidor com merge item a item.
+  // Aqui apenas geramos/atualizamos o resumo desta auditoria na lista.
+  var win = frame.contentWindow;
+  var state = (win && win.STATE) || {};
+  var record = buildRecord(state, editingId);
+  commitRecord(record);
+}
+
+// Salva/carrega o STATE de cada auditoria em sua chave dedicada "auditoria:<id>"
+async function saveAuditoriaState(id, state) {
+  if (!id) return;
+  try {
+    var res = await fetch('/api/save', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ key: 'auditoria:' + id, value: state })
+    });
+    if (!res.ok) console.error('Erro ao salvar STATE da auditoria:', await res.text());
+  } catch (err) {
+    console.error('Erro ao salvar STATE da auditoria:', err);
+  }
+}
+
+async function loadAuditoriaState(id) {
+  if (!id) return null;
+  try {
+    var res  = await fetch('/api/load?key=auditoria:' + id);
+    var data = await res.json();
+    return data && data.value ? data.value : null;
+  } catch (err) {
+    console.error('Erro ao carregar STATE da auditoria:', err);
+    return null;
+  }
+}
+
+// ── SALVAR AUDITORIA (botão 💾 Salvar na barra superior) ──────────
+function salvarAuditoria() {
+  var frame = document.getElementById('modal-iframe');
+  if (!frame || !frame.contentWindow) {
+    alert('Nenhuma auditoria aberta para salvar.');
+    return;
+  }
+  var win = frame.contentWindow;
+
+  // Salva e MANTÉM o editor aberto. O proprio editor salva no servidor (com merge item a item);
+  // aqui so atualizamos o resumo da lista depois.
+  manualSave = true;
+  try {
+    if (typeof win.audSaveToServer === 'function') {
+      Promise.resolve(win.audSaveToServer(true)).then(function(){ extractAndSave(frame); }).catch(function(){ extractAndSave(frame); });
+      return;
+    }
+  } catch(e) {}
+  extractAndSave(frame);
+}
+
+function buildRecord(STATE, id) {
+  var record = {
+    id:                id || genId(),
+    empresa:           '—',
+    auditores:         '—',
+    data_abertura:     '—',
+    data_encerramento: '—',
+    horario_inicio:    '',
+    horario_fim:       '',
+    total_itens:       0,
+    conformes:         0,
+    nao_conformes:     0,
+    obs:               0,
+    setores:           0,
+    maturidade:        0,
+    savedAt:           new Date().toISOString()
+  };
+
+  if (!STATE || !STATE.home) return record;
+  var h = STATE.home;
+  record.empresa           = h.empresa           || '—';
+  record.auditores         = h.auditor            || '—';
+  record.data_abertura     = h.data_abertura      || h.data || '—';
+  record.data_encerramento = h.data_encerramento  || '—';
+  record.horario_inicio    = h.horario_inicio     || '';
+  record.horario_fim       = h.horario_fim        || '';
+
+  // Contar a partir de STATE.sectors — estrutura: sec.items (array) + sec._addedItems (obj)
+  var sectors = STATE.sectors || {};
+  var sectorNames = Object.keys(sectors).filter(function(sk){
+    var sec = sectors[sk];
+    return sec && !sec.naoAuditado; // ignora setores marcados como "não auditado"
+  });
+  record.setores = sectorNames.length;
+  var total=0, conf=0, nc=0, obs=0;
+  function countItem(item) {
+    if (!item) return;
+    var v = (item.verif || '').toString().toUpperCase();
+    if (!v || v === 'NA') return;
+    total++;
+    if (v==='X') conf++;
+    else if (v==='A' || v==='B') nc++;
+    else if (v==='C') obs++;
+  }
+  sectorNames.forEach(function(sk) {
+    var sec = sectors[sk];
+    if (!sec) return;
+    // items default (array)
+    if (Array.isArray(sec.items)) sec.items.forEach(countItem);
+    // _addedItems customizados (objeto)
+    if (sec._addedItems && typeof sec._addedItems === 'object') {
+      Object.keys(sec._addedItems).forEach(function(k){ countItem(sec._addedItems[k]); });
+    }
+    // Compatibilidade com formato antigo (reqs)
+    if (sec.reqs && typeof sec.reqs === 'object') {
+      Object.keys(sec.reqs).forEach(function(k){ countItem(sec.reqs[k]); });
+    }
+  });
+  record.total_itens   = total;
+  record.conformes     = conf;
+  record.nao_conformes = nc;
+  record.obs           = obs;
+  if (total > 0) {
+    record.maturidade = parseFloat(((conf*5 + obs*3 + nc*1) / (total*5) * 5).toFixed(2));
+  }
+  return record;
+}
+
+function commitRecord(record) {
+  if (editingIdx !== null && editingIdx >= 0) {
+    record.id = auditorias[editingIdx].id;
+    auditorias[editingIdx] = record;
+  } else {
+    // Check if already exists
+    var existing = auditorias.findIndex(function(a){ return a.id === record.id; });
+    if (existing >= 0) auditorias[existing] = record;
+    else auditorias.unshift(record);
+  }
+  renderAll();
+  scheduleServerSave();
+  if (manualSave) {
+    manualSave = false;
+    // NÃO fecha o editor — salva e mantém aberto, só dá feedback no botão Salvar
+    var btn = document.getElementById('btn-salvar');
+    if (btn) { var _orig = btn.innerHTML; btn.innerHTML = '✅ Salvo!'; setTimeout(function(){ btn.innerHTML = _orig || '💾 Salvar'; }, 2000); }
+  }
+}
+
+// ── DELETE ────────────────────────────────────────────────────────
+function deleteAuditoria(idx) {
+  var a = auditorias[idx];
+  if (!confirm('Excluir auditoria de "' + (a.empresa || 'empresa') + '"?\nEsta ação não pode ser desfeita.')) return;
+  auditorias.splice(idx, 1);
+  renderAll();
+  scheduleServerSave();
+}
+
+// ── LISTEN for messages from auditoria iframe ────────────────────
+window.addEventListener('message', function(e) {
+  if (!e.data) return;
+
+  // Breadcrumb update
+  if (e.data.type === 'auditoria-nav' && window.self !== window.top) {
+    window.parent.postMessage(e.data, '*');
+  }
+
+  // Auditoria foi salva no iframe — captura o resumo
+  if (e.data.type === 'auditoria-saved') {
+    var s  = e.data.summary || {};
+
+    // ── ANTI-FANTASMA ──
+    // Só cria/atualiza um registro se o usuário realmente preencheu algo
+    // OU se estamos editando uma auditoria que já existe na lista.
+    var hasContent = (s.empresa && s.empresa !== '—' && s.empresa.trim() !== '') ||
+                     (s.auditores && s.auditores !== '—' && s.auditores.trim() !== '') ||
+                     (s.total_itens && s.total_itens > 0) ||
+                     (s.conformes && s.conformes > 0) ||
+                     (s.nao_conformes && s.nao_conformes > 0);
+    var isEditingExisting = (editingIdx !== null && editingIdx >= 0);
+
+    if (!hasContent && !isEditingExisting && !manualSave) {
+      // Ignora auto-saves vazios de auditorias novas
+      return;
+    }
+
+    var id = e.data.auditoria_id || editingId || genId();
+    var record = {
+      id:                id,
+      empresa:           s.empresa           || '—',
+      auditores:         s.auditores         || '—',
+      data_abertura:     s.data_abertura     || '—',
+      data_encerramento: s.data_encerramento || '—',
+      horario_inicio:    s.horario_inicio    || '',
+      horario_fim:       s.horario_fim       || '',
+      total_itens:       s.total_itens       || 0,
+      conformes:         s.conformes         || 0,
+      nao_conformes:     s.nao_conformes     || 0,
+      obs:               s.obs               || 0,
+      setores:           s.setores           || 0,
+      maturidade:        s.maturidade        || 0,
+      savedAt:           new Date().toISOString()
+    };
+
+    // Salva o STATE em chave dedicada (não inline no array)
+    if (e.data.state) saveAuditoriaState(id, e.data.state);
+    commitRecord(record);
+  }
+});
+
+
+
+
+
+
+
+function openMatriz(idx) {
+  // Se idx fornecido, abre matriz de auditoria específica
+  // Se não, abre a última auditoria ou avisa
+  var id = null;
+  if (idx !== undefined && auditorias[idx]) {
+    id = auditorias[idx].id;
+    var sub = document.getElementById('gmatriz-subtitle');
+    if (sub) sub.textContent = auditorias[idx].empresa || '';
+  } else if (auditorias.length > 0) {
+    id = auditorias[0].id;
+    var sub = document.getElementById('gmatriz-subtitle');
+    if (sub) sub.textContent = (auditorias[0].empresa || '') + ' (mais recente)';
+  } else {
+    alert('Nenhuma auditoria disponível. Crie e salve uma auditoria primeiro.');
+    return;
+  }
+  var frame = document.getElementById('gmatriz-iframe');
+  frame.src = 'auditoria.html?v=' + Date.now() + '&auditoria=' + id + '#/matriz';
+  document.getElementById('gmatriz-overlay').classList.add('open');
+}
+
+function closeMatriz() {
+  document.getElementById('gmatriz-overlay').classList.remove('open');
+  var frame = document.getElementById('gmatriz-iframe');
+  frame.src = '';
+}
+
+function openCriterios() {
+  renderCriteriosTable();
+  document.getElementById('gcrit-overlay').classList.add('open');
+}
+
+function closeCriterios() {
+  document.getElementById('gcrit-overlay').classList.remove('open');
+}
+
+function renderCriteriosTable() {
+  var tbody = document.getElementById('gcrit-tbody');
+  if (!tbody) return;
+  var html = '';
+  GLOBAL_CRITERIOS.forEach(function(c, i) {
+    var cor = c.cor || '#666666';
+    var codigo = (c.codigo || '').replace(/"/g, '&quot;');
+    var pontuacao = (c.pontuacao || '').replace(/"/g, '&quot;');
+    var descricao = (c.descricao || '').replace(/"/g, '&quot;');
+    var definicao = (c.definicao || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    html += '<tr id="gcrit-row-' + i + '">';
+    html += '<td><div style="display:flex;align-items:center;gap:6px">';
+    html +=   '<input type="color" value="' + cor + '" data-idx="' + i + '" oninput="updateCritColor(this)" style="width:28px;height:28px;border:none;cursor:pointer;border-radius:4px">';
+    html +=   '<span id="gcrit-badge-' + i + '" class="crit-badge" style="background:' + cor + '">' + codigo + '</span>';
+    html +=   '<input data-field="codigo" data-idx="' + i + '" value="' + codigo + '" oninput="updateCritBadge(this)" class="crit-input" style="width:50px;font-weight:700">';
+    html +=   '<input data-field="cor" value="' + cor + '" type="hidden">';
+    html += '</div></td>';
+    html += '<td><input data-field="pontuacao" value="' + pontuacao + '" class="crit-input" style="width:70px"></td>';
+    html += '<td><input data-field="descricao" value="' + descricao + '" class="crit-input"></td>';
+    html += '<td><textarea data-field="definicao" class="crit-input" style="width:100%;min-height:56px;resize:vertical;font-family:inherit">' + definicao + '</textarea></td>';
+    html += '<td><button onclick="deleteCritRow(' + i + ')" style="background:none;border:none;cursor:pointer;color:#ef4444;font-size:16px">🗑</button></td>';
+    html += '</tr>';
+  });
+  tbody.innerHTML = html;
+}
+
+function updateCritColor(el) {
+  var i = el.getAttribute('data-idx');
+  var badge = document.getElementById('gcrit-badge-' + i);
+  if (badge) badge.style.background = el.value;
+  var row = el.closest('tr');
+  if (row) {
+    var hiddenCor = row.querySelector('input[data-field="cor"]');
+    if (hiddenCor) hiddenCor.value = el.value;
+  }
+}
+
+function updateCritBadge(el) {
+  var i = el.getAttribute('data-idx');
+  var badge = document.getElementById('gcrit-badge-' + i);
+  if (badge) badge.textContent = el.value;
+}
+
+
+
+function addGlobalCriterio() {
+  GLOBAL_CRITERIOS.push({ codigo: 'N', pontuacao: '—', descricao: 'Novo critério', cor: '#607d8b', definicao: '' });
+  renderCriteriosTable();
+}
+
+function deleteCritRow(idx) {
+  GLOBAL_CRITERIOS.splice(idx, 1);
+  renderCriteriosTable();
+}
+
+// ── PERSISTÊNCIA NO SERVIDOR (Upstash Redis via api/save e api/load) ─────────
+
+// Debounce: evita salvar múltiplas vezes em sequência rápida
+var _saveTimer = null;
+function scheduleServerSave() {
+  clearTimeout(_saveTimer);
+  _saveTimer = setTimeout(saveToServer, 800);
+}
+
+async function saveToServer() {
+  try {
+    var res = await fetch('/api/save', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ key: 'auditorias', value: auditorias })
+    });
+    if (!res.ok) console.error('Erro ao salvar:', await res.text());
+  } catch (err) {
+    console.error('Erro ao salvar auditorias:', err);
+  }
+}
+
+async function loadFromServer() {
+  try {
+    var res  = await fetch('/api/load?key=auditorias');
+    var data = await res.json();
+    if (Array.isArray(data.value)) {
+      auditorias = data.value;
+      renderAll();
+    }
+  } catch (err) {
+    console.error('Erro ao carregar auditorias:', err);
+  }
+}
+
+async function saveGlobalCriterios() {
+  // Coleta valores atuais da tabela antes de salvar
+  var rows = document.querySelectorAll('#gcrit-tbody tr');
+  rows.forEach(function(row, i) {
+    if (!GLOBAL_CRITERIOS[i]) return;
+    var cod  = row.querySelector('[data-field="codigo"]');
+    var pont = row.querySelector('[data-field="pontuacao"]');
+    var desc = row.querySelector('[data-field="descricao"]');
+    var cor  = row.querySelector('[data-field="cor"]');
+    if (cod)  GLOBAL_CRITERIOS[i].codigo    = cod.value;
+    if (pont) GLOBAL_CRITERIOS[i].pontuacao = pont.value;
+    if (desc) GLOBAL_CRITERIOS[i].descricao = desc.value;
+    if (cor)  GLOBAL_CRITERIOS[i].cor       = cor.value;
+    var defi = row.querySelector('[data-field="definicao"]');
+    if (defi) GLOBAL_CRITERIOS[i].definicao = defi.value;
+  });
+  try {
+    var res = await fetch('/api/save', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ key: 'criterios_globais', value: GLOBAL_CRITERIOS })
+    });
+    if (res.ok) {
+      var btn = document.querySelector('[onclick="saveGlobalCriterios()"]');
+      if (btn) { var orig = btn.innerHTML; btn.innerHTML = '✅ Salvo!'; setTimeout(function(){ btn.innerHTML = orig; }, 2000); }
+    } else {
+      alert('Erro ao salvar critérios.');
+    }
+  } catch (err) {
+    alert('Erro ao salvar critérios.');
+    console.error(err);
+  }
+}
+
+async function loadGlobalCriterios() {
+  try {
+    var res  = await fetch('/api/load?key=criterios_globais');
+    var data = await res.json();
+    if (Array.isArray(data.value) && data.value.length > 0) {
+      GLOBAL_CRITERIOS = data.value;
+    }
+  } catch (err) {
+    console.error('Erro ao carregar critérios:', err);
+  }
+}
+
+// ── POLLING: sincroniza com outros usuários a cada 10 segundos ────
+var _lastSavedAt = null;
+async function pollServer() {
+  try {
+    var res  = await fetch('/api/load?key=auditorias');
+    var data = await res.json();
+    if (!Array.isArray(data.value)) return;
+    // Compara o savedAt da auditoria mais recente
+    var latest = data.value.length > 0 ? data.value[0].savedAt : null;
+    if (latest && latest !== _lastSavedAt) {
+      _lastSavedAt = latest;
+      auditorias = data.value;
+      renderAll();
+    }
+  } catch (err) { /* silencioso */ }
+}
+
+// ── INIT ─────────────────────────────────────────────────────────
+if (window.self !== window.top) {
+  // Inside dashboard iframe - show action bar, topbar already hidden by CSS
+  var bar = document.getElementById('iframe-action-bar');
+  if (bar) bar.style.display = 'flex';
+}
+loadGlobalCriterios();
+loadFromServer().then(function() {
+  // Inicia polling após primeiro carregamento
+  setInterval(pollServer, 10000);
+});
+</script>
+</body>
+</html>

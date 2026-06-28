@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Portal do Fornecedor — Central SGI</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    background: linear-gradient(135deg, #1a3a5c 0%, #2563a8 100%);
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+  }
+
+  .card {
+    background: #fff;
+    border-radius: 16px;
+    padding: 40px 44px;
+    width: 100%;
+    max-width: 420px;
+    box-shadow: 0 20px 60px rgba(0,0,0,.35);
+  }
+
+  .logo-area {
+    text-align: center;
+    margin-bottom: 28px;
+  }
+  .logo-area img { height: 48px; object-fit: contain; }
+  .logo-area .brand {
+    font-size: 13px;
+    color: #64748b;
+    margin-top: 8px;
+    letter-spacing: .3px;
+  }
+  .logo-badge { width:130px; margin:0 auto 12px; background:#fff; border:1px solid #eef2f7; border-radius:12px; padding:8px 12px; box-shadow:0 4px 14px rgba(0,0,0,.08); }
+  .logo-badge img { width:100%; height:auto; display:block; object-fit:contain; }
+  .brand-name { font-size:19px; font-weight:700; color:#1a3a5c; }
+  .brand-sub { font-size:11px; color:#94a3b8; text-transform:uppercase; letter-spacing:2px; margin-top:3px; }
+  .pdivider { height:1px; background:#e2e8f0; margin:16px 0 12px; }
+  .portal-title { font-size:22px; font-weight:800; color:#0d1b2a; letter-spacing:.2px; }
+
+  h2 {
+    font-size: 20px;
+    font-weight: 700;
+    color: #0d1b2a;
+    margin-bottom: 6px;
+  }
+  .subtitle {
+    font-size: 13px;
+    color: #64748b;
+    margin-bottom: 24px;
+  }
+
+  label {
+    display: block;
+    font-size: 13px;
+    font-weight: 600;
+    color: #334155;
+    margin-bottom: 5px;
+  }
+  input[type=email], input[type=password] {
+    width: 100%;
+    padding: 10px 13px;
+    border: 1.5px solid #cbd5e1;
+    border-radius: 8px;
+    font-size: 14px;
+    color: #0f172a;
+    outline: none;
+    transition: border-color .15s;
+    margin-bottom: 16px;
+  }
+  input:focus { border-color: #1a56db; }
+
+  .btn {
+    width: 100%;
+    padding: 11px;
+    border: none;
+    border-radius: 8px;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background .15s, transform .1s;
+  }
+  .btn:active { transform: scale(.98); }
+  .btn-primary { background: #1a56db; color: #fff; }
+  .btn-primary:hover:not(:disabled) { background: #1648c0; }
+  .btn:disabled { opacity: .55; cursor: not-allowed; }
+
+  .msg {
+    border-radius: 8px;
+    padding: 10px 14px;
+    font-size: 13px;
+    margin-bottom: 16px;
+    display: none;
+  }
+  .msg.error   { background: #fee2e2; color: #991b1b; display: block; }
+  .msg.success { background: #dcfce7; color: #166534; display: block; }
+
+  .screen { display: none; }
+  .screen.active { display: block; }
+
+  .hint {
+    font-size: 12px;
+    color: #94a3b8;
+    margin-top: 10px;
+    text-align: center;
+  }
+
+  .req-rule {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    color: #94a3b8;
+    margin-top: 4px;
+    margin-bottom: 12px;
+    transition: color .2s;
+  }
+  .req-rule.ok { color: #16a34a; }
+  .req-rule .dot {
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    background: #cbd5e1;
+    flex-shrink: 0;
+    transition: background .2s;
+  }
+  .req-rule.ok .dot { background: #16a34a; }
+
+  /* Spinner */
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .spinner {
+    display: inline-block;
+    width: 14px; height: 14px;
+    border: 2px solid rgba(255,255,255,.4);
+    border-top-color: #fff;
+    border-radius: 50%;
+    animation: spin .7s linear infinite;
+    vertical-align: middle;
+    margin-right: 6px;
+  }
+  body.dark{background:linear-gradient(135deg,#0a1726 0%,#0f2236 100%)}
+  body.dark .card{background:#151d2b}
+  body.dark .brand-name,body.dark .portal-title,body.dark h2{color:#e8edf5}
+  body.dark .brand-sub,body.dark .brand,body.dark .subtitle,body.dark .hint{color:#8194ad}
+  body.dark .pdivider{background:#283447}
+  body.dark label{color:#9fb3c8}
+  body.dark input[type=email],body.dark input[type=password]{background:#1d2738;border-color:#3a485f;color:#e2e8f0}
+  body.dark .req-rule{color:#64748b}
+</style>
+</head>
+<body>
+
+<div class="card">
+  <div class="logo-area">
+    <div class="brand-name">Central SGI</div>
+    <div class="brand-sub">Central SGI</div>
+    <div class="pdivider"></div>
+    <div class="portal-title">Portal do Fornecedor</div>
+  </div>
+
+  <!-- ── TELA 1: LOGIN ─────────────────────────── -->
+  <div id="screen-login" class="screen active">
+    <h2>Entrar</h2>
+    <p class="subtitle">Use as credenciais enviadas por email.</p>
+    <div id="login-msg" class="msg"></div>
+    <label for="login-email">Email</label>
+    <input id="login-email" type="email" placeholder="seu@email.com" autocomplete="username">
+    <label for="login-pass">Senha</label>
+    <input id="login-pass" type="password" placeholder="••••••••" autocomplete="current-password">
+    <button class="btn btn-primary" id="btn-login" onclick="doLogin()">Entrar</button>
+    <p class="hint">Acesso restrito a fornecedores cadastrados.</p>
+  </div>
+
+  <!-- ── TELA 2: REDEFINIR SENHA ───────────────── -->
+  <div id="screen-reset" class="screen">
+    <h2>Redefinir senha</h2>
+    <p class="subtitle">Esta é sua primeira entrada. Crie uma senha pessoal.</p>
+    <div id="reset-msg" class="msg"></div>
+    <label for="reset-current">Senha temporária (recebida por email)</label>
+    <input id="reset-current" type="password" placeholder="Senha do email" autocomplete="current-password">
+    <label for="reset-new">Nova senha</label>
+    <input id="reset-new" type="password" placeholder="Mínimo 8 caracteres" autocomplete="new-password" oninput="checkPwRules()">
+    <div class="req-rule" id="rule-len"><span class="dot"></span> Ao menos 8 caracteres</div>
+    <label for="reset-confirm">Confirmar nova senha</label>
+    <input id="reset-confirm" type="password" placeholder="Repita a nova senha" autocomplete="new-password" oninput="checkPwRules()">
+    <div class="req-rule" id="rule-match"><span class="dot"></span> Senhas iguais</div>
+    <button class="btn btn-primary" id="btn-reset" onclick="doReset()" style="margin-top:4px">Salvar nova senha</button>
+  </div>
+</div>
+
+<script>
+// ─── utilitários ─────────────────────────────────────────────────────────────
+function showMsg(id, text, type) {
+  const el = document.getElementById(id);
+  el.textContent = text;
+  el.className = 'msg ' + type;
+}
+function clearMsg(id) {
+  const el = document.getElementById(id);
+  el.className = 'msg';
+  el.textContent = '';
+}
+function setLoading(btnId, loading) {
+  const btn = document.getElementById(btnId);
+  if (loading) {
+    btn._orig = btn.innerHTML;
+    btn.innerHTML = '<span class="spinner"></span>Aguarde…';
+    btn.disabled = true;
+  } else {
+    btn.innerHTML = btn._orig || btn.innerHTML;
+    btn.disabled = false;
+  }
+}
+function showScreen(name) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById('screen-' + name).classList.add('active');
+}
+
+// ─── login ───────────────────────────────────────────────────────────────────
+async function doLogin() {
+  clearMsg('login-msg');
+  const email    = document.getElementById('login-email').value.trim();
+  const password = document.getElementById('login-pass').value;
+  if (!email || !password) { showMsg('login-msg', 'Preencha email e senha.', 'error'); return; }
+
+  setLoading('btn-login', true);
+  try {
+    const r = await fetch('/api/portal-auth?action=login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password }),
+      credentials: 'include',
+    });
+    const data = await r.json();
+    if (!data.ok) { showMsg('login-msg', data.error || 'Credenciais inválidas.', 'error'); return; }
+
+    if (data.mustResetPassword) {
+      showScreen('reset');
+    } else {
+      window.location.href = '/portal_docs.html';
+    }
+  } catch (e) {
+    showMsg('login-msg', 'Erro de rede. Tente novamente.', 'error');
+  } finally {
+    setLoading('btn-login', false);
+  }
+}
+
+// ─── reset de senha ──────────────────────────────────────────────────────────
+function checkPwRules() {
+  const nv     = document.getElementById('reset-new').value;
+  const conf   = document.getElementById('reset-confirm').value;
+  const rLen   = document.getElementById('rule-len');
+  const rMatch = document.getElementById('rule-match');
+  rLen.classList.toggle('ok',   nv.length >= 8);
+  rMatch.classList.toggle('ok', nv.length >= 8 && nv === conf);
+}
+
+async function doReset() {
+  clearMsg('reset-msg');
+  const current = document.getElementById('reset-current').value;
+  const newPass  = document.getElementById('reset-new').value;
+  const confirm  = document.getElementById('reset-confirm').value;
+
+  if (!current)           { showMsg('reset-msg', 'Informe a senha temporária.', 'error'); return; }
+  if (newPass.length < 8) { showMsg('reset-msg', 'A nova senha deve ter ao menos 8 caracteres.', 'error'); return; }
+  if (newPass !== confirm) { showMsg('reset-msg', 'As senhas não coincidem.', 'error'); return; }
+
+  setLoading('btn-reset', true);
+  try {
+    const r = await fetch('/api/portal-auth?action=reset-password', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ currentPassword: current, newPassword: newPass }),
+      credentials: 'include',
+    });
+    const data = await r.json();
+    if (!data.ok) { showMsg('reset-msg', data.error || 'Erro ao redefinir senha.', 'error'); return; }
+    // Sucesso — vai para o portal
+    window.location.href = '/portal_docs.html';
+  } catch (e) {
+    showMsg('reset-msg', 'Erro de rede. Tente novamente.', 'error');
+  } finally {
+    setLoading('btn-reset', false);
+  }
+}
+
+// ─── tecla Enter ─────────────────────────────────────────────────────────────
+document.addEventListener('keydown', e => {
+  if (e.key !== 'Enter') return;
+  const active = document.querySelector('.screen.active')?.id;
+  if (active === 'screen-login') doLogin();
+  if (active === 'screen-reset') doReset();
+});
+
+// ─── ao carregar: verifica se já está logado ─────────────────────────────────
+(async () => {
+  try {
+    const r = await fetch('/api/portal-auth?action=whoami', { credentials: 'include' });
+    const d = await r.json();
+    if (d.ok && !d.mustResetPassword) window.location.href = '/portal_docs.html';
+  } catch { /* offline / não autenticado */ }
+})();
+</script>
+<div style="position:fixed;bottom:28px;left:0;right:0;text-align:center;color:#94a3b8;font-size:10px;padding:0 12px">Site criado e desenvolvido por: Ayrton Ribeiro e Jucelio F. Santos.</div>
+<div style="position:fixed;bottom:12px;left:0;right:0;text-align:center;color:#94a3b8;font-size:11px">Revisão 2.21 · 16/06/2026</div>
+<button id="thBtn" onclick="tgTheme()" title="Tema claro/escuro" aria-label="Tema" style="position:fixed;bottom:16px;right:16px;z-index:9999;width:42px;height:42px;border-radius:50%;border:none;cursor:pointer;background:#1a56db;color:#fff;font-size:18px;line-height:1;box-shadow:0 6px 18px rgba(0,0,0,.35)">🌙</button>
+<script src="/assets/tema.js"></script>
+</body>
+</html>

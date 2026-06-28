@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="64" height="64" role="img" aria-label="ARGOS favicon">
+  <rect width="100" height="100" rx="22" fill="#2B3F5C"/>
+  <g fill="#9FC3D6">
+    <circle cx="26" cy="50" r="6"/><circle cx="74" cy="50" r="6"/>
+    <circle cx="50" cy="26" r="6"/><circle cx="50" cy="74" r="6"/>
+  </g>
+  <g stroke="#9FC3D6" stroke-width="3" opacity="0.5">
+    <line x1="26" y1="50" x2="50" y2="26"/><line x1="50" y1="26" x2="74" y2="50"/>
+    <line x1="26" y1="50" x2="50" y2="74"/><line x1="50" y1="74" x2="74" y2="50"/>
+  </g>
+  <circle cx="50" cy="50" r="9" fill="#2FD0C6"/>
+</svg>

@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Portal de Documentos — Central SGI</title>
+<style>
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'Segoe UI',system-ui,sans-serif;background:#eceff5;color:#0f172a;min-height:100vh}
+  header{background:#0d1b2a;color:#fff;padding:14px 18px;display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+  header .ttl{font-size:15px;font-weight:700}
+  header .emp{font-size:13px;color:#9fb3c8}
+  .hbrand{display:flex;align-items:center;gap:12px}
+  .hlogo{background:#fff;border-radius:8px;padding:5px 9px;display:flex;align-items:center;flex-shrink:0}
+  .hlogo img{height:30px;width:auto;display:block;object-fit:contain}
+  .btn{border:none;border-radius:8px;padding:8px 14px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit}
+  .btn-light{background:#1e3a5f;color:#fff}
+  .btn-pri{background:#1a56db;color:#fff}
+  .btn-sm{padding:6px 11px;font-size:12px}
+  main{max-width:900px;margin:0 auto;padding:18px}
+  .tabs{display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap}
+  .tab{background:#fff;color:#475569;border:1px solid #dbe2ec;border-radius:9px;padding:10px 16px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit}
+  .tab.on{background:#1a56db;color:#fff;border-color:#1a56db}
+  .pane{display:none}
+  .pane.on{display:block}
+  .intro{color:#475569;font-size:13px;margin-bottom:14px}
+  .card{background:#fff;border-radius:12px;padding:14px 16px;margin-bottom:10px;box-shadow:0 1px 4px rgba(13,27,42,.08)}
+  .card .top{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;flex-wrap:wrap}
+  .doc-nome{font-size:14px;font-weight:700;color:#0d1b2a}
+  .doc-area{font-size:12px;color:#64748b;margin-top:2px}
+  .badge{font-size:11px;font-weight:700;padding:3px 9px;border-radius:99px;white-space:nowrap}
+  .b-pend{background:#e2e8f0;color:#475569}
+  .b-ok{background:#dcfce7;color:#166534}
+  .b-venc{background:#fee2e2;color:#991b1b}
+  .b-avc{background:#fef3c7;color:#92400e}
+  .b-sval{background:#e0e7ff;color:#3730a3}
+  .row{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-top:12px}
+  .fld{display:flex;flex-direction:column;gap:3px}
+  .fld label{font-size:11px;font-weight:600;color:#64748b}
+  input[type=date],input[type=text]{border:1.5px solid #cbd5e1;border-radius:8px;padding:7px 10px;font-size:14px;color:#0f172a;font-family:inherit}
+  .file-ok{font-size:13px;color:#166534;font-weight:600;display:flex;align-items:center;gap:6px}
+  .muted{font-size:12px;color:#94a3b8}
+  .wcard{background:#fff;border-radius:12px;padding:14px 16px;margin-bottom:12px;box-shadow:0 1px 4px rgba(13,27,42,.08)}
+  .whd{border-bottom:1px solid #eef2f7;padding-bottom:10px;margin-bottom:6px}
+  .wnome{font-size:15px;font-weight:700;color:#0d1b2a}
+  .wsub{font-size:12px;color:#64748b}
+  .wdoc{padding:10px 0;border-bottom:1px solid #f1f5f9}
+  .wdoc:last-child{border-bottom:none}
+  .addform{background:#fff;border-radius:12px;padding:14px 16px;margin-bottom:12px;display:none;gap:10px;flex-wrap:wrap;align-items:flex-end;box-shadow:0 1px 4px rgba(13,27,42,.08)}
+  .addform.show{display:flex}
+  .toast{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);background:#0f172a;color:#fff;padding:11px 18px;border-radius:10px;font-size:13px;opacity:0;pointer-events:none;transition:opacity .2s;z-index:50;box-shadow:0 6px 24px rgba(0,0,0,.4)}
+  .toast.show{opacity:1}
+  .spin{display:inline-block;width:13px;height:13px;border:2px solid rgba(255,255,255,.4);border-top-color:#fff;border-radius:50%;animation:sp .7s linear infinite;vertical-align:middle;margin-right:6px}
+  @keyframes sp{to{transform:rotate(360deg)}}
+  .loading{color:#cbd5e1;text-align:center;padding:30px;font-size:14px}
+  body.dark{background:#0f1623}
+  body.dark header{background:#0b121d}
+  body.dark .intro{color:#9fb3c8}
+  body.dark .tab{background:#1a2230;color:#9fb3c8;border-color:#2a3547}
+  body.dark .tab.on{background:#1a56db;color:#fff;border-color:#1a56db}
+  body.dark .card,body.dark .wcard,body.dark .addform{background:#1a2230;box-shadow:0 1px 6px rgba(0,0,0,.45)}
+  body.dark .doc-nome,body.dark .wnome{color:#e8edf5}
+  body.dark .doc-area,body.dark .wsub,body.dark .muted,body.dark .fld label{color:#94a3b8}
+  body.dark input[type=date],body.dark input[type=text]{background:#0f1623;border-color:#3a485f;color:#e2e8f0}
+  body.dark .whd{border-color:#2a3547}
+  body.dark .wdoc{border-color:#222c3b}
+  body.dark .loading{color:#9fb3c8}
+</style>
+</head>
+<body>
+<header>
+  <div class="hbrand">
+    <div>
+      <div class="ttl">Portal de Documentos — Central SGI</div>
+      <div class="emp" id="hdrEmp">—</div>
+    </div>
+  </div>
+  <button class="btn btn-light btn-sm" onclick="sair()">Sair</button>
+</header>
+
+<main>
+  <div class="tabs">
+    <button class="tab on" id="tabEmp" onclick="showTab('emp')">🏢 Documentos da empresa</button>
+    <button class="tab" id="tabMo" onclick="showTab('mo')">👷 Mão de Obra</button>
+  </div>
+
+  <div id="pane-emp" class="pane on">
+    <div class="intro">Anexe o arquivo de cada documento e informe a data de validade. Salva automaticamente.</div>
+    <div id="list"><div class="loading">Carregando…</div></div>
+  </div>
+
+  <div id="pane-mo" class="pane">
+    <div class="intro" style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+      <span>Cadastre os colaboradores alocados e anexe os documentos de cada um.</span>
+      <button class="btn btn-pri btn-sm" style="margin-left:auto" onclick="toggleAdd()">+ Adicionar colaborador</button>
+    </div>
+    <div class="addform" id="addform">
+      <div class="fld"><label>Nome *</label><input type="text" id="aNome" placeholder="Nome completo"></div>
+      <div class="fld"><label>CPF</label><input type="text" id="aCpf" placeholder="000.000.000-00"></div>
+      <div class="fld"><label>Função</label><input type="text" id="aFun" placeholder="Cargo / função"></div>
+      <button class="btn btn-pri btn-sm" onclick="addColab()">Salvar</button>
+      <button class="btn btn-light btn-sm" onclick="toggleAdd()">Cancelar</button>
+    </div>
+    <div id="colabs"></div>
+  </div>
+  <div style="text-align:center;color:#64748b;font-size:11px;padding:18px 0 4px">Central SGI · Revisão 2.21 · 16/06/2026</div>
+</main>
+
+<div class="toast" id="toast"></div>
+
+<script>
+let DOCS=[], WORKERS=[];
+function toast(m){const t=document.getElementById('toast');t.textContent=m;t.classList.add('show');clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove('show'),2600);}
+function today(){return new Date().toISOString().slice(0,10);}
+function dias(v){ if(!v) return null; return Math.floor((new Date(v)-new Date(today()))/86400000); }
+function fmt(v){ if(!v) return ''; const[y,m,d]=v.split('-'); return `${d}/${m}/${y}`; }
+function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+function statusOf(d){
+  if(!d.file) return {cls:'b-pend',txt:'Pendente'};
+  if(!d.validade) return {cls:'b-sval',txt:'Sem validade'};
+  const k=dias(d.validade);
+  if(k<0) return {cls:'b-venc',txt:'Vencido em '+fmt(d.validade)};
+  if(k<=30) return {cls:'b-avc',txt:'Vence em '+k+' dia'+(k===1?'':'s')};
+  return {cls:'b-ok',txt:'Válido até '+fmt(d.validade)};
+}
+
+function showTab(t){
+  document.getElementById('pane-emp').classList.toggle('on',t==='emp');
+  document.getElementById('pane-mo').classList.toggle('on',t==='mo');
+  document.getElementById('tabEmp').classList.toggle('on',t==='emp');
+  document.getElementById('tabMo').classList.toggle('on',t==='mo');
+}
+
+async function carregar(){
+  let r;
+  try{ r=await fetch('/api/portal-docs',{credentials:'include'}); }
+  catch(e){ document.getElementById('list').innerHTML='<div class="loading">Erro de conexão.</div>'; return; }
+  if(r.status===401){ window.location.href='/portal.html'; return; }
+  const data=await r.json();
+  if(!data.ok || !data.terceiro){ document.getElementById('list').innerHTML='<div class="loading">Nenhum cadastro vinculado ao seu acesso. Fale com o administrador.</div>'; return; }
+  document.getElementById('hdrEmp').textContent=data.terceiro.razaoSocial||'Fornecedor';
+  DOCS=data.docs||[]; WORKERS=data.workers||[];
+  render();
+}
+
+function render(){
+  const el=document.getElementById('list');
+  el.innerHTML = DOCS.length ? DOCS.map((d,i)=>docCard(d,'d',i)).join('') : '<div class="loading">Nenhum documento exigido.</div>';
+  const cs=document.getElementById('colabs');
+  cs.innerHTML = WORKERS.length ? WORKERS.map((w,wi)=>workerCard(w,wi)).join('')
+    : '<div class="card"><span class="muted">Nenhum colaborador cadastrado. Use “+ Adicionar colaborador”.</span></div>';
+}
+
+function valNote(d){
+  if(!d || !d.aprov) return '';
+  if(d.aprov==='pendente') return '<div style="margin:2px 0 8px;font-size:12px;color:#b45309;background:#fff7ed;border:1px solid #fed7aa;border-radius:6px;padding:6px 9px">🟡 Em análise.</div>';
+  if(d.aprov==='aprovado') return '<div style="margin:2px 0 8px;font-size:12px;color:#15803d;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:6px;padding:6px 9px">🟢 Validado.</div>';
+  if(d.aprov==='reprovado') return '<div style="margin:2px 0 8px;font-size:12px;color:#b91c1c;background:#fef2f2;border:1px solid #fecaca;border-radius:6px;padding:6px 9px">🔴 <b>Reprovado.</b> '+esc(d.aprovMotivo||'')+'<br>Por favor, reenvie o documento.</div>';
+  return '';
+}
+function docCard(d,scope,i,wi){
+  const s=statusOf(d);
+  const fid=`fi-${scope}-${wi!=null?wi+'-':''}${i}`;
+  const onUp = scope==='d' ? `anexar(${i},this)` : `anexarW(${wi},${i},this)`;
+  const onVal= scope==='d' ? `salvarVal(${i},this.value)` : `salvarWVal(${wi},${i},this.value)`;
+  const onEmis= scope==='d' ? `salvarEmis(${i},this.value)` : `salvarWEmis(${wi},${i},this.value)`;
+  return `<div class="${scope==='d'?'card':'wdoc'}">
+    <div class="top">
+      <div><div class="doc-nome">${esc(d.nome||'Documento')}</div>${d.freq?`<div class="doc-area">${esc(d.freq)}</div>`:''}</div>
+      <span class="badge ${s.cls}">${esc(s.txt)}</span>
+    </div>
+    ${valNote(d)}
+    <div class="row">
+      <div class="fld"><label>Emissão</label><input type="date" value="${d.emissao||''}" onchange="${onEmis}"></div>
+      <div class="fld"><label>Validade</label><input type="date" value="${d.validade||''}" onchange="${onVal}"></div>
+      <div class="fld"><label>Arquivo</label><div>
+        ${d.file ? `<span class="file-ok">✔ ${esc(d.fileName||'enviado')}</span>
+          <button class="btn btn-light btn-sm" style="margin-left:8px" onclick="document.getElementById('${fid}').click()">Trocar</button>`
+        : `<button class="btn btn-pri btn-sm" onclick="document.getElementById('${fid}').click()">⬆ Anexar</button>`}
+        <input type="file" id="${fid}" style="display:none" onchange="${onUp}">
+      </div></div>
+    </div>
+  </div>`;
+}
+function workerCard(w,wi){
+  return `<div class="wcard">
+    <div class="whd"><div class="wnome">${esc(w.nome||'Colaborador')}</div>
+      <div class="wsub">${esc(w.funcao||'—')}${w.cpf?' · CPF: '+esc(w.cpf):''}</div></div>
+    ${(w.wdocs||[]).map((d,di)=>docCard(d,'w',di,wi)).join('') || '<span class="muted">Sem documentos.</span>'}
+  </div>`;
+}
+
+async function salvarVal(i,val){ DOCS[i].validade=val; await postDoc({action:'updateDoc',docId:DOCS[i].id,validade:val}); render(); }
+async function salvarEmis(i,val){ DOCS[i].emissao=val; await postDoc({action:'updateDoc',docId:DOCS[i].id,emissao:val}); }
+async function anexar(i,inp){ const r=await upload(DOCS[i].id,inp); if(!r) return; await postDoc({action:'updateDoc',docId:DOCS[i].id,file:r.path,fileName:r.fileName}); DOCS[i].file=r.path; DOCS[i].fileName=r.fileName; DOCS[i].aprov='pendente'; DOCS[i].aprovMotivo=''; render(); toast('Documento enviado — em análise ✔'); }
+
+function toggleAdd(){ document.getElementById('addform').classList.toggle('show'); }
+async function addColab(){
+  const nome=document.getElementById('aNome').value.trim();
+  if(!nome){ toast('Informe o nome'); return; }
+  const cpf=document.getElementById('aCpf').value.trim(), funcao=document.getElementById('aFun').value.trim();
+  const r=await postDoc({action:'addWorker',nome,cpf,funcao});
+  if(r&&r.ok&&r.worker){ WORKERS.push(r.worker); document.getElementById('aNome').value='';document.getElementById('aCpf').value='';document.getElementById('aFun').value=''; toggleAdd(); render(); toast('Colaborador adicionado'); }
+  else toast('Falha ao adicionar');
+}
+async function salvarWVal(wi,di,val){ WORKERS[wi].wdocs[di].validade=val; await postDoc({action:'updateWorkerDoc',workerId:WORKERS[wi].id,docId:WORKERS[wi].wdocs[di].id,validade:val}); render(); }
+async function salvarWEmis(wi,di,val){ WORKERS[wi].wdocs[di].emissao=val; await postDoc({action:'updateWorkerDoc',workerId:WORKERS[wi].id,docId:WORKERS[wi].wdocs[di].id,emissao:val}); }
+async function anexarW(wi,di,inp){
+  const d=WORKERS[wi].wdocs[di];
+  const r=await upload(d.id,inp); if(!r) return;
+  await postDoc({action:'updateWorkerDoc',workerId:WORKERS[wi].id,docId:d.id,file:r.path,fileName:r.fileName});
+  d.file=r.path; d.fileName=r.fileName; d.aprov='pendente'; d.aprovMotivo=''; render(); toast('Documento enviado — em análise ✔');
+}
+
+async function postDoc(payload){
+  try{ const r=await fetch('/api/portal-docs',{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)}); return await r.json(); }
+  catch(e){ toast('Falha de conexão'); return null; }
+}
+function compress(file){
+  return new Promise(res=>{
+    if(!file||!file.type||!file.type.startsWith('image/')) return res(file);
+    const u=URL.createObjectURL(file),img=new Image();
+    img.onload=()=>{URL.revokeObjectURL(u);let w=img.naturalWidth,h=img.naturalHeight;const M=1600;if(w>M||h>M){const r=Math.min(M/w,M/h);w=Math.round(w*r);h=Math.round(h*r);}try{const c=document.createElement('canvas');c.width=w;c.height=h;c.getContext('2d').drawImage(img,0,0,w,h);c.toBlob(b=>{if(b&&b.size<file.size)res(new File([b],(file.name||'img').replace(/\.(png|jpe?g|webp|gif|bmp)$/i,'')+'.jpg',{type:'image/jpeg'}));else res(file);},'image/jpeg',0.7);}catch(e){res(file);}};
+    img.onerror=()=>{URL.revokeObjectURL(u);res(file);};img.src=u;
+  });
+}
+async function upload(docKey,inp){
+  let f=inp.files&&inp.files[0]; if(!f) return null;
+  try{ f=await compress(f); }catch(e){}
+  if(f.size>4*1024*1024){ toast('Arquivo muito grande (máx. 4 MB). Use PDF ou reduza a imagem.'); return null; }
+  toast('Enviando…');
+  try{
+    const fd=new FormData(); fd.append('file',f); fd.append('docKey',docKey);
+    const up=await fetch('/api/portal-upload',{method:'POST',credentials:'include',body:fd});
+    const uj=await up.json();
+    if(!uj.ok){ toast('Falha no upload: '+(uj.error||'')); return null; }
+    return uj;
+  }catch(e){ toast('Falha no envio'); return null; }
+}
+async function sair(){ try{ await fetch('/api/portal-auth?action=logout',{method:'POST',credentials:'include'}); }catch(e){} window.location.href='/portal.html'; }
+
+carregar();
+</script>
+<button id="thBtn" onclick="tgTheme()" title="Tema claro/escuro" aria-label="Tema" style="position:fixed;bottom:16px;right:16px;z-index:9999;width:42px;height:42px;border-radius:50%;border:none;cursor:pointer;background:#1a56db;color:#fff;font-size:18px;line-height:1;box-shadow:0 6px 18px rgba(0,0,0,.35)">🌙</button>
+<script src="/assets/tema.js"></script>
+</body>
+</html>

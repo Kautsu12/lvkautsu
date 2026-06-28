@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RNC — Tratamento de Não Conformidade</title>
+<style>
+  *{box-sizing:border-box}
+  body{margin:0;background:#eef2f6;font-family:system-ui,-apple-system,Arial,sans-serif;color:#1f2937}
+  .wrap{max-width:1180px;margin:0 auto;padding:18px}
+  .card{background:#fff;border-radius:12px;box-shadow:0 4px 18px rgba(0,0,0,.06);overflow:hidden}
+  .top{background:#5b2a86;color:#fff;padding:18px 22px}
+  .top h1{margin:0;font-size:17px}
+  .top .sub{font-size:12px;opacity:.85;margin-top:3px}
+  .body{padding:20px 22px}
+  .info{display:grid;grid-template-columns:1fr 1fr;gap:8px 18px;background:#f8fafc;border:1px solid #eef2f7;border-radius:9px;padding:14px 16px;margin-bottom:18px;font-size:13px}
+  .info .full{grid-column:1/-1}
+  .info b{color:#5b2a86}
+  .grade{display:inline-block;padding:2px 9px;border-radius:99px;font-size:11px;font-weight:700;color:#fff}
+  .g-A{background:#b91c1c}.g-B{background:#c2410c}.g-C{background:#1565c0}
+  label{display:block;font-size:12px;font-weight:600;color:#374151;margin:14px 0 5px}
+  textarea,input,select{width:100%;padding:10px 12px;border:1px solid #cbd5e1;border-radius:8px;font-size:13.5px;font-family:inherit;background:#fff}
+  textarea{min-height:60px;resize:vertical}
+  .sec{font-size:12px;font-weight:700;color:#5b2a86;border-bottom:2px solid #ede9f3;padding-bottom:4px;margin:24px 0 8px}
+  .btn{margin-top:18px;width:100%;padding:13px;background:#16a34a;color:#fff;border:0;border-radius:9px;font-weight:700;font-size:14px;cursor:pointer}
+  .btn:disabled{opacity:.6}
+  .btn2{margin-top:10px;width:100%;padding:12px;background:#fff;color:#5b2a86;border:1.5px solid #5b2a86;border-radius:9px;font-weight:700;font-size:13.5px;cursor:pointer}
+  .addbtn{margin-top:6px;padding:6px 12px;background:#fff;border:1px solid #5b2a86;color:#5b2a86;border-radius:6px;font-size:12px;cursor:pointer}
+  .msg{margin-top:12px;font-size:13px;text-align:center;min-height:18px}
+  .msg.ok{color:#15803d}.msg.err{color:#b91c1c}
+  .hist{margin-top:18px;font-size:11.5px;color:#64748b}
+  .hist h3{font-size:12px;color:#374151;margin:0 0 6px}
+  .hist .it{padding:5px 0;border-top:1px solid #f1f5f9}
+  .row2{display:flex;gap:10px}.row2>div{flex:1}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:18px;align-items:start}
+  @media(max-width:680px){.grid2{grid-template-columns:1fr}}
+  table.act{width:100%;border-collapse:collapse;font-size:12.5px}
+  table.act th{text-align:left;padding:6px 8px;background:#f3eef7;color:#5b2a86;font-size:11px}
+  table.act td{padding:3px 4px;vertical-align:top}
+  table.act input{padding:7px 8px}
+  .ish-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin-top:8px}
+  .ish-cell .lbl{font-size:11px;font-weight:700;color:#5b2a86;margin-bottom:3px}
+  .fish{width:100%;height:auto;display:block;background:#faf8fc;border:1px solid #ede9f3;border-radius:8px}
+  .delc{background:#fee2e2;color:#b91c1c;border:0;border-radius:5px;width:28px;height:30px;cursor:pointer;font-size:15px}
+  /* --- Layout em cards recolhiveis (limpo corporativo) --- */
+  .dcard{border:1px solid #e7e3ee;border-radius:10px;margin:11px 0;overflow:hidden;background:#fff;box-shadow:0 1px 2px rgba(16,24,40,.03)}
+  .dhead{width:100%;display:flex;align-items:center;gap:10px;background:#faf8fc;border:0;border-left:3px solid #5b2a86;padding:11px 14px;cursor:pointer;font-family:inherit;text-align:left}
+  .dhead:hover{background:#f3eef7}
+  .dbadge{flex:0 0 auto;background:#5b2a86;color:#fff;font-weight:700;font-size:11px;border-radius:6px;padding:3px 8px;letter-spacing:.3px;min-width:34px;text-align:center}
+  .dtitle{flex:1;font-size:13px;font-weight:700;color:#3b2a52}
+  .dsub{font-weight:400;color:#94a3b8;font-size:11px;margin-left:6px}
+  .dchev{flex:0 0 auto;color:#9a8bb0;font-size:12px;transition:transform .15s}
+  .dcard.collapsed .dchev{transform:rotate(-90deg)}
+  .dcard.collapsed .dbody{display:none}
+  .dbody{padding:13px 14px}
+  .dbody>textarea:first-child{margin-top:0}
+  .subsec{font-size:11.5px;font-weight:700;color:#5b2a86;margin:16px 0 7px;display:flex;align-items:center;gap:7px}
+  .subsec:first-child{margin-top:2px}
+  .subsec::before{content:'';width:6px;height:6px;border-radius:50%;background:#5b2a86;display:inline-block}
+  .ish-legend{font-size:11.5px;color:#64748b;margin:0 0 8px;line-height:1.5}
+  .ro-box{padding:10px 12px;border:1px solid #e5e7eb;border-radius:8px;background:#f8fafc;color:#374151;font-size:13.5px;min-height:42px;white-space:pre-wrap}
+  .btn-anexar{padding:9px 14px;background:#5b2a86;color:#fff;border:0;border-radius:7px;font-weight:600;cursor:pointer;white-space:nowrap}
+  .finalize{margin-top:6px}
+  .action-bar{position:sticky;bottom:0;background:#fff;border-top:1px solid #e5e7eb;padding:12px 0 6px;margin-top:12px;display:flex;gap:10px;z-index:5}
+  .action-bar .btn,.action-bar .btn2{margin-top:0;flex:1}
+  /* --- Passo a passo (etapas) --- */
+  .stepper{display:flex;gap:6px;margin:4px 0 2px}
+  .stp{flex:1;text-align:center;cursor:pointer}
+  .stp .bar{display:block;height:4px;border-radius:99px;background:#e2dced}
+  .stp.on .bar,.stp.done .bar{background:#5b2a86}
+  .stp .lb{display:block;font-size:10px;color:#9a8bb0;margin-top:5px;line-height:1.2}
+  .stp.on .lb{color:#5b2a86;font-weight:700}
+  .step-label{font-size:12px;color:#9a8bb0;font-weight:700;margin:11px 0 12px}
+  .sechead{display:flex;align-items:center;gap:9px;margin:0 0 8px}
+  .sechead .dbadge{min-width:auto}
+  .navbtn{padding:11px 15px;background:#fff;color:#5b2a86;border:1px solid #d9cfe6;border-radius:9px;font-weight:700;font-size:13px;cursor:pointer;font-family:inherit;white-space:nowrap}
+  .navbtn:hover{background:#f3eef7}
+  .navbtn:disabled{opacity:.4;cursor:default}
+  .navbtn.primary{background:#5b2a86;color:#fff;border-color:#5b2a86}
+  /* --- Ishikawa: diagrama com caixas na espinha --- */
+  .ish-diagram{position:relative;width:100%;max-width:800px;margin:8px auto 4px;aspect-ratio:760/360}
+  .ish-diagram svg{position:absolute;inset:0;width:100%;height:100%}
+  .ish-head{position:absolute;left:93.5%;top:50%;transform:translate(-50%,-50%);background:#5b2a86;color:#fff;font-size:10px;font-weight:700;text-align:center;border-radius:8px;padding:7px 10px;line-height:1.15}
+  .ish-head small{font-size:8.5px;opacity:.9}
+  .ish-box{position:absolute;transform:translate(-50%,-50%);background:#f3eef7;border:1.5px solid #5b2a86;border-radius:7px;padding:5px 11px;cursor:pointer;font-size:11.5px;font-weight:700;color:#5b2a86;white-space:nowrap;text-align:center;box-shadow:0 1px 3px rgba(0,0,0,.1);transition:background .12s}
+  .ish-box:hover{background:#e7dcf3}
+  .ish-box .cnt{display:block;font-size:9px;font-weight:400;color:#7c6b94;margin-top:1px}
+  .ish-box.has-causa{background:#ede9f3}
+  .ish-box.has-root{border-color:#c62828;background:#fdecec;color:#c62828}
+  .ish-box.has-root .cnt{color:#c62828}
+  .minfo{cursor:help;color:#1565c0;font-weight:700}
+  .ish-modal-ov{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:200;display:flex;align-items:center;justify-content:center;padding:16px}
+  .ish-modal{background:#fff;border-radius:12px;width:540px;max-width:96vw;max-height:88vh;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 20px 50px rgba(0,0,0,.3)}
+  .ish-modal-h{background:#5b2a86;color:#fff;padding:12px 16px;font-size:14px;font-weight:700;display:flex;align-items:center;gap:8px}
+  .ish-modal-h .minfo{color:#dcd0ec}
+  .ish-modal-x{margin-left:auto;background:rgba(255,255,255,.2);border:0;color:#fff;border-radius:6px;width:26px;height:26px;cursor:pointer;font-size:13px}
+  .ish-modal-b{padding:14px 16px;overflow:auto}
+  .ish-modal-f{padding:12px 16px;border-top:1px solid #eee}
+  .ish-modal-f .btn{margin-top:0}
+  @media(max-width:680px){.ish-diagram{aspect-ratio:auto;height:auto;max-width:100%}.ish-diagram svg{display:none}.ish-head{position:static;display:inline-block;transform:none;margin-bottom:8px}.ish-box{position:static;transform:none;display:block;margin:6px 0;text-align:left}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="card">
+    <div class="top">
+      <h1>Relatório de Não Conformidade (RNC)</h1>
+      <div class="sub">Preencha a análise e o plano de ação. Suas edições ficam registradas.</div>
+    </div>
+    <div class="body" id="body"><div style="text-align:center;color:#94a3b8;padding:40px 0">Carregando…</div></div>
+  </div>
+</div>
+<script>
+var params=new URLSearchParams(location.search);
+var id=params.get('id')||'', token=params.get('token')||'';
+var REC=null, ISH={}, D5=[], D6=[], D7=[], isSGI=false, STEP=0;
+function esc(s){return String(s==null?'':s).replace(/[<>&"]/g,function(c){return{'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;'}[c];});}
+function gradeBadge(g){g=String(g||'').toUpperCase();var l=g==='A'?'A — Crítica':g==='B'?'B — Maior':g==='C'?'C — Melhoria':(g||'—');return '<span class="grade g-'+(g||'C')+'">'+esc(l)+'</span>';}
+function arrFrom(x){ if(Array.isArray(x)) return x.map(function(o){return {acao:o.acao||'',resp:o.resp||'',prazo:o.prazo||''};}); if(x && String(x).trim()) return [{acao:String(x),resp:'',prazo:''}]; return []; }
+function toDateInput(v){ v=String(v||''); var m=v.match(/(\d{2})\/(\d{2})\/(\d{4})/); if(m) return m[3]+'-'+m[2]+'-'+m[1]; if(/^\d{4}-\d{2}-\d{2}$/.test(v)) return v; return ''; }
+
+async function init(){
+  var body=document.getElementById('body');
+  if(!id||!token){ body.innerHTML='<div style="color:#b91c1c;text-align:center;padding:30px">Link inválido.</div>'; return; }
+  try{
+    var r=await fetch('/api/renew_document?kind=rnc&id='+encodeURIComponent(id)+'&token='+encodeURIComponent(token));
+    var d=await r.json();
+    if(!r.ok){ body.innerHTML='<div style="color:#b91c1c;text-align:center;padding:30px">'+esc(d.error||'Erro')+'</div>'; return; }
+    REC=d.rnc;
+    ISH=(REC.causaRaiz && typeof REC.causaRaiz==='object')?REC.causaRaiz:{};
+    D5=arrFrom(REC.acoesCorrecao); if(!D5.length) D5=[{acao:'',resp:'',prazo:''}];
+    D6=arrFrom(REC.implementacao); if(!D6.length) D6=[{acao:'',resp:'',prazo:''}];
+    D7=arrFrom(REC.preventivas); if(!D7.length) D7=[{acao:'',resp:'',prazo:''}];
+    try{ var wr=await fetch('/api/auth?action=whoami',{credentials:'include'}); if(wr.ok){ var wd=await wr.json(); isSGI=(wd.role==='SGI'||wd.role==='ADM'); } }catch(e){}
+    render();
+  }catch(e){ body.innerHTML='<div style="color:#b91c1c;text-align:center;padding:30px">Erro: '+esc(e.message)+'</div>'; }
+}
+
+function arrOf(sec){ return sec==='d5'?D5:sec==='d6'?D6:D7; }
+function setCell(sec,i,f,v){ var a=arrOf(sec); if(a[i]) a[i][f]=v; }
+function rowHtml(sec,i,o){
+  return '<tr>'
+    +'<td><input value="'+esc(o.acao||'')+'" placeholder="O que será feito" oninput="setCell(\''+sec+'\','+i+',\'acao\',this.value)"></td>'
+    +'<td><input value="'+esc(o.resp||'')+'" placeholder="Responsável" oninput="setCell(\''+sec+'\','+i+',\'resp\',this.value)"></td>'
+    +'<td><input type="date" value="'+esc(toDateInput(o.prazo))+'" oninput="setCell(\''+sec+'\','+i+',\'prazo\',this.value)"></td>'
+    +'<td style="text-align:center"><button type="button" class="delc" onclick="delRow(\''+sec+'\','+i+')">×</button></td>'
+    +'</tr>';
+}
+function actTable(sec){
+  var a=arrOf(sec);
+  return '<table class="act"><thead><tr><th>Ação</th><th style="width:26%">Responsável</th><th style="width:22%">Data</th><th style="width:36px"></th></tr></thead>'
+    +'<tbody id="tb-'+sec+'">'+a.map(function(o,i){return rowHtml(sec,i,o);}).join('')+'</tbody></table>'
+    +'<button type="button" class="addbtn" onclick="addRow(\''+sec+'\')">+ Adicionar linha</button>';
+}
+function redrawTable(sec){ var tb=document.getElementById('tb-'+sec); if(tb) tb.innerHTML=arrOf(sec).map(function(o,i){return rowHtml(sec,i,o);}).join(''); }
+function addRow(sec){ arrOf(sec).push({acao:'',resp:'',prazo:''}); redrawTable(sec); }
+function delRow(sec,i){ var a=arrOf(sec); a.splice(i,1); if(!a.length) a.push({acao:'',resp:'',prazo:''}); redrawTable(sec); }
+
+var ISH_M=[
+  {k:'metodo',label:'Método',info:'Como o processo é executado: procedimentos, IT, parâmetros. Ex.: tempo de imersão no zinco, sequência de pré-tratamento (desengraxe/decapagem/fluxo), espessura especificada.'},
+  {k:'maquina',label:'Máquina',info:'Equipamentos e instalações. Ex.: tanques de pré-tratamento, banho de zinco e seu aquecimento, retificador, ponte rolante, exaustão.'},
+  {k:'medicao',label:'Medição',info:'Instrumentos e controle. Ex.: medidor de espessura de camada, termômetro do banho, balança, calibração dos instrumentos.'},
+  {k:'maoObra',label:'Mão de obra',info:'Pessoas: treinamento, competência, atenção. Ex.: operador sem treinamento, amarração incorreta das peças, leitura errada de parâmetro.'},
+  {k:'material',label:'Material',info:'Insumos e matéria-prima. Ex.: qualidade do zinco e do fluxo, concentração do ácido/decapante, peça com óleo/ferrugem/superfície inadequada.'},
+  {k:'meioAmbiente',label:'Meio ambiente',info:'Condições do ambiente. Ex.: temperatura/umidade, ventilação, limpeza, exposição das peças a intempéries antes da galvanização.'}
+];
+function ishArr(k){ if(!ISH[k]) ISH[k]=[]; if(typeof ISH[k]==='string'){ ISH[k]=ISH[k].trim()?[{t:ISH[k],m:''}]:[]; } if(!Array.isArray(ISH[k])) ISH[k]=[]; return ISH[k]; }
+function ishSet(k,i,v){ var a=ishArr(k); if(a[i]) a[i].t=v; }
+function ishMark(k,i,val){ var a=ishArr(k); if(a[i]){ a[i].m=(a[i].m===val?'':val); ishRedraw(k); } }
+function ishAdd(k){ ishArr(k).push({t:'',m:''}); ishRedraw(k); }
+function ishDel(k,i){ var a=ishArr(k); a.splice(i,1); ishRedraw(k); }
+function ishRedraw(k){ var el=document.getElementById('ish-'+k); if(el) el.innerHTML=ishCausesHtml(k); }
+function mbtn(k,i,val,sym,title,cur){
+  var on=cur===val;
+  return '<button type="button" title="'+title+'" onclick="ishMark(\''+k+'\','+i+',\''+val+'\')" style="border:1px solid '+(on?'#5b2a86':'#cbd5e1')+';background:'+(on?'#ede9f3':'#fff')+';border-radius:6px;padding:2px 8px;cursor:pointer;font-size:14px;line-height:1;opacity:'+(on?'1':'0.5')+'">'+sym+'</button>';
+}
+function ishCausesHtml(k){
+  var a=ishArr(k);
+  if(!a.length) return '<div style="font-size:11px;color:#94a3b8;padding:3px 0">Nenhuma causa.</div>';
+  return a.map(function(o,i){
+    return '<div style="border:1px solid #e5e7eb;border-radius:7px;padding:6px;margin-bottom:6px;background:#fff">'
+      +'<textarea oninput="ishSet(\''+k+'\','+i+',this.value)" placeholder="Causa..." style="width:100%;min-height:38px;border:1px solid #eef2f7;border-radius:5px;resize:vertical;font-size:12.5px;padding:5px 7px">'+esc(o.t||'')+'</textarea>'
+      +'<div style="display:flex;gap:6px;align-items:center;margin-top:5px">'
+        +mbtn(k,i,'v','🟢','Causa investigada e confirmada OK conforme o padrao, ou rejeitada com base em fatos',o.m)
+        +mbtn(k,i,'a','🔺','Causa investigada e confirmada como CONTRIBUINTE, e documentada',o.m)
+        +mbtn(k,i,'r','❌','Causa investigada e confirmada como CAUSA DIRETA do problema',o.m)
+        +'<button type="button" onclick="ishDel(\''+k+'\','+i+')" title="Remover causa" style="margin-left:auto;background:#fee2e2;color:#b91c1c;border:0;border-radius:5px;width:24px;height:24px;cursor:pointer">×</button>'
+      +'</div></div>';
+  }).join('');
+}
+function ishGridHtml(){
+  return ISH_M.map(function(m){
+    return '<div class="ish-cell"><div class="lbl">'+m.label+' <span title="'+esc(m.info)+'" style="cursor:help;color:#1565c0;font-weight:700">&#9432;</span></div>'
+      +'<div id="ish-'+m.k+'">'+ishCausesHtml(m.k)+'</div>'
+      +'<button type="button" class="addbtn" onclick="ishAdd(\''+m.k+'\')">+ adicionar causa</button></div>';
+  }).join('');
+}
+var ISH_POS={
+  metodo:{l:'45%',t:'25%'}, maquina:{l:'52%',t:'33%'}, medicao:{l:'59%',t:'41%'},
+  maoObra:{l:'59%',t:'59%'}, material:{l:'52%',t:'67%'}, meioAmbiente:{l:'45%',t:'75%'}
+};
+function ishBox(k){
+  var meta=ISH_M.filter(function(x){return x.k===k;})[0]||{};
+  var a=ishArr(k)||[];
+  var filled=a.filter(function(c){return (c.t||'').trim();});
+  var hasRoot=filled.some(function(c){return c.m==='r';});
+  var hasContrib=filled.some(function(c){return c.m==='a';});
+  var sub;
+  if(!filled.length){ sub='sem causa · editar'; }
+  else { sub=filled.length+' causa'+(filled.length>1?'s':'')+(hasRoot?' · ❌ causa raiz':(hasContrib?' · 🔺':''))+' · editar'; }
+  var cls='ish-box'+(hasRoot?' has-root':(filled.length?' has-causa':''));
+  var pos=ISH_POS[k]||{l:'50%',t:'50%'};
+  return '<div class="'+cls+'" style="left:'+pos.l+';top:'+pos.t+'" onclick="openIshEditor(\''+k+'\')" title="Clique para editar as causas">'
+    +(meta.label||k)+'<span class="cnt">'+sub+'</span></div>';
+}
+function ishFishboneHtml(){
+  var svg='<svg viewBox="0 0 760 360" preserveAspectRatio="xMidYMid meet" aria-hidden="true">'
+    +'<defs><marker id="ahd" markerWidth="12" markerHeight="12" refX="8" refY="5" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#5b2a86"/></marker></defs>'
+    +'<line x1="18" y1="180" x2="708" y2="180" stroke="#5b2a86" stroke-width="2.5" marker-end="url(#ahd)"/>'
+    +'<line x1="430" y1="52" x2="628" y2="180" stroke="#b59ad0" stroke-width="2"/>'
+    +'<line x1="430" y1="308" x2="628" y2="180" stroke="#b59ad0" stroke-width="2"/>'
+    +'</svg>';
+  var head='<div class="ish-head">PROBLEMA<br><small>(NC)</small></div>';
+  var boxes=['metodo','maquina','medicao','maoObra','material','meioAmbiente'].map(ishBox).join('');
+  return '<div class="ish-diagram">'+svg+head+boxes+'</div>';
+}
+function openIshEditor(k){
+  closeIshEditor();
+  var meta=ISH_M.filter(function(x){return x.k===k;})[0]||{};
+  var ov=document.createElement('div'); ov.className='ish-modal-ov'; ov.id='ishModalOv';
+  ov.innerHTML='<div class="ish-modal">'
+    +'<div class="ish-modal-h"><span>'+(meta.label||k)+'</span> <span class="minfo" title="'+esc(meta.info||'')+'">&#9432;</span><button type="button" class="ish-modal-x" onclick="closeIshEditor()">✕</button></div>'
+    +'<div class="ish-modal-b"><div style="font-size:11.5px;color:#64748b;margin-bottom:8px">Adicione as causas desta categoria e marque cada uma: 🟢 OK · 🔺 contribuinte · ❌ causa raiz (causa direta).</div>'
+    +'<div id="ish-'+k+'">'+ishCausesHtml(k)+'</div>'
+    +'<button type="button" class="addbtn" onclick="ishAdd(\''+k+'\')">+ adicionar causa</button></div>'
+    +'<div class="ish-modal-f"><button type="button" class="btn" style="margin:0;width:100%" onclick="closeIshEditor()">Concluir edição</button></div>'
+    +'</div>';
+  ov.addEventListener('click',function(e){ if(e.target===ov) closeIshEditor(); });
+  document.body.appendChild(ov);
+}
+function closeIshEditor(){ var o=document.getElementById('ishModalOv'); if(o) o.remove(); if(STEP===1 && REC) render(); }
+function cleanIsh(){ var o={}; ISH_M.forEach(function(m){ o[m.k]=ishArr(m.k).filter(function(c){return (c.t||'').trim();}); }); return o; }
+function fishSVG(){
+  return '<svg class="fish" viewBox="0 0 820 280" xmlns="http://www.w3.org/2000/svg">'
+    +'<line x1="40" y1="140" x2="700" y2="140" stroke="#5b2a86" stroke-width="3"/>'
+    +'<polygon points="700,128 740,140 700,152" fill="#5b2a86"/>'
+    +'<rect x="742" y="118" width="74" height="44" rx="6" fill="#5b2a86"/>'
+    +'<text x="779" y="138" fill="#fff" font-size="11" text-anchor="middle">PROBLEMA</text>'
+    +'<text x="779" y="153" fill="#fff" font-size="9" text-anchor="middle">(NC)</text>'
+    // bones topo
+    +'<line x1="160" y1="140" x2="120" y2="40" stroke="#9b6cb8" stroke-width="2"/>'
+    +'<line x1="360" y1="140" x2="320" y2="40" stroke="#9b6cb8" stroke-width="2"/>'
+    +'<line x1="560" y1="140" x2="520" y2="40" stroke="#9b6cb8" stroke-width="2"/>'
+    +'<text x="118" y="32" fill="#5b2a86" font-size="12" font-weight="700" text-anchor="middle">Método</text>'
+    +'<text x="318" y="32" fill="#5b2a86" font-size="12" font-weight="700" text-anchor="middle">Máquina</text>'
+    +'<text x="518" y="32" fill="#5b2a86" font-size="12" font-weight="700" text-anchor="middle">Medição</text>'
+    // bones baixo
+    +'<line x1="160" y1="140" x2="120" y2="240" stroke="#9b6cb8" stroke-width="2"/>'
+    +'<line x1="360" y1="140" x2="320" y2="240" stroke="#9b6cb8" stroke-width="2"/>'
+    +'<line x1="560" y1="140" x2="520" y2="240" stroke="#9b6cb8" stroke-width="2"/>'
+    +'<text x="118" y="258" fill="#5b2a86" font-size="12" font-weight="700" text-anchor="middle">Mão de obra</text>'
+    +'<text x="318" y="258" fill="#5b2a86" font-size="12" font-weight="700" text-anchor="middle">Material</text>'
+    +'<text x="518" y="258" fill="#5b2a86" font-size="12" font-weight="700" text-anchor="middle">Meio ambiente</text>'
+    +'</svg>';
+}
+
+function toggleCard(btn){ if(btn&&btn.parentElement) btn.parentElement.classList.toggle('collapsed'); }
+function dcard(badge,title,sub,body){
+  return '<div class="dcard">'
+    +'<button type="button" class="dhead" onclick="toggleCard(this)">'
+      +'<span class="dbadge">'+badge+'</span>'
+      +'<span class="dtitle">'+title+(sub?'<span class="dsub">'+sub+'</span>':'')+'</span>'
+      +'<span class="dchev">\u25be</span>'
+    +'</button>'
+    +'<div class="dbody">'+body+'</div></div>';
+}
+function render(){
+  var m=REC;
+  var info=''
+    +'<div class="info">'
+    +'<div><b>RNC N°:</b> '+esc(m.num||'—')+'</div>'
+    +'<div><b>Grau:</b> '+gradeBadge(m.grau)+'</div>'
+    +'<div><b>Setor:</b> '+esc(m.setor||'—')+'</div>'
+    +'<div><b>Unidade:</b> '+esc(m.unidade||'—')+'</div>'
+    +'<div class="full"><b>Norma / Cláusula:</b> '+esc([m.norma,m.clausula].filter(Boolean).join(' · ')||'—')+'</div>'
+    +'<div class="full"><b>Requisito:</b> '+esc(m.requisito||'—')+'</div>'
+    +(m.descricao?'<div class="full"><b>D2 · Descrição do problema:</b><br>'+esc(m.descricao).replace(/\n/g,'<br>')+'</div>':'')
+    +'</div>';
+  var labels=['Equipe & contenção','Causa raiz','Plano de ação','Eficácia'];
+  var prog='<div class="stepper">'+labels.map(function(l,i){
+    return '<div class="stp'+(i===STEP?' on':'')+(i<STEP?' done':'')+'" onclick="goStep('+i+')"><span class="bar"></span><span class="lb">'+l+'</span></div>';
+  }).join('')+'</div>';
+  var nav='<div class="action-bar">'
+    +'<button type="button" class="navbtn"'+(STEP===0?' disabled':'')+' onclick="goStep('+(STEP-1)+')">‹ Anterior</button>'
+    +'<button type="button" class="btn" id="save" onclick="salvar()" style="flex:1;margin:0">Salvar tratativa</button>'
+    +(STEP<3
+      ? '<button type="button" class="navbtn primary" onclick="goStep('+(STEP+1)+')">Próximo ›</button>'
+      : '<button type="button" class="navbtn primary" onclick="baixarExcel()">⬇ Excel</button>')
+    +'</div>';
+  var hist='';
+  if(Array.isArray(m.history)&&m.history.length){
+    hist='<div class="hist"><h3>Histórico de edições</h3>'+m.history.slice().reverse().slice(0,12).map(function(h){
+      var dt=new Date(h.at);var z=function(x){return('0'+x).slice(-2);};
+      return '<div class="it">'+z(dt.getDate())+'/'+z(dt.getMonth()+1)+'/'+dt.getFullYear()+' '+z(dt.getHours())+':'+z(dt.getMinutes())+' — '+esc(h.by||'setor')+(h.changed&&h.changed.length?(' ('+esc(h.changed.join(', '))+')'):'')+'</div>';
+    }).join('')+'</div>';
+  }
+  document.getElementById('body').innerHTML=info+prog+'<div class="step-label">Etapa '+(STEP+1)+' de 4 · '+labels[STEP]+'</div>'+stepContent(STEP)+'<div class="msg" id="msg"></div>'+nav+hist;
+  window.scrollTo(0,0);
+}
+function sechead(badge,title,sub){ return '<div class="sechead"><span class="dbadge">'+badge+'</span><span class="dtitle">'+title+(sub?'<span class="dsub">'+sub+'</span>':'')+'</span></div>'; }
+function evidBlock(){
+  return '<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><input type="file" id="evid-file" multiple style="flex:1;min-width:160px"><button type="button" onclick="uploadEvid()" class="btn-anexar">Anexar evidências</button></div>'
+    +'<div style="font-size:11px;color:#94a3b8;margin-top:3px">Você pode selecionar vários arquivos (PDF, imagem, etc.) de uma vez.</div>'
+    +'<div id="evid-status" style="font-size:11.5px;color:#64748b;min-height:14px;margin-top:4px"></div>'
+    +'<div id="evid-list">'+evidListHtml()+'</div>';
+}
+function stepContent(st){
+  var m=REC;
+  if(st===0){
+    return sechead('D1','Equipe designada','')
+      +'<textarea id="f_equipe" placeholder="Auditor, entrevistados, responsáveis">'+esc(m.equipe||'')+'</textarea>'
+      +'<div style="height:16px"></div>'
+      +sechead('D3','Ação de contenção','imediata')
+      +'<textarea id="f_contencao" placeholder="O que foi feito de imediato">'+esc(m.contencao||'')+'</textarea>'
+      +'<div class="row2" style="margin-top:8px"><div><label>Responsável</label><input id="f_contResp" value="'+esc(m.contencaoResp||'')+'" placeholder="Quem ficou responsável"></div><div><label>Prazo</label><input type="date" id="f_contPrazo" value="'+esc(toDateInput(m.contencaoPrazo||''))+'"></div></div>';
+  }
+  if(st===1){
+    return sechead('D4','Causa raiz','Ishikawa — espinha de peixe')
+      +'<div class="ish-legend">Legenda: 🟢 investigada e OK conforme o padrão (ou rejeitada com base em fatos) · 🔺 confirmada como contribuinte (documentada) · ❌ confirmada como causa direta do problema. Passe o mouse no &#9432; de cada M para a explicação e exemplos.</div>'
+      +ishFishboneHtml();
+  }
+  if(st===2){
+    return sechead('D5-7','Plano de ação','')
+      +'<div class="subsec">D5 · Ações de correção</div>'+actTable('d5')
+      +'<div class="subsec">D6 · Implementação e verificação</div>'+actTable('d6')
+      +'<div class="subsec">D7 · Ações preventivas</div>'+actTable('d7')
+      +'<div style="height:20px"></div>'
+      +sechead('📎','Evidências','anexos do plano de ação')+evidBlock();
+  }
+  var efD8 = isSGI
+    ? '<textarea id="f_efic" placeholder="Resultado / evidência da eficácia (avaliada pelo SGI)">'+esc(m.eficacia||'')+'</textarea>'
+    : '<div class="ro-box">'+(esc(m.eficacia||'')||'<span style=\'color:#9ca3af\'>A ser preenchido pelo SGI.</span>')+'</div>';
+  var qn=(m._quem!=null?m._quem:'');
+  var sts=(m._status||m.status||'em_tratamento');
+  var statusField;
+  if(isSGI){
+    statusField='<select id="f_status"><option value="em_tratamento"'+(sts==='em_tratamento'?' selected':'')+'>Em tratamento</option><option value="concluida"'+(sts==='concluida'?' selected':'')+'>Concluída</option></select>';
+  } else if(sts==='concluida'){
+    statusField='<div class="ro-box" style="min-height:auto">✔ Concluída <span style="color:#94a3b8;font-size:11px">(definido pelo SGI)</span></div><input type="hidden" id="f_status" value="concluida">';
+  } else {
+    statusField='<select id="f_status"><option value="em_tratamento" selected>Em tratamento</option></select><div style="font-size:11px;color:#94a3b8;margin-top:3px">Apenas o SGI pode concluir a RNC.</div>';
+  }
+  return sechead('D8','Eficácia das ações',(isSGI?'':'somente o SGI edita'))+efD8
+    +'<div class="finalize"><div class="row2"><div><label>Seu nome</label><input id="f_quem" value="'+esc(qn)+'" placeholder="Quem está preenchendo"></div>'
+    +'<div><label>Situação</label>'+statusField+'</div></div></div>'
+    +'<div style="font-size:11px;color:#94a3b8;text-align:center;margin-top:8px">Salve antes de baixar o Excel para incluir suas últimas edições.</div>';
+}
+function captureStep(){
+  var g=function(idv){var e=document.getElementById(idv); return e?e.value:null;};
+  var v;
+  v=g('f_equipe'); if(v!==null) REC.equipe=v;
+  v=g('f_contencao'); if(v!==null) REC.contencao=v;
+  v=g('f_contResp'); if(v!==null) REC.contencaoResp=v;
+  v=g('f_contPrazo'); if(v!==null) REC.contencaoPrazo=v;
+  v=g('f_efic'); if(v!==null) REC.eficacia=v;
+  v=g('f_quem'); if(v!==null) REC._quem=v;
+  v=g('f_status'); if(v!==null) REC._status=v;
+}
+function validateStep(st){
+  var m=REC;
+  if(st===0){
+    if(!(m.equipe||'').trim()) return 'Preencha a equipe designada (D1) antes de avançar.';
+    if(!(m.contencao||'').trim()) return 'Preencha a ação de contenção (D3) antes de avançar.';
+  }
+  if(st===1){
+    var has=false; ISH_M.forEach(function(mm){ (ishArr(mm.k)||[]).forEach(function(c){ if((c.t||'').trim()) has=true; }); });
+    if(!has) return 'Defina ao menos uma causa raiz (D4) antes de avançar.';
+  }
+  return null;
+}
+function goStep(n){
+  captureStep();
+  if(n>STEP){ var err=validateStep(STEP); if(err){ try{ var mm=document.getElementById('msg'); if(mm){mm.className='msg err';mm.textContent=err;} }catch(e){} alert(err); return; } }
+  STEP=Math.max(0,Math.min(3,n)); render();
+}
+
+function cleanArr(a){ return a.filter(function(o){ return (o.acao||'').trim()||(o.resp||'').trim()||(o.prazo||'').trim(); }); }
+async function salvar(){
+  captureStep();
+  var msg=document.getElementById('msg'), btn=document.getElementById('save');
+  var m=REC;
+  var payload={
+    quem:String(m._quem||'').trim(), status:(m._status||m.status||'em_tratamento'),
+    equipe:m.equipe||'', contencao:m.contencao||'', contencaoResp:m.contencaoResp||'', contencaoPrazo:m.contencaoPrazo||'',
+    causaRaiz:cleanIsh(),
+    acoesCorrecao:cleanArr(D5), implementacao:cleanArr(D6), preventivas:cleanArr(D7)
+  };
+  if(isSGI) payload.eficacia=m.eficacia||'';
+  msg.className='msg'; msg.textContent='Salvando…'; btn.disabled=true;
+  try{
+    var r=await fetch('/api/renew_document?kind=rnc&id='+encodeURIComponent(id)+'&token='+encodeURIComponent(token),
+      {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
+    var d=await r.json();
+    if(!r.ok) throw new Error(d.error||('Erro '+r.status));
+    msg.className='msg ok'; msg.textContent='Tratativa salva ✓';
+    REC.status=d.status||REC.status;
+  }catch(e){ msg.className='msg err'; msg.textContent=e.message; }
+  btn.disabled=false;
+}
+function baixarExcel(){ window.open('/api/renew_document?kind=rnc&download=1&id='+encodeURIComponent(id)+'&token='+encodeURIComponent(token),'_blank'); }
+function evidListHtml(){
+  var ev=Array.isArray(REC.evidencias)?REC.evidencias:[];
+  if(!ev.length) return '<div style="font-size:12px;color:#94a3b8;padding:6px 0">Nenhuma evidência anexada.</div>';
+  return ev.map(function(e){
+    var pe=encodeURIComponent(e.path);
+    return '<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-top:1px solid #f1f5f9;font-size:12.5px">'
+      +'<span style="flex:1">📎 '+esc(e.fileName||'arquivo')+'</span>'
+      +'<a href="#" onclick="viewEvid(\''+pe+'\');return false;" style="color:#1565c0">ver</a>'
+      +'<button type="button" onclick="removeEvid(\''+pe+'\')" style="background:#fee2e2;color:#b91c1c;border:0;border-radius:5px;width:24px;height:24px;cursor:pointer">×</button>'
+      +'</div>';
+  }).join('');
+}
+function refreshEvidList(){ var el=document.getElementById('evid-list'); if(el) el.innerHTML=evidListHtml(); }
+async function uploadEvid(){
+  var inp=document.getElementById('evid-file');
+  var files=inp&&inp.files?Array.prototype.slice.call(inp.files):[];
+  var st=document.getElementById('evid-status');
+  if(!files.length){ if(st){ st.textContent='Selecione um ou mais arquivos.'; } return; }
+  var ok=0, fail=0, erros=[];
+  for(var i=0;i<files.length;i++){
+    if(st){ st.textContent='Enviando '+(i+1)+'/'+files.length+'… ('+files[i].name+')'; }
+    try{
+      var fd=new FormData(); fd.append('file',files[i]); var qn=document.getElementById('f_quem'); fd.append('quem', qn?qn.value:'');
+      var r=await fetch('/api/renew_document?kind=rnc&id='+encodeURIComponent(id)+'&token='+encodeURIComponent(token),{method:'POST',body:fd});
+      var d=await r.json(); if(!r.ok||!d.ok) throw new Error(d.error||'falha');
+      REC.evidencias=d.evidencias||REC.evidencias||[]; refreshEvidList(); ok++;
+    }catch(e){ fail++; erros.push(files[i].name); }
+  }
+  if(inp) inp.value='';
+  if(st){ st.textContent=ok+' evidência(s) anexada(s)'+(fail?(' · '+fail+' falhou: '+erros.join(', ')):'')+' ✓'; }
+}
+async function viewEvid(pe){
+  try{ var r=await fetch('/api/renew_document?kind=rnc&fileview='+pe+'&id='+encodeURIComponent(id)+'&token='+encodeURIComponent(token)); var d=await r.json(); if(d.url) window.open(d.url,'_blank'); else alert(d.error||'Não foi possível abrir'); }catch(e){ alert('Erro: '+e.message); }
+}
+async function removeEvid(pe){
+  if(!confirm('Remover esta evidência?')) return;
+  try{ var r=await fetch('/api/renew_document?kind=rnc&id='+encodeURIComponent(id)+'&token='+encodeURIComponent(token),{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({removeEvidencia:decodeURIComponent(pe)})}); var d=await r.json(); if(!r.ok) throw new Error(d.error||'erro'); REC.evidencias=d.evidencias||[]; refreshEvidList(); }catch(e){ alert('Erro: '+e.message); }
+}
+init();
+</script>
+</body>
+</html>

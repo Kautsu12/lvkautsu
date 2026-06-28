@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Renovação de Documento — Central SGI</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', Arial, sans-serif; background: #f0f4f8; color: #0d2137; min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 20px; }
+  .card { background: #fff; border-radius: 12px; box-shadow: 0 8px 30px rgba(0,0,0,.1); width: 100%; max-width: 520px; overflow: hidden; }
+  .header { background: #0d2137; color: #fff; padding: 18px 22px; }
+  .header h1 { font-size: 16px; }
+  .header p { font-size: 11.5px; opacity: .75; margin-top: 3px; }
+  .body { padding: 22px; }
+  .info-row { padding: 8px 0; font-size: 13px; display: flex; gap: 10px; border-bottom: 1px solid #f1f5f9; }
+  .info-row:last-child { border-bottom: 0; }
+  .info-label { color: #64748b; min-width: 110px; font-size: 12px; }
+  .info-value { color: #0d2137; font-weight: 600; flex: 1; }
+  .form-group { margin-top: 14px; }
+  .form-group label { display: block; font-size: 11.5px; color: #64748b; margin-bottom: 5px; }
+  .form-group input { width: 100%; padding: 10px 12px; border: 1px solid #cbd5e1; border-radius: 7px; font-size: 13.5px; font-family: inherit; }
+  .form-group input:focus { outline: none; border-color: #1565c0; }
+  .btn { width: 100%; padding: 12px; background: #15803d; color: #fff; border: 0; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; margin-top: 16px; }
+  .btn:hover { background: #166534; }
+  .btn:disabled { background: #94a3b8; cursor: not-allowed; }
+  .msg { margin-top: 12px; padding: 10px; border-radius: 7px; font-size: 12.5px; display: none; }
+  .msg.ok { background: #dcfce7; color: #15803d; display: block; }
+  .msg.err { background: #fee2e2; color: #b91c1c; display: block; }
+  .loading { text-align: center; padding: 60px 20px; color: #94a3b8; }
+</style>
+</head>
+<body>
+  <div class="card">
+    <div class="header">
+      <h1>📑 Renovação de Documento</h1>
+      <p>Central SGI · Sistema de Gestão Integrada</p>
+    </div>
+    <div class="body" id="body">
+      <div class="loading">Carregando documento…</div>
+    </div>
+  </div>
+
+<script>
+var params = new URLSearchParams(window.location.search);
+var docId = params.get('docId') || '';
+var token = params.get('token') || '';
+
+async function init() {
+  var body = document.getElementById('body');
+  if (!docId || !token) {
+    body.innerHTML = '<div style="color:#b91c1c;text-align:center;padding:30px">Link inválido. Solicite um novo envio de email.</div>';
+    return;
+  }
+  try {
+    var r = await fetch('/api/renew_document?docId=' + encodeURIComponent(docId) + '&token=' + encodeURIComponent(token));
+    var d = await r.json();
+    if (!r.ok) {
+      body.innerHTML = '<div style="color:#b91c1c;text-align:center;padding:30px">'+ (d.error||'Erro') +'</div>';
+      return;
+    }
+    renderForm(d.doc);
+  } catch(e) {
+    body.innerHTML = '<div style="color:#b91c1c;text-align:center;padding:30px">Erro: ' + e.message + '</div>';
+  }
+}
+
+function renderForm(doc) {
+  var esc = function(s){ return String(s||'').replace(/[<>&"]/g, function(c){return{'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;'}[c];}); };
+  var body = document.getElementById('body');
+  body.innerHTML = '' +
+    '<div style="margin-bottom:16px;padding:10px 14px;background:#fef3c7;color:#92400e;border-radius:7px;font-size:12px">' +
+      'Atualize os dados abaixo para marcar este documento como renovado.' +
+    '</div>' +
+    '<div class="info-row"><span class="info-label">Documento</span><span class="info-value">' + esc(doc.nome) + '</span></div>' +
+    '<div class="info-row"><span class="info-label">Tipo</span><span class="info-value">' + esc(doc.tipo||'—') + '</span></div>' +
+    '<div class="info-row"><span class="info-label">Responsável</span><span class="info-value">' + esc(doc.responsavel||'—') + '</span></div>' +
+    '<div class="info-row"><span class="info-label">Vencimento atual</span><span class="info-value" style="color:#b91c1c">' + esc(doc.dataVencimento) + '</span></div>' +
+    (doc.pasta ? '<div class="info-row"><span class="info-label">Pasta do documento</span><span class="info-value"><a href="'+esc(doc.pasta)+'" target="_blank" style="color:#1565c0">📂 Abrir pasta</a></span></div>' : '') +
+    '<div class="form-group"><label>Seu nome (quem está renovando)</label><input id="f-quem" type="text" placeholder="Ex: João Silva"></div>' +
+    '<div class="form-group"><label>NOVA data de vencimento *</label><input id="f-data" type="date" required></div>' +
+    '<div class="form-group"><label>Anexar o documento atualizado *</label><input id="f-file" type="file" required>' + (doc.fileName ? '<div style="font-size:11px;color:#94a3b8;margin-top:4px">Arquivo atual: '+esc(doc.fileName)+'</div>' : '') + '<div style="font-size:11px;color:#94a3b8;margin-top:4px">Obrigatório: envie a nova versão do documento para concluir a renovação.</div></div>' +
+    '<div class="form-group"><label>URL da pasta atualizada (opcional)</label><input id="f-pasta" type="url" placeholder="' + esc(doc.pasta||'https://...') + '" value="' + esc(doc.pasta||'') + '"></div>' +
+    '<button class="btn" id="f-btn" onclick="submitRenewal()">✓ Confirmar renovação</button>' +
+    '<div id="msg" class="msg"></div>';
+}
+
+async function submitRenewal() {
+  var quem = document.getElementById('f-quem').value.trim();
+  var novaData = document.getElementById('f-data').value;
+  var novaPasta = document.getElementById('f-pasta').value.trim();
+  var fileEl = document.getElementById('f-file');
+  var file = fileEl && fileEl.files && fileEl.files[0];
+  var msg = document.getElementById('msg');
+  var btn = document.getElementById('f-btn');
+  msg.className = 'msg';
+  if (!novaData) { msg.className = 'msg err'; msg.textContent = 'Informe a nova data de vencimento.'; return; }
+  if (!file) { msg.className = 'msg err'; msg.textContent = 'É obrigatório anexar o documento atualizado.'; return; }
+  // Confere que não é no passado
+  var hoje = new Date(); hoje.setHours(0,0,0,0);
+  var d = new Date(novaData + 'T00:00:00');
+  if (d < hoje) { msg.className = 'msg err'; msg.textContent = 'A nova data deve ser hoje ou futura.'; return; }
+  btn.disabled = true; btn.textContent = 'Salvando…';
+  try {
+    var fd = new FormData();
+    fd.append('docId', docId); fd.append('token', token);
+    fd.append('novaData', novaData); fd.append('novaPasta', novaPasta); fd.append('quem', quem);
+    fd.append('file', file);
+    var r = await fetch('/api/renew_document', { method:'POST', body: fd });
+    var dd = await r.json();
+    if (!r.ok) throw new Error(dd.error || ('Erro ' + r.status));
+    document.getElementById('body').innerHTML = '<div style="text-align:center;padding:40px 20px"><div style="font-size:48px;margin-bottom:14px">✅</div><div style="font-size:16px;font-weight:700;color:#15803d;margin-bottom:8px">Renovação registrada!</div><div style="font-size:12.5px;color:#64748b">Nova data de vencimento: <strong>'+novaData+'</strong></div><div style="font-size:11px;color:#94a3b8;margin-top:14px">Você pode fechar esta página.</div></div>';
+  } catch(e) {
+    msg.className = 'msg err'; msg.textContent = e.message;
+    btn.disabled = false; btn.textContent = '✓ Confirmar renovação';
+  }
+}
+
+init();
+</script>
+</body>
+</html>

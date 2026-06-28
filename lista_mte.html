@@ -1,0 +1,674 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lista de Auditorias MTE</title>
+<script>
+if(window.self !== window.top){ document.documentElement.classList.add('in-iframe'); }
+</script>
+<style>
+html.in-iframe #lista-topbar { display: none !important; }
+:root {
+  --navy:#0d2137; --blue:#1565c0; --green:#1b7e4a; --orange:#c84b00;
+  --red:#b91c1c; --text:#1e293b; --text2:#64748b; --border:#e2e8f0;
+  --bg:#f0f4f8; --card:#ffffff;
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Segoe UI', Arial, sans-serif; background: var(--bg); color: var(--text); font-size: 13px; }
+
+.topbar { background: var(--navy); color:#fff; padding:0 24px; height:52px; display:flex; align-items:center; justify-content:space-between; box-shadow:0 2px 8px rgba(0,0,0,.25); }
+.topbar-title { font-size:15px; font-weight:700; }
+.btn-new { padding:7px 18px; background:var(--blue); color:#fff; border:none; border-radius:7px; font-size:13px; font-weight:600; cursor:pointer; display:flex; align-items:center; gap:6px; }
+.btn-new:hover { opacity:.85; }
+
+.summary-strip { display:flex; gap:12px; padding:18px 24px 0; }
+.sum-card { flex:1; background:var(--card); border-radius:10px; border:1px solid var(--border); padding:14px 18px; box-shadow:0 1px 3px rgba(0,0,0,.05); display:flex; flex-direction:column; gap:3px; }
+.sum-label { font-size:10px; color:var(--text2); text-transform:uppercase; letter-spacing:.5px; font-weight:600; }
+.sum-value { font-size:22px; font-weight:700; color:var(--navy); }
+.sum-value.green  { color:var(--green); }
+.sum-value.orange { color:var(--orange); }
+.sum-value.red    { color:var(--red); }
+
+.table-wrap { margin:18px 24px 24px; background:var(--card); border-radius:12px; border:1px solid var(--border); box-shadow:0 1px 4px rgba(0,0,0,.05); overflow:hidden; }
+.table-header { padding:14px 18px; display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border); background:#f8fafc; }
+.table-header h2 { font-size:13px; font-weight:700; color:var(--navy); }
+.search-box { padding:7px 12px; border:1px solid var(--border); border-radius:7px; font-size:12px; outline:none; width:220px; }
+.search-box:focus { border-color:var(--blue); }
+
+table { width:100%; border-collapse:collapse; }
+thead th { padding:10px 14px; text-align:left; font-size:10.5px; font-weight:700; color:var(--text2); text-transform:uppercase; letter-spacing:.4px; background:#f8fafc; border-bottom:1px solid var(--border); white-space:nowrap; }
+thead th:first-child { padding-left:18px; }
+tbody tr { transition: background .1s; }
+tbody tr:hover { background:#f0f7ff; }
+tbody tr + tr { border-top:1px solid var(--border); }
+tbody td { padding:12px 14px; font-size:12.5px; vertical-align:middle; }
+tbody td:first-child { padding-left:18px; }
+
+.cell-empresa { font-weight:600; color:var(--navy); }
+.cell-data    { color:var(--text2); font-size:12px; white-space:nowrap; }
+.cell-num     { text-align:center; font-weight:600; color:var(--navy); }
+
+.status-badge { display:inline-flex; align-items:center; gap:5px; padding:4px 10px; border-radius:99px; font-size:11px; font-weight:700; }
+.status-aprovado  { background:#dcfce7; color:#15803d; }
+.status-reprovado { background:#fee2e2; color:#b91c1c; }
+.status-parcial   { background:#fef3c7; color:#92400e; }
+.status-pendente  { background:#f1f5f9; color:#64748b; }
+
+.cell-actions { display:flex; gap:6px; justify-content:flex-end; }
+.btn-action { padding:5px 10px; border-radius:6px; border:1px solid var(--border); background:#fff; font-size:11px; cursor:pointer; transition:.15s; white-space:nowrap; display:flex; align-items:center; gap:4px; }
+.btn-action:hover { background:#f0f4f8; border-color:#cbd5e1; }
+.btn-action.view { color:var(--blue); }
+.btn-action.del  { color:var(--red); }
+.btn-action.del:hover { background:#fee2e2; border-color:#fecaca; }
+
+.empty-state { padding:60px 24px; text-align:center; color:var(--text2); }
+.empty-icon { font-size:40px; margin-bottom:12px; }
+.empty-title { font-size:15px; font-weight:600; color:var(--navy); margin-bottom:6px; }
+.empty-sub { font-size:13px; margin-bottom:20px; }
+
+/* MODAL */
+.modal-overlay { position:fixed; inset:0; background:rgba(0,0,0,.55); z-index:500; display:none; align-items:center; justify-content:center; padding:10px; }
+.modal-overlay.open { display:flex; }
+.modal-frame { background:#fff; border-radius:10px; width:98vw; max-width:100%; height:96vh; overflow:hidden; display:flex; flex-direction:column; box-shadow:0 25px 60px rgba(0,0,0,.35); position:relative; }
+.modal-frame-header { background:var(--navy); color:#fff; padding:0 16px; height:48px; display:flex; justify-content:space-between; align-items:center; gap:8px; flex-shrink:0; }
+.modal-frame-title { font-size:13px; font-weight:700; flex-shrink:0; }
+.modal-frame-actions { display:flex; gap:6px; align-items:center; flex-wrap:nowrap; }
+.btn-aud { padding:5px 11px; border-radius:6px; border:1px solid rgba(255,255,255,.22); background:rgba(255,255,255,.1); color:#fff; font-size:11.5px; font-weight:600; cursor:pointer; white-space:nowrap; }
+.btn-aud:hover { background:rgba(255,255,255,.2); }
+.btn-aud.save { background:#059669; border-color:#059669; }
+.btn-aud.save:hover { background:#047857; }
+.btn-aud.close { background:rgba(220,38,38,.35); border-color:rgba(220,38,38,.5); }
+.btn-aud.close:hover { background:rgba(220,38,38,.55); }
+.modal-iframe { flex:1; width:100%; border:none; }
+
+#iframe-action-bar { display:none; padding:8px 20px; justify-content:flex-end; gap:8px; align-items:center; background:#f8fafc; border-bottom:1px solid #e2e8f0; }
+</style>
+</head>
+<body>
+
+<!-- TOPBAR (standalone only) -->
+<div class="topbar" id="lista-topbar">
+  <div class="topbar-title">📋 Auditorias MTE</div>
+  <button class="btn-new" onclick="openNovaMTE()">＋ Nova Auditoria MTE</button>
+</div>
+
+<!-- Action bar (when in iframe inside index.html) -->
+<div id="iframe-action-bar">
+  <button class="btn-new" onclick="openNovaMTE()">＋ Nova Auditoria MTE</button>
+</div>
+
+<!-- SUMMARY -->
+<div class="summary-strip">
+  <div class="sum-card"><span class="sum-label">Total MTEs</span><div class="sum-value" id="sum-total">0</div></div>
+  <div class="sum-card"><span class="sum-label">Aprovadas</span><div class="sum-value green" id="sum-aprovadas">0</div></div>
+  <div class="sum-card"><span class="sum-label">Parciais</span><div class="sum-value orange" id="sum-parciais">0</div></div>
+  <div class="sum-card"><span class="sum-label">Reprovadas</span><div class="sum-value red" id="sum-reprovadas">0</div></div>
+</div>
+
+<!-- TABLE -->
+<div class="table-wrap">
+  <div class="table-header">
+    <h2>Histórico de Auditorias MTE</h2>
+    <input type="text" id="search" class="search-box" placeholder="🔍 Buscar unidade, auditor..." oninput="renderTable()">
+  </div>
+  <div id="table-body"></div>
+</div>
+
+<!-- MODAL com iframe -->
+<div class="modal-overlay" id="modal-overlay">
+  <div class="modal-frame">
+    <div class="modal-frame-header">
+      <div class="modal-frame-title" id="modal-title">Auditoria MTE</div>
+      <div class="modal-frame-actions">
+        <button id="btn-modal-finalizar" class="btn-aud" onclick="finalizarMTE()" style="background:linear-gradient(135deg,#92400e,#78350f);border-color:transparent" title="Verificar itens pendentes e finalizar auditoria">🔒 Finalizar Auditoria</button>
+        <button id="btn-modal-relatorio" class="btn-aud" onclick="emitirRelatorioMTE()" style="background:linear-gradient(135deg,#166534,#14532d);border-color:transparent;opacity:0.45;cursor:not-allowed" title="Finalize a auditoria antes de emitir o relatório">📄 Emitir Relatório</button>
+        <button class="btn-aud" onclick="callMteFn('exportCSV')" title="Exportar dados em CSV">📊 Excel</button>
+        <button class="btn-aud" onclick="callMteFn('exportJSON')" style="background:linear-gradient(135deg,#2e7d32,#1b5e20);border-color:transparent" title="Exportar backup JSON">📤 Exportar</button>
+        <button class="btn-aud" onclick="callMteFn('importarJSON')" style="background:linear-gradient(135deg,#e65100,#bf360c);border-color:transparent" title="Importar backup JSON">📥 Importar</button>
+        <button class="btn-aud save" onclick="salvarMTE()">💾 Salvar</button>
+        <button class="btn-aud close" onclick="closeModal()">✕ Fechar</button>
+      </div>
+    </div>
+    <iframe class="modal-iframe" id="modal-iframe" src="" allowfullscreen></iframe>
+    <div id="modal-loading" style="display:none;position:absolute;inset:0;background:#fff;z-index:10;align-items:center;justify-content:center;flex-direction:column;gap:16px;">
+      <svg width="48" height="48" viewBox="0 0 48 48" style="animation:spin 1s linear infinite"><circle cx="24" cy="24" r="20" fill="none" stroke="#e2e8f0" stroke-width="4"/><path d="M24 4a20 20 0 0 1 20 20" fill="none" stroke="var(--navy,#1e3a5f)" stroke-width="4" stroke-linecap="round"/></svg>
+      <div style="color:#64748b;font-size:14px;font-weight:500;">Carregando auditoria…</div>
+    </div>
+  </div>
+</div>
+<style>@keyframes spin{to{transform:rotate(360deg)}}</style>
+
+<script>
+// ── HELPER: chama função do iframe interno (mte.html) ───────────
+function callMteFn(fnName) {
+  var frame = document.getElementById('modal-iframe');
+  if (!frame || !frame.contentWindow) { alert('Formulário não está aberto.'); return; }
+  var fn = frame.contentWindow[fnName];
+  if (typeof fn !== 'function') { alert('Função "' + fnName + '" indisponível no formulário.'); return; }
+  try { fn(); } catch(ex) { alert('Erro ao executar ' + fnName + ': ' + ex.message); }
+}
+
+// ── FINALIZAÇÃO E RELATÓRIO (botões do modal) ─────────────────
+function _isFinalizada() {
+  var frame = document.getElementById('modal-iframe');
+  return frame && frame.contentWindow && frame.contentWindow._auditoriaFinalizada === true;
+}
+
+function _atualizarBotoesModal() {
+  var finalizada = _isFinalizada();
+  var btnF = document.getElementById('btn-modal-finalizar');
+  var btnR = document.getElementById('btn-modal-relatorio');
+  if (btnF) {
+    if (finalizada) {
+      btnF.textContent = '✅ Auditoria Finalizada';
+      btnF.style.background = 'linear-gradient(135deg,#166534,#14532d)';
+      btnF.style.cursor = 'default';
+      btnF.onclick = null;
+    } else {
+      btnF.textContent = '🔒 Finalizar Auditoria';
+      btnF.style.background = 'linear-gradient(135deg,#92400e,#78350f)';
+      btnF.style.cursor = 'pointer';
+      btnF.onclick = finalizarMTE;
+    }
+  }
+  if (btnR) {
+    if (finalizada) {
+      btnR.style.opacity = '1';
+      btnR.style.cursor = 'pointer';
+      btnR.title = 'Emitir Relatório Final PDF';
+    } else {
+      btnR.style.opacity = '0.45';
+      btnR.style.cursor = 'not-allowed';
+      btnR.title = '⚠️ Finalize a auditoria antes de emitir o relatório';
+    }
+  }
+}
+
+function finalizarMTE() {
+  var frame = document.getElementById('modal-iframe');
+  if (!frame || !frame.contentWindow) { alert('Formulário não está aberto.'); return; }
+  if (frame.contentWindow._auditoriaFinalizada) return;
+  if (typeof frame.contentWindow.finalizarAuditoria === 'function') {
+    frame.contentWindow.finalizarAuditoria();
+    // Aguarda a finalização e atualiza botões
+    setTimeout(function() {
+      _atualizarBotoesModal();
+      // Força re-save do record para refletir finalizada=true na lista
+      if (frame.contentWindow._auditoriaFinalizada) {
+        extractAndSave(frame);
+      }
+    }, 500);
+  }
+}
+
+function emitirRelatorioMTE() {
+  if (!_isFinalizada()) {
+    alert('⚠️ Finalize a auditoria antes de emitir o relatório PDF.');
+    return;
+  }
+  callMteFn('gerarRelatorioPDF');
+}
+
+// ── STATE LOCAL ────────────────────────────────────────────────
+var mtes = [];          // Array de records (resumos) de MTEs
+var editingIdx = null;  // índice em mtes[] quando editando existente
+var editingId  = null;
+var manualSave = false;
+
+function genId() {
+  return 'mte_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2,7);
+}
+
+// ── RENDER ─────────────────────────────────────────────────────
+function renderAll() { renderSummary(); renderTable(); }
+
+function getStatus(m) {
+  if (!m.finalizada) return 'pendente';
+  if (!m.total_itens) return 'pendente';
+  if (m.conformidade_pct >= 85) return 'aprovado';
+  if (m.conformidade_pct >= 70) return 'parcial';
+  return 'reprovado';
+}
+
+function renderSummary() {
+  var total = mtes.length;
+  var aprov = mtes.filter(function(m){ return getStatus(m) === 'aprovado'; }).length;
+  var parci = mtes.filter(function(m){ return getStatus(m) === 'parcial'; }).length;
+  var reprov = mtes.filter(function(m){ return getStatus(m) === 'reprovado'; }).length;
+  document.getElementById('sum-total').textContent = total;
+  document.getElementById('sum-aprovadas').textContent = aprov;
+  document.getElementById('sum-parciais').textContent  = parci;
+  document.getElementById('sum-reprovadas').textContent = reprov;
+}
+
+function statusBadge(m) {
+  var st = getStatus(m);
+  var map = {
+    aprovado:  { cls:'status-aprovado',  label:'✅ Aprovada' },
+    parcial:   { cls:'status-parcial',   label:'⚠️ Parcial' },
+    reprovado: { cls:'status-reprovado', label:'❌ Reprovada' },
+    pendente:  { cls:'status-pendente',  label:'⏳ Pendente' }
+  };
+  return '<span class="status-badge '+map[st].cls+'">'+map[st].label+'</span>';
+}
+
+function escapeHtml(s) { return String(s||'').replace(/[&<>"']/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); }
+
+function renderTable() {
+  var q = (document.getElementById('search').value || '').toLowerCase();
+  var rows = mtes.filter(function(m){
+    if (!q) return true;
+    return (m.unidade||'').toLowerCase().includes(q) ||
+           (m.auditor||'').toLowerCase().includes(q) ||
+           (m.referencia||'').toLowerCase().includes(q);
+  });
+  var body = document.getElementById('table-body');
+  if (!rows.length) {
+    body.innerHTML = '<div class="empty-state"><div class="empty-icon">📋</div><div class="empty-title">Nenhuma auditoria MTE</div><div class="empty-sub">Clique em "Nova Auditoria MTE" para começar</div></div>';
+    return;
+  }
+  var html = '<table><thead><tr>' +
+    '<th>Unidade</th><th>Data</th><th>Auditor</th>' +
+    '<th>Itens</th><th>Conformes</th><th>NCs</th><th>OBS</th>' +
+    '<th>% Conform.</th><th>Status</th><th style="text-align:right">Ações</th>' +
+    '</tr></thead><tbody>';
+  rows.forEach(function(m){
+    var idx = mtes.indexOf(m);
+    var pct = m.conformidade_pct != null ? m.conformidade_pct.toFixed(1) + '%' : '—';
+    html += '<tr>' +
+      '<td class="cell-empresa">' + escapeHtml(m.unidade || '—') + '</td>' +
+      '<td class="cell-data">' + escapeHtml(m.data || '—') + '</td>' +
+      '<td>' + escapeHtml(m.auditor || '—') + '</td>' +
+      '<td class="cell-num">' + (m.total_itens || 0) + '</td>' +
+      '<td class="cell-num" style="color:var(--green)">' + (m.conformes || 0) + '</td>' +
+      '<td class="cell-num" style="color:var(--red)">' + (m.nao_conformes || 0) + '</td>' +
+      '<td class="cell-num" style="color:var(--orange)">' + (m.obs || 0) + '</td>' +
+      '<td class="cell-num">' + pct + '</td>' +
+      '<td>' + statusBadge(m) + '</td>' +
+      '<td><div class="cell-actions">' +
+        '<button class="btn-action view" onclick="viewMTE('+idx+')">✏️ Editar</button>' +
+        '<button class="btn-action del" onclick="deleteMTE('+idx+')">🗑 Excluir</button>' +
+      '</div></td>' +
+    '</tr>';
+  });
+  html += '</tbody></table>';
+  body.innerHTML = html;
+}
+
+// ── MODAL ──────────────────────────────────────────────────────
+function openNovaMTE() {
+  editingIdx = null;
+  editingId  = genId();
+  document.getElementById('modal-title').textContent = 'Nova Auditoria MTE';
+  var frame = document.getElementById('modal-iframe');
+  frame.src = 'mte.html?v=' + Date.now();
+  document.getElementById('modal-overlay').classList.add('open');
+  _serverBaseline = {};
+  frame.onload = function() {
+    startSyncPolling();
+    setTimeout(_atualizarBotoesModal, 400);
+  };
+}
+
+async function viewMTE(idx) {
+  editingIdx = idx;
+  editingId  = mtes[idx].id;
+  var m = mtes[idx];
+  document.getElementById('modal-title').textContent = 'Editando MTE — ' + (m.unidade || 'Sem unidade');
+  var frame = document.getElementById('modal-iframe');
+
+  // Cancela timer pendente que zeraria o src
+  if (_clearFrameTimer) { clearTimeout(_clearFrameTimer); _clearFrameTimer = null; }
+
+  // Mostra overlay de carregamento e abre o modal
+  var loadingEl = document.getElementById('modal-loading');
+  if (loadingEl) loadingEl.style.display = 'flex';
+  document.getElementById('modal-overlay').classList.add('open');
+
+  // Busca estado no Redis E carrega iframe EM PARALELO
+  var statePromise = loadMTEState(editingId);
+  var iframeReady  = new Promise(function(res){ frame.onload = res; });
+  frame.src = 'mte.html?v=' + Date.now();
+
+  // Aguarda os dois terminarem
+  var state = await statePromise;
+  var cached = _localCache[editingId];
+  if (cached && (Date.now() - cached.ts) < 15000) {
+    state = cached.state;
+  } else if (!state && m.state) {
+    state = m.state;
+  }
+  _serverBaseline = state ? JSON.parse(JSON.stringify(state)) : {};
+
+  await iframeReady;
+
+  if (state) {
+    try {
+      frame.contentWindow.postMessage({ type: 'load-mte-state', state: state }, '*');
+    } catch(ex) { console.warn('load STATE err:', ex); }
+  }
+
+  // Remove overlay após dar tempo para aplicarDadosAuditoria renderizar
+  setTimeout(function() {
+    if (loadingEl) loadingEl.style.display = 'none';
+    _atualizarBotoesModal();
+  }, 450);
+
+  startSyncPolling();
+}
+
+function closeModal() {
+  silentServerSave(); // salva no servidor antes de fechar
+  stopSyncPolling();
+  document.getElementById('modal-overlay').classList.remove('open');
+  var frame = document.getElementById('modal-iframe');
+  _clearFrameTimer = setTimeout(function(){ frame.src = ''; _clearFrameTimer = null; }, 1500);
+  editingIdx = null;
+}
+
+function salvarMTE() {
+  var frame = document.getElementById('modal-iframe');
+  if (!frame || !frame.contentWindow) { alert('Nenhuma MTE aberta.'); return; }
+  manualSave = true;
+  extractAndSave(frame);
+}
+
+// ── EXTRAÇÃO + MERGE 3-WAY + SAVE ──────────────────────────────
+var _serverBaseline = null;
+var _syncTimer = null;
+// Cache local: guarda o último estado coletado (pode ainda não ter chegado ao Redis)
+var _localCache = {}; // { [id]: { state, ts } }
+var _isSaving = false; // bloqueia syncPoll durante operações de save
+var _clearFrameTimer = null;
+
+function threeWayMerge(base, local, remote) {
+  if (local === undefined) return remote;
+  if (remote === undefined) return local;
+  if (local === null || remote === null) {
+    if (local !== (base === undefined ? null : base)) return local;
+    return remote;
+  }
+  if (Array.isArray(local) && Array.isArray(remote)) {
+    if (JSON.stringify(local) !== JSON.stringify(base)) return local;
+    return remote;
+  }
+  if (typeof local === 'object' && typeof remote === 'object') {
+    var out = {};
+    var baseObj = (base && typeof base === 'object') ? base : {};
+    var keys = {};
+    Object.keys(local).forEach(function(k){ keys[k] = 1; });
+    Object.keys(remote).forEach(function(k){ keys[k] = 1; });
+    Object.keys(baseObj).forEach(function(k){ keys[k] = 1; });
+    Object.keys(keys).forEach(function(k){
+      out[k] = threeWayMerge(baseObj[k], local[k], remote[k]);
+    });
+    return out;
+  }
+  if (local === remote) return local;
+  if (local !== base) return local;
+  return remote;
+}
+
+async function syncPoll() {
+  if (!editingId || _isSaving) return;
+  var frame = document.getElementById('modal-iframe');
+  if (!frame || !frame.contentWindow) return;
+  try {
+    var remote = await loadMTEState(editingId);
+    if (!remote) return;
+    var baseline = _serverBaseline || remote;
+    if (JSON.stringify(remote) === JSON.stringify(baseline)) return;
+    var local = null;
+    try { if (typeof frame.contentWindow.coletarDados === 'function') local = frame.contentWindow.coletarDados(); } catch(_){}
+    if (!local) return;
+    var merged = threeWayMerge(baseline, local, remote);
+    if (JSON.stringify(merged) !== JSON.stringify(local)) {
+      frame.contentWindow.postMessage({ type: 'sync-merge-state', state: merged }, '*');
+    }
+    _serverBaseline = JSON.parse(JSON.stringify(remote));
+  } catch (e) { /* silencioso */ }
+}
+var _autoSaveTimer = null;
+
+async function silentServerSave() {
+  if (_isSaving) return; // já há um save em andamento
+  try {
+    if (!editingId) return;
+    var frame = document.getElementById('modal-iframe');
+    if (!frame || !frame.contentWindow) return;
+    if (typeof frame.contentWindow.coletarDados !== 'function') return;
+    _isSaving = true;
+    var state = frame.contentWindow.coletarDados();
+    // Armazena localmente ANTES do await — garante disponibilidade mesmo se o servidor demorar
+    _localCache[editingId] = { state: JSON.parse(JSON.stringify(state)), ts: Date.now() };
+    await saveMTEState(editingId, state);
+    _serverBaseline = JSON.parse(JSON.stringify(state));
+  } catch(e) { /* silencioso */ }
+  finally { _isSaving = false; }
+}
+
+function startSyncPolling() {
+  stopSyncPolling();
+  _syncTimer = setInterval(syncPoll, 5000);
+  _autoSaveTimer = setInterval(silentServerSave, 30000); // autosave no servidor a cada 30s
+}
+function stopSyncPolling() {
+  if (_syncTimer) { clearInterval(_syncTimer); _syncTimer = null; }
+  if (_autoSaveTimer) { clearInterval(_autoSaveTimer); _autoSaveTimer = null; }
+  _serverBaseline = null;
+}
+
+async function extractAndSave(frame) {
+  var win = frame.contentWindow;
+  if (typeof win.coletarDados !== 'function') {
+    alert('Formulário ainda carregando, tente novamente em 1 segundo.');
+    return;
+  }
+  _isSaving = true;
+  try {
+    var localState = win.coletarDados();
+    var id = editingId;
+    // Usuário clicou Salvar: estado local é autoritativo, não precisa merge com servidor
+    await saveMTEState(id, localState);
+    _serverBaseline = JSON.parse(JSON.stringify(localState));
+    _localCache[id] = { state: JSON.parse(JSON.stringify(localState)), ts: Date.now() };
+    var record = buildRecord(localState, id);
+    commitRecord(record);
+  } finally {
+    _isSaving = false;
+  }
+}
+
+function buildRecord(state, id) {
+  var meta = (state && state.meta) || {};
+  var record = {
+    id: id || genId(),
+    unidade:     meta.unidade     || '—',
+    auditor:     meta.auditor     || '—',
+    data:        meta.data        || '—',
+    referencia:  meta.referencia  || '',
+    inicio:      meta.inicio      || '',
+    fim:         meta.fim         || '',
+    total_itens: 0,
+    conformes:   0,
+    nao_conformes: 0,
+    obs:         0,
+    nc_criticas: 0,
+    conformidade_pct: 0,
+    finalizada:   meta.finalizada   === true,
+    finalizadaEm: meta.finalizadaEm || null,
+    savedAt:     new Date().toISOString()
+  };
+  // Conta itens das seções
+  var secoes = (state && state.secoes) || {};
+  var total = 0, c = 0, nc = 0, obs = 0;
+  Object.keys(secoes).forEach(function(sid){
+    var sec = secoes[sid];
+    if (!sec || !Array.isArray(sec.itens)) return;
+    sec.itens.forEach(function(it){
+      var s = (it.status || '').toUpperCase();
+      if (!s || s === 'NA' || s === 'NAUD') return;
+      total++;
+      if (s === 'C') c++;
+      else if (s === 'NC') nc++;
+      else if (s === 'OBS') obs++;
+    });
+  });
+  record.total_itens   = total;
+  record.conformes     = c;
+  record.nao_conformes = nc;
+  record.obs           = obs;
+  if (total > 0) record.conformidade_pct = parseFloat(((c / total) * 100).toFixed(2));
+  // Amostras de funcionários (segurança, treinamento, saúde, terceiros)
+  var amostras = (state && state.amostras) || {};
+  Object.keys(amostras).forEach(function(secId){
+    var arr = amostras[secId];
+    if (!Array.isArray(arr)) return;
+    arr.forEach(function(bloco){
+      if (!Array.isArray(bloco.itens)) return;
+      bloco.itens.forEach(function(it){
+        var s = (it.status || '').toUpperCase();
+        if (!s || s === 'NA' || s === 'NAUD') return;
+        record.total_itens++;
+        if (s === 'C') record.conformes++;
+        else if (s === 'NC') { record.nao_conformes++; record.nc_criticas++; }
+        else if (s === 'OBS') record.obs++;
+      });
+    });
+  });
+  // Funcionários (checklist documental)
+  if (Array.isArray(state.funcionariosChecklist)) {
+    state.funcionariosChecklist.forEach(function(f){
+      if (!f || !Array.isArray(f.itens)) return;
+      f.itens.forEach(function(it){
+        var s = (it.status || '').toUpperCase();
+        if (!s || s === 'NA' || s === 'NAUD') return;
+        record.total_itens++;
+        if (s === 'C') record.conformes++;
+        else if (s === 'NC') { record.nao_conformes++; record.nc_criticas++; }
+        else if (s === 'OBS') record.obs++;
+      });
+    });
+  }
+  if (record.total_itens > 0) record.conformidade_pct = parseFloat(((record.conformes / record.total_itens) * 100).toFixed(2));
+  return record;
+}
+
+function commitRecord(record) {
+  if (editingIdx !== null && editingIdx >= 0) {
+    record.id = mtes[editingIdx].id;
+    mtes[editingIdx] = record;
+  } else {
+    var existing = mtes.findIndex(function(m){ return m.id === record.id; });
+    if (existing >= 0) mtes[existing] = record;
+    else mtes.unshift(record);
+  }
+  renderAll();
+  scheduleServerSave();
+  if (manualSave) {
+    manualSave = false;
+    closeModal();
+  }
+}
+
+function deleteMTE(idx) {
+  var m = mtes[idx];
+  if (!confirm('Excluir auditoria MTE de "' + (m.unidade || 'sem unidade') + '"?\nEsta ação não pode ser desfeita.')) return;
+  mtes.splice(idx, 1);
+  renderAll();
+  scheduleServerSave();
+}
+
+// ── PERSISTÊNCIA NA NUVEM (chave 'mte_auditorias' + 'mte:<id>') ──
+var _saveTimer = null;
+function scheduleServerSave() {
+  clearTimeout(_saveTimer);
+  _saveTimer = setTimeout(saveToServer, 800);
+}
+
+async function saveToServer() {
+  try {
+    var res = await fetch('/api/save', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ key: 'mte_auditorias', value: mtes })
+    });
+    if (!res.ok) console.error('Erro ao salvar lista MTE:', await res.text());
+  } catch (err) { console.error('Erro lista MTE:', err); }
+}
+
+async function loadFromServer() {
+  try {
+    var res  = await fetch('/api/load?key=mte_auditorias');
+    var data = await res.json();
+    if (!Array.isArray(data.value)) return;
+    mtes = data.value;
+    renderAll();
+    // Recalcula registros existentes a partir do estado completo (corrige contagens antigas)
+    var needsSave = false;
+    await Promise.all(mtes.map(async function(m) {
+      if (!m.id) return;
+      var state = await loadMTEState(m.id);
+      if (!state) return;
+      var fresh = buildRecord(state, m.id);
+      // Só atualiza se houver diferença relevante
+      if (fresh.total_itens !== m.total_itens ||
+          fresh.conformes !== m.conformes ||
+          fresh.nao_conformes !== m.nao_conformes ||
+          fresh.obs !== m.obs) {
+        fresh.savedAt = m.savedAt; // preserva data original
+        var idx = mtes.findIndex(function(x){ return x.id === m.id; });
+        if (idx >= 0) { mtes[idx] = fresh; needsSave = true; }
+      }
+    }));
+    if (needsSave) { renderAll(); scheduleServerSave(); }
+  } catch (err) { console.error(err); }
+}
+
+async function saveMTEState(id, state) {
+  if (!id) return;
+  try {
+    var res = await fetch('/api/save', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ key: 'mte:' + id, value: state })
+    });
+    if (!res.ok) console.error('Erro ao salvar STATE MTE:', await res.text());
+  } catch (err) { console.error(err); }
+}
+
+async function loadMTEState(id) {
+  if (!id) return null;
+  try {
+    var res = await fetch('/api/load?key=mte:' + id);
+    var data = await res.json();
+    return data && data.value ? data.value : null;
+  } catch (err) { return null; }
+}
+
+// ── POLLING DA LISTA (sincroniza com outros usuários) ──────────
+var _lastSavedAt = null;
+async function pollLista() {
+  try {
+    var res = await fetch('/api/load?key=mte_auditorias');
+    var data = await res.json();
+    if (!Array.isArray(data.value)) return;
+    var latest = data.value.length > 0 ? data.value[0].savedAt : null;
+    if (latest && latest !== _lastSavedAt) {
+      _lastSavedAt = latest;
+      mtes = data.value;
+      renderAll();
+    }
+  } catch(_){}
+}
+
+// ── INIT ──────────────────────────────────────────────────────
+if (window.self !== window.top) {
+  var bar = document.getElementById('iframe-action-bar');
+  if (bar) bar.style.display = 'flex';
+}
+loadFromServer().then(function(){ setInterval(pollLista, 10000); });
+</script>
+</body>
+</html>

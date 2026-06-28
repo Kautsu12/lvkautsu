@@ -1,0 +1,16 @@
+{
+  "name": "raitz-auditoria-sgi",
+  "version": "1.0.0",
+  "private": true,
+  "dependencies": {
+    "@supabase/supabase-js": "^2.45.4",
+    "@upstash/redis": "^1.34.3",
+    "bcryptjs": "2.4.3",
+    "exceljs": "^4.4.0",
+    "nodemailer": "^7.0.7",
+    "resend": "^4.0.1"
+  },
+  "engines": {
+    "node": "20.x"
+  }
+}
