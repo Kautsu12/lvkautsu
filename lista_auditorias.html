@@ -429,7 +429,7 @@ function renderTable() {
   var body = document.getElementById('table-body');
   if (!tbl.length) {
     body.innerHTML = '<div class="empty-state">' +
-      '<div class="empty-icon">📋</div>' +
+      '<img src="/assets/mascot/metis-mascote-analisando.svg" alt="" style="width:112px;height:auto;margin:0 auto 8px;display:block">' +
       '<div class="empty-title">' + (auditorias.length ? 'Nenhuma auditoria encontrada' : 'Nenhuma auditoria registrada') + '</div>' +
       '<div class="empty-sub">' + (auditorias.length ? 'Ajuste o filtro de busca.' : 'Clique em ＋ Nova Auditoria para começar.') + '</div>' +
       (!auditorias.length ? '<button class="btn-new" onclick="openNovaAuditoria()" style="margin:0 auto">＋ Nova Auditoria</button>' : '') +

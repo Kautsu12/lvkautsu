@@ -267,7 +267,7 @@ function renderTable() {
   });
   var body = document.getElementById('table-body');
   if (!rows.length) {
-    body.innerHTML = '<div class="empty-state"><div class="empty-icon">📋</div><div class="empty-title">Nenhuma auditoria MTE</div><div class="empty-sub">Clique em "Nova Auditoria MTE" para começar</div></div>';
+    body.innerHTML = '<div class="empty-state"><img src="/assets/mascot/metis-mascote-analisando.svg" alt="" style="width:112px;height:auto;margin:0 auto 8px;display:block"><div class="empty-title">Nenhuma auditoria MTE</div><div class="empty-sub">Clique em "Nova Auditoria MTE" para começar</div></div>';
     return;
   }
   var html = '<table><thead><tr>' +

@@ -1504,7 +1504,7 @@ function renderRecents(records) {
     .sort(function(a,b){ return new Date(b.savedAt) - new Date(a.savedAt); })
     .slice(0, 5);
   if (!top5.length) {
-    container.innerHTML = '<div style="text-align:center;color:#94a3b8;padding:30px 0">Nenhuma atividade ainda</div>';
+    container.innerHTML = '<div class="metis-state metis-state--sm"><img src="/assets/mascot/metis-mascote-vigia.svg" alt=""><p>Nenhuma atividade ainda</p></div>';
     return;
   }
   container.innerHTML = top5.map(function(r){
@@ -3102,16 +3102,16 @@ applyRev();
 <button id="thBtn" onclick="tgThemeIdx()" title="Tema claro/escuro" aria-label="Tema" style="position:fixed;bottom:70px;right:16px;z-index:9999;width:42px;height:42px;border-radius:50%;border:none;cursor:pointer;background:#1565c0;color:#fff;font-size:18px;line-height:1;box-shadow:0 6px 18px rgba(0,0,0,.35)">🌙</button>
 
 <!-- Central de Ajuda (IA) -->
-<button id="ajudaBtn" onclick="ajudaToggle(true)" title="Central de Ajuda" aria-label="Central de Ajuda" style="position:fixed;bottom:16px;right:16px;z-index:9999;width:46px;height:46px;border-radius:50%;border:none;cursor:pointer;background:#1565c0;color:#fff;font-size:22px;line-height:1;box-shadow:0 6px 18px rgba(0,0,0,.35)">💬</button>
+<button id="ajudaBtn" onclick="ajudaToggle(true)" title="Central de Ajuda — Coruja METIS" aria-label="Central de Ajuda" style="position:fixed;bottom:16px;right:16px;z-index:9999;width:60px;height:60px;border-radius:50%;border:2px solid #fff;cursor:pointer;background:#eef2f6;padding:4px;overflow:hidden;box-shadow:0 8px 22px rgba(34,48,63,.32)"><img src="/assets/mascot/metis-mascote-aceno.svg" alt="" style="width:100%;height:100%;object-fit:contain;display:block"></button>
 <div id="ajudaPanel" style="display:none;position:fixed;bottom:16px;right:16px;z-index:10000;width:min(380px,94vw);height:min(560px,82vh);background:#fff;border-radius:14px;box-shadow:0 12px 40px rgba(0,0,0,.35);flex-direction:column;overflow:hidden;border:1px solid #e2e8f0">
   <div style="background:#0d2137;color:#fff;padding:12px 14px;display:flex;align-items:center;justify-content:space-between">
-    <div style="display:flex;align-items:center;gap:9px"><span style="font-size:18px">💬</span><div><div style="font-weight:700;font-size:14px">Central de Ajuda</div><div style="font-size:11px;color:#9fb3c8">Dúvidas sobre o sistema</div></div></div>
+    <div style="display:flex;align-items:center;gap:9px"><img src="/assets/mascot/metis-mascote-vigia.svg" alt="" style="width:30px;height:30px;flex:none"><div><div style="font-weight:700;font-size:14px">Coruja METIS</div><div style="font-size:11px;color:#9fb3c8">Ajuda do sistema</div></div></div>
     <button onclick="ajudaToggle(false)" aria-label="Fechar" style="background:none;border:0;color:#fff;font-size:22px;cursor:pointer;line-height:1">×</button>
   </div>
   <div id="ajudaMsgs" style="flex:1;overflow:auto;padding:14px;background:#f4f6f8;display:flex;flex-direction:column;gap:10px"></div>
   <div style="padding:10px;border-top:1px solid #e2e8f0;display:flex;gap:8px;background:#fff">
     <textarea id="ajudaInput" rows="1" placeholder="Escreva sua dúvida..." onkeydown="ajudaKey(event)" style="flex:1;resize:none;max-height:90px;padding:9px 11px;border:1px solid #cbd5e1;border-radius:9px;font-size:13px;font-family:inherit;outline:none"></textarea>
-    <button id="ajudaSendBtn" onclick="ajudaSend()" aria-label="Enviar" style="background:#1565c0;color:#fff;border:0;border-radius:9px;padding:0 15px;cursor:pointer;font-weight:700;font-size:16px">➤</button>
+    <button id="ajudaSendBtn" onclick="ajudaSend()" aria-label="Enviar" style="background:#2C6E8E;color:#fff;border:0;border-radius:9px;padding:0 15px;cursor:pointer;font-weight:700;font-size:16px">➤</button>
   </div>
 </div>
 <script>
@@ -3120,7 +3120,7 @@ function ajudaToggle(open){
   var p=document.getElementById('ajudaPanel'), b=document.getElementById('ajudaBtn');
   if(!p||!b) return;
   if(open){ p.style.display='flex'; b.style.display='none';
-    if(!window._ajudaMsgs.length){ ajudaPush('model','Olá! Sou a Central de Ajuda do Central SGI. Me pergunte como fazer algo no sistema — por exemplo: "como cadastro um terceiro?" ou "como aprovo um documento?".'); }
+    if(!window._ajudaMsgs.length){ ajudaPush('model','Olá! Eu sou a Coruja METIS 🦉 — conheço todo o sistema e ajudo você. Pergunte, por exemplo: "como crio uma auditoria interna?", "como vejo os vencimentos?" ou "o que aparece nos Relatórios?".'); }
     setTimeout(function(){ var i=document.getElementById('ajudaInput'); if(i) i.focus(); },60);
   } else { p.style.display='none'; b.style.display='flex'; }
 }
