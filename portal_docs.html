@@ -66,6 +66,8 @@
   body.dark .wdoc{border-color:#222c3b}
   body.dark .loading{color:#9fb3c8}
 </style>
+  <link rel="icon" href="/assets/favicon.svg">
+  <link rel="stylesheet" href="/assets/brand.css">
 </head>
 <body>
 <header>
@@ -137,7 +139,7 @@ async function carregar(){
   catch(e){ document.getElementById('list').innerHTML='<div class="loading">Erro de conexão.</div>'; return; }
   if(r.status===401){ window.location.href='/portal.html'; return; }
   const data=await r.json();
-  if(!data.ok || !data.terceiro){ document.getElementById('list').innerHTML='<div class="loading">Nenhum cadastro vinculado ao seu acesso. Fale com o administrador.</div>'; return; }
+  if(!data.ok || !data.terceiro){ document.getElementById('list').innerHTML='<div class="metis-state"><img src="/assets/mascot/metis-mascote-analisando.svg" alt=""><h4>Nada por aqui ainda</h4><p>Nenhum cadastro vinculado ao seu acesso. Fale com o administrador.</p></div>'; return; }
   document.getElementById('hdrEmp').textContent=data.terceiro.razaoSocial||'Fornecedor';
   DOCS=data.docs||[]; WORKERS=data.workers||[];
   render();

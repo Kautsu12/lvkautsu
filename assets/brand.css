@@ -1,0 +1,75 @@
+/* ==========================================================================
+   METIS — Sistema de marca compartilhado
+   Marca: coruja-vigia + olho-constelação. Auditoria / gestão integrada.
+   Paleta: petrol #2C6E8E · midnight #2B3F5C · turquesa #1FA59E · belly #DCE6EC
+   Inclua:  <link rel="stylesheet" href="/assets/brand.css">
+   ========================================================================== */
+:root{
+  --metis-petrol:#2C6E8E;
+  --metis-petrol-dark:#245F7C;
+  --metis-midnight:#2B3F5C;
+  --metis-turq:#1FA59E;
+  --metis-turq-bright:#2FD0C6;
+  --metis-belly:#DCE6EC;
+  --metis-ink:#22303f;       /* texto principal */
+  --metis-slate:#5b6b7e;     /* texto secundário */
+  --metis-muted:#8698a8;     /* apagado */
+  --metis-line:#e2e8ee;
+  --metis-bg:#eef2f6;
+  --metis-card:#ffffff;
+  --metis-charcoal:#1A2230;  /* dark mode base */
+  --metis-radius:12px;
+  --metis-radius-sm:8px;
+  --metis-display:'Space Grotesk','Segoe UI',system-ui,Arial,sans-serif;
+  --metis-body:'Segoe UI',system-ui,-apple-system,Arial,sans-serif;
+}
+
+/* Higiene global (segura) */
+::selection{ background:rgba(31,165,158,.20); }
+:focus-visible{ outline:none; box-shadow:0 0 0 3px rgba(31,165,158,.45); border-radius:4px; }
+@media (prefers-reduced-motion:reduce){ *{ transition:none !important; animation:none !important; } }
+
+/* Wordmark METIS */
+.metis-wordmark{ font-family:var(--metis-display);font-weight:600;letter-spacing:.14em;
+  text-transform:uppercase;color:var(--metis-midnight);line-height:1; }
+.metis-tagline{ font-family:var(--metis-body);font-size:10.5px;color:var(--metis-muted);
+  text-transform:uppercase;letter-spacing:.18em; }
+
+/* Logo mark (usa o SVG copiado) */
+.metis-mark{ display:block; }
+.metis-mark--sm{ width:30px;height:30px; }
+.metis-mark--md{ width:40px;height:40px; }
+.metis-mark--lg{ width:58px;height:58px; }
+
+/* Mascote */
+.metis-mascot{ display:block; }
+.metis-mascot--sm{ width:56px; }
+.metis-mascot--md{ width:96px; }
+.metis-mascot--lg{ width:140px; }
+
+/* Botão da marca */
+.metis-btn{ font-family:var(--metis-body);font-size:14px;font-weight:600;cursor:pointer;
+  padding:11px 16px;border-radius:10px;border:1px solid var(--metis-line);
+  background:var(--metis-card);color:var(--metis-ink);
+  display:inline-flex;align-items:center;justify-content:center;gap:9px;transition:.15s; }
+.metis-btn:hover{ border-color:#9fb0c0;box-shadow:0 8px 20px -12px rgba(34,48,63,.4); }
+.metis-btn--primary{ background:var(--metis-petrol);border-color:var(--metis-petrol);color:#fff; }
+.metis-btn--primary:hover{ background:#255d78; }
+
+/* Chips de estado (casam com as poses do mascote) */
+.metis-chip{ display:inline-flex;align-items:center;gap:6px;font-family:var(--metis-body);
+  font-size:12px;font-weight:600;padding:3px 10px;border-radius:999px;
+  background:rgba(31,165,158,.12);color:#0e6f69; }
+.metis-chip--warn{ background:rgba(245,158,11,.14);color:#96650a; }
+.metis-chip--err{ background:rgba(225,74,74,.12);color:#a32d2d; }
+.metis-chip--info{ background:rgba(44,110,142,.12);color:#245f7c; }
+
+/* Estado com mascote (vazio / carregando / erro / aprovado) */
+.metis-state{ display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:12px;text-align:center;padding:38px 20px;font-family:var(--metis-body); }
+.metis-state img{ width:118px;height:auto;display:block; }
+.metis-state h4{ margin:0;font-size:16px;font-weight:600;color:var(--metis-ink); }
+.metis-state p{ margin:0;font-size:13px;color:var(--metis-muted);max-width:340px;line-height:1.5; }
+.metis-state--sm img{ width:82px; }
+@keyframes metis-bob{ 0%,100%{transform:translateY(0)} 50%{transform:translateY(-6px)} }
+.metis-loading img{ animation:metis-bob 1.5s ease-in-out infinite; }

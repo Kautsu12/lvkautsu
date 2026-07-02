@@ -3,23 +3,27 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Central SGI — Acesso restrito</title>
+<title>METIS · Central SGI — Acesso restrito</title>
+<link rel="icon" href="/assets/favicon.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
 <style>
   :root{
-    --bg:#e9eef5; --grid:rgba(14,35,54,.045); --glow:rgba(37,99,235,.10);
-    --card:#ffffff; --card-line:#e7ecf3; --card-shadow:0 30px 70px -28px rgba(14,35,54,.45);
-    --ink:#0e2336; --muted:#5b6b7e; --faint:#90a0b3;
-    --line:#e2e8f0; --tile1:#13314f; --tile2:#0b2238; --check:#34d399;
-    --btn-bg:#ffffff; --btn-line:#cdd7e3; --btn-ink:#1f2d3d; --btn-bg-h:#f6f9fc; --btn-line-h:#93a4b8;
-    --ring:#2563eb; --err-bg:#fdeaea; --err-ink:#b42323; --err-line:#f6c9c9;
+    --bg:#e8eef3; --grid:rgba(44,110,142,.06); --glow:rgba(31,165,158,.12);
+    --card:#ffffff; --line:#e7ecf2; --shadow:0 30px 70px -30px rgba(34,48,63,.45);
+    --ink:#22303f; --muted:#8698a8; --slate:#5b6b7e;
+    --rule:#e6ebf1; --petrol:#2C6E8E; --midnight:#2B3F5C; --turq:#1FA59E;
+    --btn-bg:#fff; --btn-line:#cdd8e2; --btn-ink:#243141; --btn-bg-h:#f5f9fc; --btn-line-h:#9fb2c2;
+    --err-bg:#fdeced; --err-ink:#b42d2d; --err-line:#f4cccd;
   }
   body.dark{
-    --bg:#0a1422; --grid:rgba(255,255,255,.035); --glow:rgba(37,99,235,.16);
-    --card:#111d2e; --card-line:#21344b; --card-shadow:0 30px 70px -26px rgba(0,0,0,.7);
-    --ink:#eaf0f8; --muted:#90a4ba; --faint:#64778d;
-    --line:#243a52; --tile1:#1b3a5c; --tile2:#0d2236; --check:#34d399;
-    --btn-bg:#16263b; --btn-line:#33485f; --btn-ink:#e6edf6; --btn-bg-h:#1c3149; --btn-line-h:#46607c;
-    --ring:#5b8bff; --err-bg:#3a1b1b; --err-ink:#fca5a5; --err-line:#5a2a2a;
+    --bg:#1A2230; --grid:rgba(255,255,255,.04); --glow:rgba(31,165,158,.16);
+    --card:#141d2b; --line:#26344a; --shadow:0 30px 70px -28px rgba(0,0,0,.7);
+    --ink:#e9eef6; --muted:#7f92a6; --slate:#9fb0c2;
+    --rule:#243248; --petrol:#4A90AE; --midnight:#cdd8e6; --turq:#2FD0C6;
+    --btn-bg:#182335; --btn-line:#33465e; --btn-ink:#e7eef7; --btn-bg-h:#1e2c41; --btn-line-h:#46607c;
+    --err-bg:#3a1b1c; --err-ink:#fca5a5; --err-line:#5a2a2b;
   }
   *{box-sizing:border-box;margin:0;padding:0}
   html,body{height:100%}
@@ -27,7 +31,7 @@
     font-family:'Segoe UI',system-ui,-apple-system,Arial,sans-serif;color:var(--ink);
     background-color:var(--bg);
     background-image:
-      radial-gradient(900px 460px at 50% -10%, var(--glow), transparent 70%),
+      radial-gradient(880px 440px at 50% -12%, var(--glow), transparent 70%),
       linear-gradient(var(--grid) 1px, transparent 1px),
       linear-gradient(90deg, var(--grid) 1px, transparent 1px);
     background-size:100% 100%, 30px 30px, 30px 30px;
@@ -35,54 +39,44 @@
     transition:background-color .25s ease;
   }
   .card{
-    background:var(--card);border:1px solid var(--card-line);border-radius:20px;
-    padding:38px 34px 26px;width:392px;max-width:94vw;text-align:center;
-    box-shadow:var(--card-shadow);position:relative;
+    background:var(--card);border:1px solid var(--line);border-radius:20px;
+    padding:34px 34px 26px;width:400px;max-width:94vw;text-align:center;
+    box-shadow:var(--shadow);position:relative;
   }
-  /* Selo de conformidade — o elemento-assinatura */
-  .seal{
-    width:62px;height:62px;margin:0 auto 18px;border-radius:16px;
-    background:linear-gradient(155deg,var(--tile1),var(--tile2));
-    display:flex;align-items:center;justify-content:center;
-    box-shadow:0 10px 22px -8px rgba(11,34,56,.55), inset 0 1px 0 rgba(255,255,255,.08);
-  }
-  .seal svg{width:30px;height:30px}
-  .wordmark{font-size:25px;font-weight:700;letter-spacing:-.02em;line-height:1.05}
-  .wordmark b{color:var(--ink)}
-  .wordmark span{color:var(--ring)}
-  .tagline{font-size:10.5px;color:var(--faint);text-transform:uppercase;letter-spacing:.22em;margin-top:7px}
-  .rule{height:1px;background:var(--line);margin:22px 0 16px}
-  .eyebrow{font-size:12px;font-weight:600;color:var(--muted);letter-spacing:.02em;margin-bottom:16px}
-  .err{
-    background:var(--err-bg);color:var(--err-ink);border:1px solid var(--err-line);
-    padding:10px 13px;border-radius:10px;font-size:13px;margin-bottom:15px;display:none;text-align:left;line-height:1.4;
-  }
-  .btn{
-    width:100%;padding:13px 16px;background:var(--btn-bg);border:1.5px solid var(--btn-line);
+  .mascot{width:104px;height:auto;margin:2px auto 12px;display:block;filter:drop-shadow(0 10px 18px rgba(34,48,63,.12))}
+  .brandrow{display:flex;align-items:center;justify-content:center;gap:10px}
+  .brandrow img{width:26px;height:26px;display:block}
+  .wordmark{font-family:'Space Grotesk','Segoe UI',sans-serif;font-weight:600;
+    font-size:27px;letter-spacing:.16em;text-transform:uppercase;color:var(--midnight)}
+  .tagline{font-size:10.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.2em;margin-top:8px}
+  .rule{height:1px;background:var(--rule);margin:20px 0 15px}
+  .eyebrow{font-size:12px;font-weight:600;color:var(--slate);margin-bottom:15px}
+  .err{background:var(--err-bg);color:var(--err-ink);border:1px solid var(--err-line);
+    padding:10px 13px;border-radius:10px;font-size:13px;margin-bottom:14px;display:none;text-align:left;line-height:1.4}
+  .btn{width:100%;padding:13px 16px;background:var(--btn-bg);border:1.5px solid var(--btn-line);
     border-radius:12px;font-size:15px;font-weight:600;color:var(--btn-ink);cursor:pointer;
     display:flex;align-items:center;justify-content:center;gap:11px;
-    transition:background .15s,border-color .15s,box-shadow .15s,transform .06s;
-  }
-  .btn:hover{background:var(--btn-bg-h);border-color:var(--btn-line-h);box-shadow:0 8px 20px -10px rgba(14,35,54,.4)}
+    transition:background .15s,border-color .15s,box-shadow .15s,transform .06s}
+  .btn:hover{background:var(--btn-bg-h);border-color:var(--btn-line-h);box-shadow:0 8px 20px -10px rgba(34,48,63,.4)}
   .btn:active{transform:translateY(1px)}
-  .btn:focus-visible{outline:none;box-shadow:0 0 0 3px var(--ring)}
-  .helper{font-size:12.5px;color:var(--muted);margin-top:15px}
-  .foot{font-size:11px;color:var(--faint);margin-top:24px}
-  .credit{position:fixed;bottom:14px;left:0;right:0;text-align:center;color:var(--faint);opacity:.7;font-size:10px;padding:0 12px}
-  .theme-btn{
-    position:fixed;bottom:16px;right:16px;z-index:9999;width:42px;height:42px;border-radius:50%;
-    border:1px solid var(--card-line);cursor:pointer;background:var(--card);color:var(--ink);
-    font-size:17px;line-height:1;box-shadow:0 8px 20px -8px rgba(0,0,0,.4)}
+  .btn:focus-visible{outline:none;box-shadow:0 0 0 3px var(--turq)}
+  .helper{font-size:12.5px;color:var(--slate);margin-top:14px}
+  .foot{font-size:11px;color:var(--muted);margin-top:22px}
+  .credit{position:fixed;bottom:14px;left:0;right:0;text-align:center;color:var(--muted);opacity:.7;font-size:10px;padding:0 12px}
+  .theme-btn{position:fixed;bottom:16px;right:16px;z-index:9999;width:42px;height:42px;border-radius:50%;
+    border:1px solid var(--line);cursor:pointer;background:var(--card);color:var(--ink);font-size:17px;line-height:1;
+    box-shadow:0 8px 20px -8px rgba(0,0,0,.4)}
   @media (prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
 </head>
 <body>
   <main class="card">
-    <div class="seal" aria-hidden="true">
-      <svg viewBox="0 0 24 24" fill="none" stroke="var(--check)" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+    <img class="mascot" src="/assets/mascot/metis-mascote-vigia.svg" alt="Mascote METIS — coruja vigia">
+    <div class="brandrow">
+      <img src="/assets/metis-icon.svg" alt="">
+      <span class="wordmark">METIS</span>
     </div>
-    <div class="wordmark"><b>Central</b> <span>SGI</span></div>
-    <div class="tagline">Sistema de Gestão Integrada</div>
+    <div class="tagline">Central SGI · Sistema de Gestão Integrada</div>
 
     <div class="rule"></div>
     <div class="eyebrow">Acesso restrito</div>
@@ -97,7 +91,7 @@
     <div class="helper">Use sua conta Google autorizada.</div>
     <div class="foot">Apenas usuários autorizados têm acesso.</div>
   </main>
-  <div class="credit">Desenvolvido por Ayrton Ribeiro e Jucelio F. Santos.</div>
+  <div class="credit">METIS · desenvolvido por Ayrton Ribeiro e Jucelio F. Santos.</div>
 
 <button id="thBtn" class="theme-btn" onclick="tgTheme()" title="Tema claro/escuro" aria-label="Alternar tema">🌙</button>
 <script>
