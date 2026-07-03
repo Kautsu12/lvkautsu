@@ -206,38 +206,39 @@ html, body { height: 100%; font-family: 'IBM Plex Sans', sans-serif; background:
 .page-sub { font-size: 13px; color: #64748b; margin-top: 2px; }
 
 /* ── KPI GRID ── */
-.kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px; margin: 20px 0; }
+.kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 16px; margin: 20px 0; }
 .kpi-card {
   background: var(--card); border: 1px solid var(--border);
-  border-radius: 12px; padding: 18px 20px;
+  border-radius: 14px; padding: 18px 20px;
   display: flex; flex-direction: column; gap: 10px;
-  transition: border-color .2s, background .2s;
+  transition: transform .16s ease, box-shadow .16s ease, border-color .2s;
   position: relative; overflow: hidden;
+  box-shadow: 0 1px 2px rgba(34,48,63,.05);
 }
 .kpi-card::before {
-  content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
+  content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
 }
-.kpi-card.green::before  { background: var(--green); }
+.kpi-card.green::before  { background: #1FA59E; }
 .kpi-card.amber::before  { background: var(--amber); }
 .kpi-card.red::before    { background: var(--red); }
-.kpi-card.blue::before   { background: var(--blue); }
+.kpi-card.blue::before   { background: #2C6E8E; }
 .kpi-card.purple::before { background: var(--purple); }
-.kpi-card.cyan::before   { background: var(--cyan); }
-.kpi-card:hover { border-color: var(--border2); background: var(--card2); }
+.kpi-card.cyan::before   { background: #1FA59E; }
+.kpi-card:hover { border-color: #bcd0dd; transform: translateY(-2px); box-shadow: 0 14px 28px -16px rgba(34,48,63,.4); }
 .kpi-icon {
-  width: 36px; height: 36px; border-radius: 8px;
-  display: flex; align-items: center; justify-content: center; font-size: 18px;
+  width: 40px; height: 40px; border-radius: 11px;
+  display: flex; align-items: center; justify-content: center; font-size: 19px;
 }
-.kpi-icon.green  { background: rgba(16,185,129,.15); }
+.kpi-icon.green  { background: rgba(31,165,158,.14); }
 .kpi-icon.amber  { background: rgba(245,158,11,.15); }
-.kpi-icon.red    { background: rgba(239,68,68,.15); }
-.kpi-icon.blue   { background: rgba(26,86,219,.15); }
+.kpi-icon.red    { background: rgba(239,68,68,.14); }
+.kpi-icon.blue   { background: rgba(44,110,142,.14); }
 .kpi-icon.purple { background: rgba(139,92,246,.15); }
-.kpi-icon.cyan   { background: rgba(6,182,212,.15); }
+.kpi-icon.cyan   { background: rgba(31,165,158,.14); }
 .kpi-row { display: flex; align-items: flex-start; justify-content: space-between; }
-.kpi-val { font-size: 28px; font-weight: 700; font-family: 'IBM Plex Mono', monospace; line-height: 1; }
-.kpi-label { font-size: 12px; color: #334155; font-weight: 500; margin-top: 4px; }
-.kpi-delta { font-size: 11px; color: var(--green); display: flex; align-items: center; gap: 3px; margin-top: 6px; }
+.kpi-val { font-size: 30px; font-weight: 700; font-family: 'Space Grotesk','IBM Plex Mono', monospace; line-height: 1; color: #2B3F5C; letter-spacing: -.01em; }
+.kpi-label { font-size: 12px; color: #5b6b7e; font-weight: 500; margin-top: 4px; }
+.kpi-delta { font-size: 11px; color: #0e6f69; display: flex; align-items: center; gap: 3px; margin-top: 6px; }
 .kpi-delta.down { color: var(--red); }
 .kpi-delta.neutral { color: var(--text3); }
 
@@ -1077,16 +1078,16 @@ function buildRadar() {
       datasets: [{
         label: 'Maturidade atual',
         data: [3.8, 4.2, 3.5, 4.0, 3.9, 3.7, 3.6, 4.1],
-        backgroundColor: 'rgba(26,86,219,0.15)',
-        borderColor: 'rgba(26,86,219,0.8)',
+        backgroundColor: 'rgba(44,110,142,0.16)',
+        borderColor: 'rgba(44,110,142,0.85)',
         borderWidth: 2,
-        pointBackgroundColor: '#1a56db',
+        pointBackgroundColor: '#2C6E8E',
         pointRadius: 4,
       },{
         label: 'Meta',
         data: [5,5,5,5,5,5,5,5],
-        backgroundColor: 'rgba(16,185,129,0.05)',
-        borderColor: 'rgba(16,185,129,0.3)',
+        backgroundColor: 'rgba(31,165,158,0.06)',
+        borderColor: 'rgba(31,165,158,0.45)',
         borderWidth: 1,
         borderDash: [4,4],
         pointRadius: 0,
@@ -1097,14 +1098,14 @@ function buildRadar() {
       scales: {
         r: {
           min: 0, max: 5,
-          ticks: { stepSize: 1, color: '#64748b', font: { size: 10 }, backdropColor: '#ffffff' },
+          ticks: { stepSize: 1, color: '#64748b', font: { size: 10 }, backdropColor: 'transparent' },
           grid: { color: 'rgba(0,0,0,0.08)' },
           angleLines: { color: 'rgba(0,0,0,0.08)' },
-          pointLabels: { color: '#1e3a5f', font: { size: 11, family: 'IBM Plex Sans' } }
+          pointLabels: { color: '#2B3F5C', font: { size: 11, family: 'IBM Plex Sans' } }
         }
       },
       plugins: {
-        legend: { labels: { color: '#1e3a5f', font: { size: 11 }, boxWidth: 12 } }
+        legend: { labels: { color: '#2B3F5C', font: { size: 11 }, boxWidth: 12 } }
       }
     }
   });
@@ -1992,7 +1993,7 @@ function renderDashboard() {
   if (elSec) {
     if (!sectorRows.length) elSec.innerHTML = '<div style="text-align:center;color:#94a3b8;padding:30px">Sem dados</div>';
     else elSec.innerHTML = sectorRows.map(function(r){
-      var color = r.pct >= 80 ? 'var(--green)' : r.pct >= 50 ? 'var(--amber)' : 'var(--red)';
+      var color = r.pct >= 80 ? '#1FA59E' : r.pct >= 50 ? 'var(--amber)' : 'var(--red)';
       return '<div class="progress-row">' +
         '<span class="progress-label">' + _esc(r.name) + '</span>' +
         '<div class="progress-track"><div class="progress-fill" style="width:' + r.pct + '%;background:' + color + '"></div></div>' +
@@ -3099,7 +3100,7 @@ function openSobre(){
 function closeSobre(){ document.getElementById('sobreBg').style.display='none'; }
 applyRev();
 </script>
-<button id="thBtn" onclick="tgThemeIdx()" title="Tema claro/escuro" aria-label="Tema" style="position:fixed;bottom:70px;right:16px;z-index:9999;width:42px;height:42px;border-radius:50%;border:none;cursor:pointer;background:#1565c0;color:#fff;font-size:18px;line-height:1;box-shadow:0 6px 18px rgba(0,0,0,.35)">🌙</button>
+
 
 <!-- Central de Ajuda (IA) -->
 <button id="ajudaBtn" onclick="ajudaToggle(true)" title="Central de Ajuda — Coruja METIS" aria-label="Central de Ajuda" style="position:fixed;bottom:16px;right:16px;z-index:9999;width:60px;height:60px;border-radius:50%;border:2px solid #fff;cursor:pointer;background:#eef2f6;padding:4px;overflow:hidden;box-shadow:0 8px 22px rgba(34,48,63,.32)"><img src="/assets/mascot/metis-mascote-aceno.svg" alt="" style="width:100%;height:100%;object-fit:contain;display:block"></button>
