@@ -192,11 +192,11 @@
   .cbus{position:relative;display:flex;justify-content:space-around;height:24px;padding:0 46px;margin:1px 0}
   .cbus::before{content:'';position:absolute;left:9%;right:9%;top:50%;height:2px;background:#c4d2df;transform:translateY(-50%)}
   .cbus span{position:relative;z-index:1;color:var(--petrol);font-size:13px;line-height:24px}
-  .mrow{display:grid;gap:10px}
-  .mrow.strat{grid-template-columns:minmax(220px,320px);justify-content:center}
+  .mgrid{display:grid;gap:10px}
+  .mgrid.strat{grid-template-columns:minmax(220px,320px);justify-content:center}
   .chainwrap{overflow-x:auto;padding-bottom:3px}
-  .mrow.chain{display:flex;gap:0;min-width:min-content}
-  .mrow.support{grid-template-columns:repeat(auto-fit,minmax(142px,1fr))}
+  .mgrid.chain{display:flex;gap:0;min-width:min-content}
+  .mgrid.support{grid-template-columns:repeat(auto-fit,minmax(142px,1fr))}
   .mcard{cursor:pointer;border-radius:11px;color:#fff;padding:15px 14px;text-align:center;position:relative;transition:.15s;min-height:64px;display:flex;flex-direction:column;justify-content:center;box-shadow:0 10px 22px -16px rgba(20,32,46,.7)}
   .mcard:hover{transform:translateY(-2px);filter:brightness(1.07)}
   .mcard .cd{font-family:var(--disp);font-weight:700;font-size:10.5px;letter-spacing:.04em;opacity:.82}
@@ -205,7 +205,7 @@
   .mcard:hover .x{opacity:.8}
   .mcard.e{background:linear-gradient(155deg,var(--mid),#1d2c40)}
   .mcard.c{background:linear-gradient(155deg,var(--petrol),var(--petrol-d));flex:1 0 152px;margin-left:-13px;padding-left:30px;border-radius:6px;clip-path:polygon(0 0,calc(100% - 18px) 0,100% 50%,calc(100% - 18px) 100%,0 100%,18px 50%)}
-  .mrow.chain .mcard.c:first-child{margin-left:0;padding-left:16px;clip-path:polygon(0 0,calc(100% - 18px) 0,100% 50%,calc(100% - 18px) 100%,0 100%)}
+  .mgrid.chain .mcard.c:first-child{margin-left:0;padding-left:16px;clip-path:polygon(0 0,calc(100% - 18px) 0,100% 50%,calc(100% - 18px) 100%,0 100%)}
   .mcard.a{background:linear-gradient(155deg,#3f7f96,var(--petrol-d))}
   .addm{border:1.4px dashed #c2d0dd;background:transparent;color:var(--slate);border-radius:9px;padding:7px 12px;cursor:pointer;font-weight:600;font-size:11.5px;font-family:var(--disp);margin-top:11px}
   .addm:hover{border-color:var(--petrol);color:var(--petrol)}
@@ -321,17 +321,17 @@ function mapaHTML(){var m=state.mapa||(state.mapa=seedMapa());var nCli=m.itens.f
  var mapNames=m.itens.map(function(it){return (it.nome||'').trim().toLowerCase();});
  var orphans=state.processos.filter(function(p){return mapNames.indexOf((p.nome||'').trim().toLowerCase())<0;});
  var outros='';
- if(orphans.length){outros='<div class="conn">▼</div><div class="tier"><div class="tl">Outros processos cadastrados</div><div class="mrow support">'+orphans.map(function(p){return '<div class="mcard a" data-openid="'+p.id+'"><div class="cd">MCR-'+esc(p.codigo||'--')+'</div><div class="nm">'+esc(p.nome)+'</div></div>';}).join('')+'</div></div>';}
+ if(orphans.length){outros='<div class="conn">▼</div><div class="tier"><div class="tl">Outros processos cadastrados</div><div class="mgrid support">'+orphans.map(function(p){return '<div class="mcard a" data-openid="'+p.id+'"><div class="cd">MCR-'+esc(p.codigo||'--')+'</div><div class="nm">'+esc(p.nome)+'</div></div>';}).join('')+'</div></div>';}
  var swE='linear-gradient(155deg,var(--mid),#1d2c40)',swC='linear-gradient(155deg,var(--petrol),var(--petrol-d))',swA='linear-gradient(155deg,#3f7f96,var(--petrol-d))';
  return '<div class="macro">'+
   '<div class="macro-h"><h2 contenteditable="true" data-mh="titulo">'+esc(m.titulo)+'</h2><div class="un" contenteditable="true" data-mh="unidades">'+esc(m.unidades)+'</div></div>'+
   '<div class="rails"><div class="rail"><span>Requisitos de clientes / partes interessadas</span></div>'+
    '<div class="tiers">'+
-    '<div class="tier"><div class="tl">Processos Estratégicos</div><div class="mrow strat">'+estrat+'</div><div style="text-align:center"><button class="addm" data-add="estrategico">＋ estratégico</button></div></div>'+
+    '<div class="tier"><div class="tl">Processos Estratégicos</div><div class="mgrid strat">'+estrat+'</div><div style="text-align:center"><button class="addm" data-add="estrategico">＋ estratégico</button></div></div>'+
     busArr('down',nCli)+
-    '<div class="tier"><div class="tl">Processos Voltados ao Cliente</div><div class="chainwrap"><div class="mrow chain">'+cli+'</div></div><div style="text-align:center"><button class="addm" data-add="cliente">＋ processo</button></div></div>'+
+    '<div class="tier"><div class="tl">Processos Voltados ao Cliente</div><div class="chainwrap"><div class="mgrid chain">'+cli+'</div></div><div style="text-align:center"><button class="addm" data-add="cliente">＋ processo</button></div></div>'+
     busArr('up',nCli)+
-    '<div class="tier"><div class="tl">Processos de Apoio e Gestão</div><div class="mrow support">'+apoio+'</div><div style="text-align:center"><button class="addm" data-add="apoio">＋ apoio</button></div></div>'+
+    '<div class="tier"><div class="tl">Processos de Apoio e Gestão</div><div class="mgrid support">'+apoio+'</div><div style="text-align:center"><button class="addm" data-add="apoio">＋ apoio</button></div></div>'+
     outros+
    '</div>'+
    '<div class="rail out"><span>Satisfação de clientes / partes interessadas</span></div>'+
@@ -523,8 +523,8 @@ function detIP(wb){for(var si=0;si<wb.SheetNames.length;si++){var nm=wb.SheetNam
    if(/^ip[\s\-]/.test(norm(nm))||flat.indexOf('interacao de processo')>=0||(flat.indexOf('recursos')>=0&&flat.indexOf('missao do processo')>=0)){var res=parseIPaoa(aoa);if(res&&ipTem(res.ip)){res.sheet=nm;return res;}}}
  return null;}
 function parseIPaoa(aoa){var ip=novoIP();var missao='';
- var zonas=[['recursos','recursos'],['maoDeObra','mao de obra'],['origem','origem'],['entradas','entradas'],['atividades','processo de'],['saidas','saida'],['destino','destino'],['metodos','metodo'],['medicao','medicao'],['missao','missao do processo']];
- function findLabel(pat){for(var r=0;r<aoa.length;r++){var row=aoa[r]||[];for(var c=0;c<row.length;c++){var t=norm(row[c]);if(t&&(t===pat||t.indexOf(pat)===0))return {r:r,c:c};}}return null;}
+ var zonas=[['recursos',['recursos']],['maoDeObra',['mao de obra','mao-de-obra']],['origem',['origem','fornecedor']],['entradas',['entradas','entrada']],['atividades',['processo da','processo de','processo do','atividades do']],['saidas',['saida']],['destino',['destino']],['metodos',['metodo']],['medicao',['medicao']],['missao',['missao do processo','missao']]];
+ function findLabel(pats){for(var r=0;r<aoa.length;r++){var row=aoa[r]||[];for(var c=0;c<row.length;c++){var t=norm(row[c]);if(!t)continue;for(var pi=0;pi<pats.length;pi++){var pat=pats[pi];if(t===pat||t.indexOf(pat)===0)return {r:r,c:c};}}}return null;}
  var pos={};zonas.forEach(function(z){var p=findLabel(z[1]);if(p)pos[z[0]]=p;});
  for(var r=0;r<aoa.length;r++){var row=aoa[r]||[];var brk=false;for(var c=0;c<row.length;c++){if(norm(row[c]).indexOf('dono do processo')>=0){var dl=splitLines(row[c]).filter(function(x){return norm(x).indexOf('dono do processo')<0;});if(dl.length)ip.dono=dl;brk=true;break;}}if(brk)break;}
  function contentFor(key){var p=pos[key];if(!p)return [];var r=p.r,c=p.c;var cEnd=((aoa[r]||[]).length)||99;for(var k in pos){if(pos[k].r===r&&pos[k].c>c&&pos[k].c<cEnd)cEnd=pos[k].c;}var items=[];for(var cc=c;cc<cEnd;cc++){var cell=(aoa[r+1]||[])[cc];if(cell==null||!String(cell).trim())continue;if(norm(cell).indexOf('dono do processo')>=0)continue;items=items.concat(splitLines(cell));}return items;}
@@ -637,11 +637,18 @@ function importExcel(ev){
  var rd=new FileReader();
  rd.onload=function(e){
   var wb;try{wb=XLSX.read(new Uint8Array(e.target.result),{type:'array',cellDates:true});}catch(err){alert('Não consegui abrir o Excel: '+(err.message||err));return;}
-  // Leitura direta puxa TUDO (IP da aba de interação + MCR da matriz), sem depender de IA.
-  var dip=detIP(wb);var dmcr=detMcr(wb);
+  // Com um processo aberto: procura em TODAS as abas a que corresponde a ele (por nome/código).
+  // Senão (ou se não achar): pega a primeira aba de IP e de MCR do arquivo.
+  var proc=(view==='proc')?P():null;var dip=null,dmcr=null;
+  if(proc){
+    var ipHit=findSheetFor(wb,proc,'ip');if(ipHit){var pr=parseIPaoa(ipHit.aoa);if(pr&&ipTem(pr.ip)){pr.sheet=ipHit.name;dip=pr;}}
+    var mcrHit=findSheetFor(wb,proc,'mcr');if(mcrHit){var mr=parseAoaMcr(mcrHit.aoa);if(mr&&mr.rows&&mr.rows.length){mr.sheet=mcrHit.name;dmcr=mr;}}
+  }
+  if(!dip)dip=detIP(wb);
+  if(!dmcr||!dmcr.rows||!dmcr.rows.length)dmcr=detMcr(wb);
   var ip=(dip&&ipTem(dip.ip))?dip.ip:null;var missao=dip?dip.missao:'';
-  var mcr=(dmcr.rows&&dmcr.rows.length)?dmcr.rows:null;
-  var procNome=dmcr.procNome||(dip&&dip.sheet)||'';
+  var mcr=(dmcr&&dmcr.rows&&dmcr.rows.length)?dmcr.rows:null;
+  var procNome=(dmcr&&dmcr.procNome)||(dip&&dip.sheet)||'';
   var src={nome:procNome,ipSheet:(dip&&dip.sheet)||'',mcrSheet:(dmcr&&dmcr.sheet)||''};
   if(ip||mcr){escolherImport(ip,mcr,procNome,file,missao,src);return;}
   // Nada reconhecido diretamente → tenta IA como reforço.
