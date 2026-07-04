@@ -28,7 +28,7 @@
   .btn:hover{border-color:#9fb2c2;box-shadow:0 8px 20px -12px rgba(34,48,63,.45)}
   .btn.pri{background:var(--petrol);border-color:var(--petrol);color:#fff}.btn.pri:hover{background:var(--petrol-d)}
   .btn.gh{border-color:transparent;background:transparent;padding:5px 8px}.btn.sm{padding:5px 9px;font-size:12px}
-  .wrap{display:grid;grid-template-columns:280px 1fr;gap:20px;max-width:1500px;margin:0 auto;padding:20px 22px 70px}
+  .wrap{max-width:1500px;margin:0 auto;padding:20px 22px 70px}
   .aside{align-self:start;position:sticky;top:76px}
   .aside h2{font-family:var(--disp);font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--mut);margin:2px 4px 10px}
   .plist{display:flex;flex-direction:column;gap:8px}
@@ -169,6 +169,41 @@
   .mmatrix{display:grid;grid-template-columns:52px repeat(3,1fr);grid-auto-rows:46px;gap:5px;margin-top:6px}
   .mmatrix .mc{border-radius:8px;display:flex;align-items:center;justify-content:center;color:#fff;font-family:var(--disp);font-weight:700;font-size:14px}
   .mmatrix .mhh{font-size:10.5px;color:var(--mut);font-weight:600;display:flex;align-items:center;justify-content:center;text-align:center}
+  /* ── Mapa geral (macro processos) ── */
+  .viewbtn{width:100%;border:1px solid var(--line);background:var(--card);border-radius:14px;padding:12px 14px;cursor:pointer;display:flex;align-items:center;gap:10px;font-weight:600;color:var(--mid);margin-bottom:10px;font-family:var(--disp);transition:.15s}
+  .viewbtn:hover{border-color:#c6d4e0}.viewbtn.on{border-color:var(--petrol);background:#eef5f9}
+  .viewbtn svg{width:18px;height:18px;stroke:var(--petrol);fill:none;stroke-width:1.8}
+  .macro{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:20px 22px 24px}
+  .macro-h{text-align:center;margin-bottom:18px}
+  .macro-h h2{font-family:var(--disp);font-size:21px;color:var(--mid);letter-spacing:.02em;outline:none}
+  .macro-h .un{font-family:var(--disp);font-size:14px;color:var(--petrol);font-weight:600;margin-top:2px;outline:none}
+  .macro-h .ap{font-size:12px;color:var(--slate);margin-top:7px}
+  .macro-h .ap [contenteditable]{outline:none;border-bottom:1px dashed transparent;padding:0 3px}.macro-h [contenteditable]:focus{background:#f2f7fb;border-radius:5px}.macro-h .ap [contenteditable]:hover{border-bottom-color:#cdd8e2}
+  .rails{display:grid;grid-template-columns:32px 1fr 32px;gap:12px;align-items:stretch}
+  .rail{background:linear-gradient(var(--petrol),var(--petrol-d));border-radius:10px;display:flex;align-items:center;justify-content:center}
+  .rail span{writing-mode:vertical-rl;transform:rotate(180deg);color:#fff;font-family:var(--disp);font-weight:600;font-size:10px;letter-spacing:.06em;text-transform:uppercase;text-align:center;padding:10px 0;line-height:1.3}
+  .rail.out{background:linear-gradient(var(--turq),var(--turq-d))}
+  .tiers{display:flex;flex-direction:column;gap:10px;min-width:0}
+  .tier{background:#f4f7fa;border:1px solid var(--line);border-radius:12px;padding:13px 15px 15px}
+  .tier .tl{font-family:var(--disp);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--mut);text-align:center;margin-bottom:12px;font-weight:700}
+  .strat{display:flex;justify-content:center}
+  .mcard{cursor:pointer;transition:.15s;border-radius:11px;position:relative;color:#fff}
+  .mcard:hover{transform:translateY(-2px);filter:brightness(1.06)}
+  .mcard .cd{font-family:var(--disp);font-weight:700;font-size:10.5px;letter-spacing:.04em;opacity:.85}
+  .mcard .nm{font-weight:700;font-size:12.5px;margin-top:2px;line-height:1.2}
+  .mcard .x{position:absolute;top:4px;right:7px;opacity:0;font-size:11px;cursor:pointer;color:rgba(255,255,255,.85)}
+  .mcard:hover .x{opacity:.8}
+  .mcard.e{background:linear-gradient(150deg,var(--mid),#1f2f45);padding:15px 26px;min-width:220px;text-align:center;box-shadow:0 14px 30px -18px rgba(43,63,92,.85)}
+  .chain{display:flex;gap:7px;flex-wrap:wrap;justify-content:center}
+  .mcard.c{background:linear-gradient(150deg,var(--petrol),var(--petrol-d));padding:16px 18px 16px 28px;flex:1;min-width:140px;text-align:center;clip-path:polygon(0 0,calc(100% - 15px) 0,100% 50%,calc(100% - 15px) 100%,0 100%,15px 50%);box-shadow:0 10px 22px -16px rgba(44,110,142,.9)}
+  .chain .mcard.c:first-child{clip-path:polygon(0 0,calc(100% - 15px) 0,100% 50%,calc(100% - 15px) 100%,0 100%)}
+  .support{display:grid;grid-template-columns:repeat(auto-fit,minmax(118px,1fr));gap:9px}
+  .mcard.a{background:linear-gradient(150deg,#3f7f96,var(--petrol-d));padding:13px 11px;text-align:center;min-height:56px;display:flex;flex-direction:column;justify-content:center}
+  .tierarrow{text-align:center;color:#bcccd9;font-size:16px;line-height:1;margin:-2px 0}
+  .addm{border:1.4px dashed #c2d0dd;background:transparent;color:var(--slate);border-radius:9px;padding:7px 12px;cursor:pointer;font-weight:600;font-size:11.5px;font-family:var(--disp);margin-top:10px}
+  .addm:hover{border-color:var(--petrol);color:var(--petrol)}
+  .maphint{text-align:center;color:var(--mut);font-size:11.5px;margin-top:14px}
+  @media(max-width:700px){.rails{grid-template-columns:1fr}.rail{display:none}}
   .foot{max-width:1500px;margin:0 auto;padding:0 22px 30px;color:var(--mut);font-size:11px;text-align:center}
   @media(prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
   @media(max-width:960px){.wrap{grid-template-columns:1fr}.ip{grid-template-columns:1fr 1fr;grid-auto-rows:auto}.ip>div{grid-column:auto!important;grid-row:auto!important}.mcr-table{min-width:0}}
@@ -190,7 +225,6 @@
   <button class="btn pri" onclick="salvar(true)">Salvar</button>
 </div>
 <div class="wrap">
-  <aside class="aside"><h2>Processos</h2><div class="plist" id="plist"></div><div style="height:8px"></div><button class="addp" onclick="addProc()">＋ Novo processo</button></aside>
   <main class="main" id="main"></main>
 </div>
 <div class="foot">Interação de Processo (IP) + Matriz de Classificação de Riscos (MCR) · dados salvos no navegador.</div>
@@ -198,7 +232,12 @@
 <aside class="drawer" id="drawer" aria-hidden="true"></aside>
 <div class="scrim center" id="mscrim" onclick="closeScale()"><div class="mbox" id="mbox" onclick="event.stopPropagation()"></div></div>
 <script>
-var LS='ip_mcr_v2'; var state=null, ativo=null, aba='ip', heatMode='atual', dIdx=null;
+var LS='ip_mcr_v2'; var state=null, ativo=null, aba='ip', heatMode='atual', dIdx=null, view='mapa';
+function seedMapa(){return {titulo:'Mapeamento de Processos',unidades:'Joinville / Resende / Curitiba',aprovado:'Bruna Schmoeller',itens:[
+ {codigo:'IP-001',nome:'Direção',cat:'estrategico'},
+ {codigo:'IP-003',nome:'Comercial',cat:'cliente'},{codigo:'IP-004',nome:'Produção',cat:'cliente'},{codigo:'IP-008',nome:'Manutenção',cat:'cliente'},{codigo:'IP-012',nome:'Laboratório',cat:'cliente'},{codigo:'IP-006',nome:'Logística',cat:'cliente'},
+ {codigo:'IP-002',nome:'Gestão Integrada',cat:'apoio'},{codigo:'IP-010',nome:'Manutenção',cat:'apoio'},{codigo:'IP-005',nome:'Compras / Recebimento',cat:'apoio'},{codigo:'IP-007',nome:'Gestão de Pessoas',cat:'apoio'},{codigo:'IP-009',nome:'Ambiental',cat:'apoio'},{codigo:'IP-011',nome:'SESMT',cat:'apoio'},{codigo:'IP-014',nome:'PCP',cat:'apoio'}
+]};}
 function uid(p){return p+Math.random().toString(36).slice(2,7);}
 function novoIP(){return {recursos:[],dono:[],maoDeObra:[],origem:[],entradas:[],atividades:[],saidas:[],destino:[],metodos:[],medicao:[]};}
 function novoRisco(){return {sub:'',categoria:'',norma:'',requisito:'',ro:'R',risco:'',conseq:'',barreira:'',grav:1,prob:1,perda:'',freq:'',acao:'',prazo:'',resp:'',dataReal:'',gravP:'',probP:'',eficaz:'',dataEfic:'',respEfic:''};}
@@ -234,7 +273,7 @@ function procAltaDirecao(){return {id:uid('p'),codigo:'AD',nome:'Alta Direção'
   {sub:'Sustentabilidade e pegada de carbono',categoria:'SGA',norma:'ISO 9001:2026 / ISO 14001:2015',requisito:'4.1 · 6.1',ro:'R',risco:'Pressão por redução da pegada de carbono; perda de contratos por não atender critérios de sustentabilidade',conseq:'Imagem prejudicada, exclusão de mercados sustentáveis',barreira:'Inventário de emissões, programa de redução de carbono, relatórios ESG',grav:2,prob:1}
  ]};}
 function carregar(){try{var r=localStorage.getItem(LS);if(r)state=JSON.parse(r);}catch(e){}if(!state||!state.processos)state=seed();migrar();ativo=state.processos[0]&&state.processos[0].id;}
-function migrar(){if(!state._seedAD){if(!state.processos.some(function(p){return /alta dire/i.test(p.nome||'');})){state.processos.push(procAltaDirecao());}state._seedAD=true;try{salvar();}catch(e){}}
+function migrar(){if(!state.mapa)state.mapa=seedMapa();if(!state._seedAD){if(!state.processos.some(function(p){return /alta dire/i.test(p.nome||'');})){state.processos.push(procAltaDirecao());}state._seedAD=true;try{salvar();}catch(e){}}
  state.processos.forEach(function(p){if(!p.mcrMeta)p.mcrMeta=novaMeta();(p.mcr||[]).forEach(function(r){['acao','prazo','resp','dataReal','respEfic','dataEfic','eficaz','categoria','norma','requisito','perda','freq'].forEach(function(k){if(r[k]==null)r[k]='';});if(r.gravP==null)r.gravP='';if(r.probP==null)r.probP='';});});}
 function fmtBRL(n){n=+n||0;return 'R$ '+n.toLocaleString('pt-BR',{maximumFractionDigits:0});}
 function impactoAnual(r){var p=+r.perda||0,f=+r.freq||0;return p*f;}
@@ -251,15 +290,49 @@ function statusOf(r){if(r.eficaz==='Eficaz')return{k:'ok',t:'Eficaz'};if(r.efica
 function addProc(){var nm=prompt('Nome do processo:');if(!nm)return;var cod=prompt('Código (ex.: 006):','')||'';var p={id:uid('p'),codigo:cod.trim(),nome:nm.trim(),missao:'',ip:novoIP(),mcr:[]};state.processos.push(p);ativo=p.id;salvar();render();}
 function removeProc(id){var p=state.processos.find(function(x){return x.id===id;});if(state.processos.length<=1){alert('Deixe ao menos um processo.');return;}if(!confirm('Remover o processo "'+p.nome+'"?'))return;state.processos=state.processos.filter(function(x){return x.id!==id;});if(ativo===id)ativo=state.processos[0].id;salvar();render();}
 function render(){renderList();renderMain();}
-function renderList(){var el=document.getElementById('plist');el.innerHTML='';state.processos.forEach(function(p){var risk=(p.mcr||[]).reduce(function(a,r){return Math.max(a,classe(r.grav,r.prob));},0);var ci=classInfo(risk||1);var d=document.createElement('div');d.className='pcard'+(p.id===ativo?' on':'');d.innerHTML='<div class="cod">IP-'+esc(p.codigo||'--')+' · MCR-'+esc(p.codigo||'--')+'</div><div class="nm">'+esc(p.nome)+'</div><div class="meta"><span><span class="dot" style="background:'+ci.c+'"></span>risco '+ci.t.toLowerCase()+'</span><span>'+(p.mcr?p.mcr.length:0)+' riscos</span></div>';d.onclick=function(){ativo=p.id;render();};el.appendChild(d);});}
+function renderList(){var el=document.getElementById('plist');if(!el)return;el.innerHTML='';state.processos.forEach(function(p){var risk=(p.mcr||[]).reduce(function(a,r){return Math.max(a,classe(r.grav,r.prob));},0);var ci=classInfo(risk||1);var d=document.createElement('div');d.className='pcard'+(p.id===ativo?' on':'');d.innerHTML='<div class="cod">IP-'+esc(p.codigo||'--')+' · MCR-'+esc(p.codigo||'--')+'</div><div class="nm">'+esc(p.nome)+'</div><div class="meta"><span><span class="dot" style="background:'+ci.c+'"></span>risco '+ci.t.toLowerCase()+'</span><span>'+(p.mcr?p.mcr.length:0)+' riscos</span></div>';d.onclick=function(){ativo=p.id;render();};el.appendChild(d);});}
 function zona(campo,label,cls,pos){var p=P();var arr=p.ip[campo]||(p.ip[campo]=[]);var items=arr.map(function(v,i){return '<div class="li"><span class="b">›</span><span class="txt" contenteditable="true" data-c="'+campo+'" data-i="'+i+'">'+esc(v)+'</span><span class="x" data-rm="'+campo+'|'+i+'">✕</span></div>';}).join('');return '<div class="zbox '+(cls||'')+' '+pos+'"><h4>'+label+'</h4><div class="lst">'+items+'</div><span class="addli" data-add="'+campo+'">＋ adicionar</span></div>';}
 function procBox(){var p=P();var arr=p.ip.atividades||(p.ip.atividades=[]);var items=arr.map(function(v,i){return '<div class="li"><span class="b">›</span><span class="txt" contenteditable="true" data-c="atividades" data-i="'+i+'">'+esc(v)+'</span><span class="x" data-rm="atividades|'+i+'">✕</span></div>';}).join('');
  return '<div class="zbox proc z-proc">'+
   '<div class="core-lbl"><svg viewBox="0 0 100 100"><g stroke="#2C6E8E" stroke-width="3" opacity=".5"><line x1="14" y1="50" x2="34" y2="34"/><line x1="34" y1="34" x2="66" y2="34"/><line x1="66" y1="34" x2="86" y2="50"/><line x1="14" y1="50" x2="34" y2="66"/><line x1="34" y1="66" x2="66" y2="66"/><line x1="66" y1="66" x2="86" y2="50"/></g><g fill="#2B3F5C"><circle cx="14" cy="50" r="4.5"/><circle cx="86" cy="50" r="4.5"/><circle cx="34" cy="34" r="4.5"/><circle cx="66" cy="34" r="4.5"/><circle cx="34" cy="66" r="4.5"/><circle cx="66" cy="66" r="4.5"/></g><circle cx="50" cy="50" r="9" fill="#2C6E8E"/><circle cx="50" cy="50" r="4" fill="#1FA59E"/></svg><h4 style="margin:0">Processo</h4></div>'+
   '<div class="lst">'+items+'</div><span class="addli" data-add="atividades">＋ atividade</span></div>';}
-function renderMain(){var p=P();if(!p){document.getElementById('main').innerHTML='';return;}
+function setView(v){view=v;render();}
+function abrirProcesso(nome,codigo){var alvo=(nome||'').trim().toLowerCase();var found=state.processos.find(function(p){return (p.nome||'').trim().toLowerCase()===alvo;});if(found){ativo=found.id;view='proc';aba='ip';render();return;}if(!confirm('O processo "'+nome+'" ainda não tem IP/MCR. Criar agora?'))return;var np={id:uid('p'),codigo:(codigo||'').replace(/^IP-?/i,'')||'',nome:nome,missao:'',ip:novoIP(),mcrMeta:novaMeta(),mcr:[]};state.processos.push(np);ativo=np.id;view='proc';aba='ip';salvar();render();}
+function abrirId(id){ativo=id;view='proc';aba='ip';render();}
+function mapaHTML(){var m=state.mapa||(state.mapa=seedMapa());
+ var estrat='',cli='',apoio='';
+ m.itens.forEach(function(it,i){var cls=it.cat==='estrategico'?'e':(it.cat==='cliente'?'c':'a');var card='<div class="mcard '+cls+'" data-mi="'+i+'"><span class="x" data-mrm="'+i+'">✕</span>'+(it.codigo?'<div class="cd">'+esc(it.codigo)+'</div>':'')+'<div class="nm">'+esc(it.nome)+'</div></div>';if(it.cat==='estrategico')estrat+=card;else if(it.cat==='cliente')cli+=card;else apoio+=card;});
+ var mapNames=m.itens.map(function(it){return (it.nome||'').trim().toLowerCase();});
+ var orphans=state.processos.filter(function(p){return mapNames.indexOf((p.nome||'').trim().toLowerCase())<0;});
+ var outros='';
+ if(orphans.length){outros='<div class="tier"><div class="tl">Outros processos cadastrados</div><div class="support">'+orphans.map(function(p){return '<div class="mcard a" data-openid="'+p.id+'"><div class="cd">MCR-'+esc(p.codigo||'--')+'</div><div class="nm">'+esc(p.nome)+'</div></div>';}).join('')+'</div></div>';}
+ return '<div class="macro">'+
+  '<div class="macro-h"><h2 contenteditable="true" data-mh="titulo">'+esc(m.titulo)+'</h2><div class="un" contenteditable="true" data-mh="unidades">'+esc(m.unidades)+'</div><div class="ap">Aprovado: <span contenteditable="true" data-mh="aprovado">'+esc(m.aprovado||'—')+'</span></div></div>'+
+  '<div class="rails"><div class="rail"><span>Requisitos de clientes / partes interessadas</span></div>'+
+   '<div class="tiers">'+
+    '<div class="tier"><div class="tl">Processos Estratégicos</div><div class="strat">'+(estrat||'<span class="maphint">—</span>')+'</div><div style="text-align:center"><button class="addm" data-add="estrategico">＋ estratégico</button></div></div>'+
+    '<div class="tierarrow">▼</div>'+
+    '<div class="tier"><div class="tl">Processos Voltados ao Cliente</div><div class="chain">'+(cli||'<span class="maphint">—</span>')+'</div><div style="text-align:center"><button class="addm" data-add="cliente">＋ processo</button></div></div>'+
+    '<div class="tierarrow">▼</div>'+
+    '<div class="tier"><div class="tl">Processos de Apoio e Gestão</div><div class="support">'+(apoio||'<span class="maphint">—</span>')+'</div><div style="text-align:center"><button class="addm" data-add="apoio">＋ apoio</button></div></div>'+
+    outros+
+   '</div>'+
+   '<div class="rail out"><span>Satisfação de clientes / partes interessadas</span></div>'+
+  '</div>'+
+  '<div class="maphint">Clique num processo para abrir sua Interação de Processo e Matriz de Risco.</div></div>';
+}
+function bindMapa(){
+ document.querySelectorAll('[data-mi]').forEach(function(el){el.onclick=function(ev){if(ev.target.getAttribute('data-mrm')!=null)return;var it=state.mapa.itens[+this.getAttribute('data-mi')];abrirProcesso(it.nome,it.codigo);};});
+ document.querySelectorAll('[data-openid]').forEach(function(el){el.onclick=function(){abrirId(this.getAttribute('data-openid'));};});
+ document.querySelectorAll('[data-mrm]').forEach(function(el){el.onclick=function(ev){ev.stopPropagation();var i=+this.getAttribute('data-mrm');if(!confirm('Remover "'+state.mapa.itens[i].nome+'" do mapa?'))return;state.mapa.itens.splice(i,1);salvar();renderMain();};});
+ document.querySelectorAll('.macro-h [data-mh]').forEach(function(el){el.addEventListener('blur',function(){state.mapa[this.getAttribute('data-mh')]=this.textContent.trim();salvar();});});
+ document.querySelectorAll('[data-add]').forEach(function(el){el.onclick=function(){var cat=this.getAttribute('data-add');var nm=prompt('Nome do processo:');if(!nm)return;var cod=prompt('Código (ex.: IP-015):','')||'';state.mapa.itens.push({codigo:cod.trim(),nome:nm.trim(),cat:cat});salvar();renderMain();};});
+}
+function renderMain(){
+ if(view==='mapa'){document.getElementById('main').innerHTML=mapaHTML();bindMapa();return;}
+ var p=P();if(!p){view='mapa';document.getElementById('main').innerHTML=mapaHTML();bindMapa();return;}
  var risk=(p.mcr||[]).reduce(function(a,r){return Math.max(a,classe(r.grav,r.prob));},0);var ci=classInfo(risk||1);
- var h='<div class="phead"><div class="row1"><span class="badge">IP · MCR '+esc(p.codigo||'--')+'</span><h3 contenteditable="true" id="pn">'+esc(p.nome)+'</h3><div class="sp" style="flex:1"></div><span class="ro '+((risk>=6)?'R':'O')+'" style="background:'+ci.bg+';color:'+ci.c+'">risco máx.: '+ci.t+'</span><button class="btn gh sm" onclick="removeProc(\''+p.id+'\')" title="Remover">🗑</button></div>'+
+ var h='<div class="phead"><div class="row1"><button class="btn gh sm" onclick="setView(\'mapa\')" title="Voltar ao mapa">← Mapa</button><span class="badge">IP · MCR '+esc(p.codigo||'--')+'</span><h3 contenteditable="true" id="pn">'+esc(p.nome)+'</h3><div class="sp" style="flex:1"></div><span class="ro '+((risk>=6)?'R':'O')+'" style="background:'+ci.bg+';color:'+ci.c+'">risco máx.: '+ci.t+'</span><button class="btn gh sm" onclick="removeProc(\''+p.id+'\')" title="Remover">🗑</button></div>'+
   '<div class="tabs"><button class="tab '+(aba==='ip'?'on':'')+'" data-ab="ip">Interação de Processo (IP)</button><button class="tab '+(aba==='mcr'?'on':'')+'" data-ab="mcr">Matriz de Riscos (MCR)</button></div></div>';
  // IP — diagrama de tartaruga em caixas (igual ao documento)
  h+='<div class="panel '+(aba==='ip'?'on':'')+'"><div class="ipwrap" id="ipwrap"><svg id="wires" class="wires" aria-hidden="true"></svg><div class="ip">'+
@@ -475,24 +548,22 @@ function importExcel(ev){
  var rd=new FileReader();
  rd.onload=function(e){
   var wb;try{wb=XLSX.read(new Uint8Array(e.target.result),{type:'array',cellDates:true});}catch(err){alert('Não consegui abrir o Excel: '+(err.message||err));return;}
-  // 1) Leitura direta (confiável, varre todas as abas, sem depender do servidor)
-  var det=detMcr(wb);
-  if(det.rows.length){aplicarImport(null,det.rows,det.procNome,file);return;}
-  // 2) Reforço por IA (para IP ou planilhas fora do padrão)
-  flash('Lendo com IA…');
+  // IA primeiro: avalia o documento inteiro (IP + MCR).
+  flash('Avaliando o documento com IA…');
   fetch('/api/importar-mcr',{method:'POST',headers:{'Content-Type':'application/json'},credentials:'same-origin',body:JSON.stringify({sheets:sheetsToCsv(wb)})})
    .then(function(r){return r.json();})
    .then(function(res){
      if(!res||!res.ok)throw new Error((res&&res.error)||'falha na IA');
      var ip=ipTem(res.ip)?normIpIA(res.ip):null;
      var mcr=(res.mcr&&res.mcr.length)?res.mcr.map(normRiscoIA):null;
-     if(!ip&&!mcr){flash('');alert('Não encontrei Interação de Processo nem Matriz de Risco nesta planilha.\n\nConfira se ela tem as colunas Risco / Consequências / Barreira.');return;}
-     if(ip&&mcr){escolherImport(function(op){aplicarImport(op!=='mcr'?ip:null,op!=='ip'?mcr:null,res.processo,file);});}
-     else aplicarImport(ip,mcr,res.processo,file);
+     if(!ip&&!mcr){var det=detMcr(wb);if(det.rows.length){aplicarImport(null,det.rows,det.procNome,file);return;}flash('');alert('Não encontrei Interação de Processo nem Matriz de Risco neste documento.');return;}
+     escolherImport(ip,mcr,res.processo,file);
    })
    .catch(function(err){
-     flash('');
-     alert('Não consegui ler a matriz automaticamente'+((''+err.message).indexOf('IA')<0?'':(' e a IA falhou ('+err.message+')'))+'.\n\nDica: confirme que a planilha tem as colunas Risco / Consequências / Barreira (e Gravidade/Probabilidade). Se a matriz estiver numa aba específica, deixe-a como a primeira do arquivo.');
+     // IA indisponível → leitura direta (só a MCR)
+     var det=detMcr(wb);
+     if(det.rows.length){aplicarImport(null,det.rows,det.procNome,file);flash('IA indisponível — importei os riscos por leitura direta (o IP precisa da IA)');return;}
+     flash('');alert('Não consegui avaliar o documento. '+(err.message||err)+'\n\nConfira o GEMINI_API_KEY no servidor, ou se a planilha tem as colunas Risco / Consequências / Barreira.');
    });
  };
  rd.readAsArrayBuffer(file);
@@ -505,13 +576,19 @@ function aplicarImport(ip,mcr,procNome,file){
  state.processos.push(novo);ativo=novo.id;aba=mcr?'mcr':'ip';salvar();render();
  flash('Importado: '+(ip?'IP':'')+(ip&&mcr?' + ':'')+(mcr?('MCR ('+mcr.length+')'):'')+' ✓');
 }
-function escolherImport(cb){var box=document.getElementById('mbox');
- box.innerHTML='<span class="mclose" onclick="closeScale()">✕</span><h3>Importar do Excel</h3><div class="msub">Esta planilha tem Interação de Processo e Matriz de Risco. O que você quer importar?</div>'+
+function escolherImport(ip,mcr,procNome,file){
+ function apply(op){aplicarImport((op==='ip'||op==='ambos')?ip:null,(op==='mcr'||op==='ambos')?mcr:null,procNome,file);}
+ if(ip&&!mcr){apply('ip');return;}
+ if(mcr&&!ip){apply('mcr');return;}
+ var nip=0;['recursos','dono','maoDeObra','origem','entradas','atividades','saidas','destino','metodos','medicao'].forEach(function(k){if(ip[k])nip+=ip[k].length;});
+ var box=document.getElementById('mbox');
+ box.innerHTML='<span class="mclose" onclick="closeScale()">✕</span><h3>Importar do documento</h3><div class="msub">A IA encontrou Interação de Processo e Matriz de Risco. O que você quer trazer?</div>'+
   '<div style="display:flex;flex-direction:column;gap:10px;margin-top:4px">'+
-   '<button class="btn" style="justify-content:flex-start" onclick="_impPick(\'ip\')">Só a Interação de Processo (IP)</button>'+
-   '<button class="btn" style="justify-content:flex-start" onclick="_impPick(\'mcr\')">Só a Matriz de Risco (MCR)</button>'+
-   '<button class="btn pri" style="justify-content:flex-start" onclick="_impPick(\'ambos\')">Os dois — IP + MCR</button></div>';
- window._impCb=cb;document.getElementById('mscrim').classList.add('on');}
+   '<button class="btn pri" style="justify-content:flex-start" onclick="_impPick(\'ambos\')">Tudo — IP + MCR ('+nip+' itens de IP · '+mcr.length+' riscos)</button>'+
+   '<button class="btn" style="justify-content:flex-start" onclick="_impPick(\'ip\')">Só a Interação de Processo ('+nip+' itens)</button>'+
+   '<button class="btn" style="justify-content:flex-start" onclick="_impPick(\'mcr\')">Só a Matriz de Risco ('+mcr.length+' riscos)</button>'+
+  '</div>';
+ window._impCb=apply;document.getElementById('mscrim').classList.add('on');}
 function _impPick(op){closeScale();var cb=window._impCb;window._impCb=null;if(cb)cb(op);}
 function exportar(){var b=new Blob([JSON.stringify(state,null,2)],{type:'application/json'});var a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='ip-mcr.json';a.click();}
 try{if(window.self!==window.top)document.body.classList.add('embedded');}catch(e){document.body.classList.add('embedded');}
