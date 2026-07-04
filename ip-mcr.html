@@ -523,7 +523,7 @@ function detIP(wb){for(var si=0;si<wb.SheetNames.length;si++){var nm=wb.SheetNam
    if(/^ip[\s\-]/.test(norm(nm))||flat.indexOf('interacao de processo')>=0||(flat.indexOf('recursos')>=0&&flat.indexOf('missao do processo')>=0)){var res=parseIPaoa(aoa);if(res&&ipTem(res.ip)){res.sheet=nm;return res;}}}
  return null;}
 function parseIPaoa(aoa){var ip=novoIP();var missao='';
- var zonas=[['recursos',['recursos']],['maoDeObra',['mao de obra','mao-de-obra']],['origem',['origem','fornecedor']],['entradas',['entradas','entrada']],['atividades',['processo da','processo de','processo do','atividades do']],['saidas',['saida']],['destino',['destino']],['metodos',['metodo']],['medicao',['medicao']],['missao',['missao do processo','missao']]];
+ var zonas=[['recursos',['recursos']],['maoDeObra',['mao de obra','mao-de-obra']],['origem',['origem','fornecedor']],['entradas',['entradas','entrada']],['atividades',['processo ','atividades do','atividade do']],['saidas',['saida']],['destino',['destino']],['metodos',['metodo']],['medicao',['medicao']],['missao',['missao do processo','missao']]];
  function findLabel(pats){for(var r=0;r<aoa.length;r++){var row=aoa[r]||[];for(var c=0;c<row.length;c++){var t=norm(row[c]);if(!t)continue;for(var pi=0;pi<pats.length;pi++){var pat=pats[pi];if(t===pat||t.indexOf(pat)===0)return {r:r,c:c};}}}return null;}
  var pos={};zonas.forEach(function(z){var p=findLabel(z[1]);if(p)pos[z[0]]=p;});
  for(var r=0;r<aoa.length;r++){var row=aoa[r]||[];var brk=false;for(var c=0;c<row.length;c++){if(norm(row[c]).indexOf('dono do processo')>=0){var dl=splitLines(row[c]).filter(function(x){return norm(x).indexOf('dono do processo')<0;});if(dl.length)ip.dono=dl;brk=true;break;}}if(brk)break;}
