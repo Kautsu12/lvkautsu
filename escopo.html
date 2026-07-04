@@ -107,6 +107,32 @@
   .foot{max-width:1500px;margin:0 auto;padding:0 22px 30px;color:var(--mut);font-size:11px;text-align:center}
   @media(prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
   @media(max-width:960px){.wrap{grid-template-columns:1fr}.cols{grid-template-columns:1fr}.rescols{grid-template-columns:1fr}}
+  /* Painel (drawer) da célula + revisão */
+  .scrim{position:fixed;inset:0;background:rgba(20,32,46,.42);backdrop-filter:blur(2px);opacity:0;pointer-events:none;transition:.2s;z-index:40}
+  .scrim.on{opacity:1;pointer-events:auto}
+  .drawer{position:fixed;top:0;right:0;height:100%;width:min(460px,94vw);background:var(--card);border-left:1px solid var(--line);box-shadow:-24px 0 60px -30px rgba(20,32,46,.55);transform:translateX(101%);transition:transform .24s cubic-bezier(.4,0,.2,1);z-index:41;display:flex;flex-direction:column}
+  .drawer.on{transform:none}
+  .dhead{padding:17px 22px;border-bottom:1px solid var(--line);display:flex;align-items:flex-start;gap:12px}
+  .dhead .dt{flex:1;min-width:0}.dhead h3{font-family:var(--disp);font-size:16px;color:var(--mid);line-height:1.3}
+  .dhead .dsub{font-family:var(--disp);font-size:11px;font-weight:700;color:var(--petrol);letter-spacing:.04em;margin-bottom:3px}
+  .dhead .dclose{cursor:pointer;color:var(--mut);font-size:20px;line-height:1;padding:2px 6px;border-radius:8px}.dhead .dclose:hover{background:#f0f4f8;color:var(--ink)}
+  .dbody{padding:16px 22px 34px;overflow-y:auto;flex:1}
+  .dsec{margin-bottom:20px}
+  .dsec .st2{font-family:var(--disp);font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--turq-d);margin-bottom:10px}
+  .dsec .st2 small{font-family:var(--body);letter-spacing:0;text-transform:none;color:var(--mut);font-weight:400}
+  .toggle2{display:flex;gap:8px}
+  .tg{flex:1;border:1px solid var(--line);background:#fff;border-radius:10px;padding:10px;font-family:var(--disp);font-weight:600;font-size:13px;color:var(--slate);cursor:pointer}
+  .tg.on{background:var(--lo-bg);border-color:#8fd3ca;color:var(--turq-d)}
+  .tg.onna{background:#eef2f6;border-color:#c2d0dd;color:var(--slate)}
+  .lns{display:flex;flex-direction:column;gap:6px;margin-bottom:6px}
+  .ln{display:flex;gap:8px;align-items:flex-start;background:#f6f9fb;border-radius:9px;padding:8px 10px}
+  .ln .lt{flex:1;font-size:13px;color:var(--ink);outline:none;line-height:1.4}.ln .lt:focus{background:#fff;border-radius:5px}
+  .ln .lx{color:var(--mut);cursor:pointer;font-size:11px;opacity:.5}.ln .lx:hover{color:var(--hi);opacity:1}
+  .lnempty{color:var(--mut);font-size:12.5px;padding:4px 2px}
+  .addln{font-size:12px;color:var(--petrol);font-weight:600;cursor:pointer;font-family:var(--disp)}
+  .qd{display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--turq);margin-left:5px;vertical-align:middle}
+  .revtag{font-family:var(--disp);font-weight:700;font-size:10.5px;color:var(--petrol);background:#e7eef6;border-radius:6px;padding:2px 7px}
+  .tag.rev{background:var(--med-bg);color:var(--med)}
   /* Dentro do sistema (iframe): o cabeçalho METIS já é do index — remove a barra da marca por completo. */
   body.embedded .top{position:static;background:transparent;border-bottom:none;box-shadow:none;backdrop-filter:none;padding:8px 18px 0}
   body.embedded .top .logo,body.embedded .top h1{display:none}
@@ -126,6 +152,8 @@
   <main class="main" id="main"></main>
 </div>
 <div class="foot">Escopo — define normas/itens (requisitos) e processos (setores) que alimentam o Programa de Auditoria · dados no navegador.</div>
+<div class="scrim" id="scrim" onclick="closeCelula()"></div>
+<aside class="drawer" id="drawer"></aside>
 <script>
 var LS='escopo_v1', MAPA_LS='ip_mcr_v2';
 var state=null, ativo=null, aba='normas', normaSel=null;
@@ -144,10 +172,12 @@ function seed(){
  var e={id:uid('e'),empresa:'Raitz Galvanização',nome:'Serviço de galvanização a fogo',rev:'01',data:'',
   normas:[normaFromBase('ISO 9001:2015',['4.1','5.1','6.1','8.1','8.5','8.6','9.1','9.2','9.3']),normaFromBase('ISO 14001:2015',['6.1','8.1','8.2','9.2'])],
   processos:[{id:uid('p'),nome:'Realização do serviço'},{id:uid('p'),nome:'PCP'},{id:uid('p'),nome:'Infraestrutura'}],
-  grade:{}};
+  grade:{},ind:{},historico:[]};
+ var it85=e.normas[0].itens.find(function(x){return x.codigo==='8.5';});
+ if(it85){it85.pool=['A produção segue os POP/FIT vigentes?','Os registros de processo estão sendo mantidos?'];it85.docs=['POP de produção','Ordem de Produção','Registros de inspeção'];}
  return {escopos:[e],ativo:e.id};
 }
-function carregar(){try{var r=localStorage.getItem(LS);if(r)state=JSON.parse(r);}catch(e){}if(!state||!state.escopos||!state.escopos.length)state=seed();ativo=state.ativo||state.escopos[0].id;E().normas.forEach(function(n){if(!n.id)n.id=uid('n');});normaSel=E().normas[0]?E().normas[0].id:null;}
+function carregar(){try{var r=localStorage.getItem(LS);if(r)state=JSON.parse(r);}catch(e){}if(!state||!state.escopos||!state.escopos.length)state=seed();migrarEsc();ativo=state.ativo||state.escopos[0].id;E().normas.forEach(function(n){if(!n.id)n.id=uid('n');});normaSel=E().normas[0]?E().normas[0].id:null;}
 function salvar(m){try{state.ativo=ativo;localStorage.setItem(LS,JSON.stringify(state));}catch(e){}if(m)flash('Salvo ✓');}
 function flash(m){var e=document.getElementById('st');e.textContent=m;clearTimeout(window._t);window._t=setTimeout(function(){e.textContent='';},2200);}
 function E(){return state.escopos.find(function(x){return x.id===ativo;})||state.escopos[0];}
@@ -157,8 +187,16 @@ function statusProc(nome){var list=mapaProcs();var alvo=(nome||'').trim().toLowe
 /* ── Contadores ── */
 function reqCount(e){return (e.normas||[]).reduce(function(a,n){return a+(n.itens||[]).filter(function(i){return i.sel;}).length;},0);}
 function reqList(e){var out=[];(e.normas||[]).forEach(function(n){(n.itens||[]).forEach(function(i){if(i.sel)out.push({norma:n.nome,codigo:i.codigo,titulo:i.titulo});});});return out;}
+/* ── Revisão e histórico (item 4 da LV Mestra) ── */
+function incRev(r){var n=parseInt(String(r||'0').replace(/\D/g,''),10)||0;n++;return (n<10?'0':'')+n;}
+function hoje(){var d=new Date();function z(x){return (x<10?'0':'')+x;}return z(d.getDate())+'/'+z(d.getMonth()+1)+'/'+d.getFullYear()+' '+z(d.getHours())+':'+z(d.getMinutes());}
+function logHist(acao,revisa){var e=E();e.historico=e.historico||[];if(revisa)e.rev=incRev(e.rev);e.historico.unshift({rev:e.rev,quando:hoje(),acao:acao,revisou:!!revisa});salvar();}
+function findItem(e,norma,codigo){var n=(e.normas||[]).find(function(x){return x.nome===norma;});if(!n)return null;return (n.itens||[]).find(function(x){return String(x.codigo)===String(codigo);})||null;}
+function procNomeById(e,id){var p=(e.processos||[]).find(function(x){return x.id===id;});return p?p.nome:'—';}
+function parseCel(k){var a=String(k).split('||');var np=a[0].split('|');return {norma:np[0],codigo:np[1],proc:a[1],key:k};}
+function migrarEsc(){(state.escopos||[]).forEach(function(e){if(!e.historico)e.historico=[];if(!e.ind)e.ind={};if(!e.grade)e.grade={};if(!e.rev)e.rev='01';(e.normas||[]).forEach(function(n){(n.itens||[]).forEach(function(it){if(!it.pool)it.pool=[];if(!it.docs)it.docs=[];});});});}
 /* ── Escopos ── */
-function addEscopo(){var emp=prompt('Nome da empresa:');if(!emp)return;var nm=prompt('Nome do escopo (ex.: Serviço de galvanização):','')||'Escopo';var e={id:uid('e'),empresa:emp.trim(),nome:nm.trim(),rev:'01',data:'',normas:[],processos:[],grade:{}};state.escopos.push(e);ativo=e.id;normaSel=null;aba='normas';salvar();render();}
+function addEscopo(){var emp=prompt('Nome da empresa:');if(!emp)return;var nm=prompt('Nome do escopo (ex.: Serviço de galvanização):','')||'Escopo';var e={id:uid('e'),empresa:emp.trim(),nome:nm.trim(),rev:'01',data:'',normas:[],processos:[],grade:{},ind:{},historico:[]};state.escopos.push(e);ativo=e.id;normaSel=null;aba='normas';salvar();render();}
 function removeEscopo(id){if(state.escopos.length<=1){alert('Deixe ao menos um escopo.');return;}var e=state.escopos.find(function(x){return x.id===id;});if(!confirm('Remover o escopo "'+e.empresa+'"?'))return;state.escopos=state.escopos.filter(function(x){return x.id!==id;});if(ativo===id)ativo=state.escopos[0].id;salvar();render();}
 /* ── Render ── */
 function render(){renderList();renderMain();}
@@ -167,14 +205,15 @@ function renderMain(){var e=E();if(!e){document.getElementById('main').innerHTML
  var procs=e.processos||[];var comIP=procs.filter(function(p){return statusProc(p.nome).temIP;}).length;var comMCR=procs.filter(function(p){return statusProc(p.nome).temMCR;}).length;
  var h='<div class="phead"><div class="row1"><span class="badge">ESCOPO</span><h3 contenteditable="true" id="enome">'+esc(e.nome)+'</h3><div class="sp"></div><button class="btn gh sm" onclick="removeEscopo(\''+e.id+'\')" title="Remover">🗑</button></div>'+
   '<div class="metaline"><span><b>Empresa:</b> <span contenteditable="true" data-f="empresa">'+esc(e.empresa)+'</span></span><span><b>Rev.:</b> <span contenteditable="true" data-f="rev">'+esc(e.rev||'01')+'</span></span><span><b>Data:</b> <span contenteditable="true" data-f="data">'+esc(e.data||'—')+'</span></span></div>'+
-  '<div class="tabs"><button class="tab '+(aba==='normas'?'on':'')+'" data-ab="normas">Normas &amp; requisitos</button><button class="tab '+(aba==='processos'?'on':'')+'" data-ab="processos">Processos (setores)</button><button class="tab '+(aba==='resumo'?'on':'')+'" data-ab="resumo">Resumo</button></div></div>';
+  '<div class="tabs"><button class="tab '+(aba==='normas'?'on':'')+'" data-ab="normas">Normas &amp; requisitos</button><button class="tab '+(aba==='processos'?'on':'')+'" data-ab="processos">Processos (setores)</button><button class="tab '+(aba==='resumo'?'on':'')+'" data-ab="resumo">Resumo</button><button class="tab '+(aba==='revisao'?'on':'')+'" data-ab="revisao">Revisão &amp; histórico</button></div></div>';
  // KPIs
  h+='<div class="kpis"><div class="kpi"><div class="n">'+(e.normas?e.normas.length:0)+'</div><div class="l">Normas</div></div>'+
    '<div class="kpi ok"><div class="n">'+reqCount(e)+'</div><div class="l">Requisitos (itens)</div></div>'+
    '<div class="kpi"><div class="n">'+procs.length+'</div><div class="l">Processos / setores</div></div>'+
    '<div class="kpi med"><div class="n">'+comIP+'<span style="font-size:13px;color:var(--mut)"> / '+procs.length+'</span></div><div class="l">Com IP</div></div>'+
-   '<div class="kpi med"><div class="n">'+comMCR+'<span style="font-size:13px;color:var(--mut)"> / '+procs.length+'</span></div><div class="l">Com MCR</div></div></div>';
- h+=renderNormas(e)+renderProcessos(e)+renderResumo(e);
+   '<div class="kpi med"><div class="n">'+comMCR+'<span style="font-size:13px;color:var(--mut)"> / '+procs.length+'</span></div><div class="l">Com MCR</div></div>'+
+   '<div class="kpi"><div class="n">'+esc(e.rev||'01')+'</div><div class="l">Revisão</div></div></div>';
+ h+=renderNormas(e)+renderProcessos(e)+renderResumo(e)+renderRevisao(e);
  document.getElementById('main').innerHTML=h;bind();
 }
 /* ── Normas ── */
@@ -197,9 +236,9 @@ function addNorma(){
  if(!isNaN(idx)&&idx>=1&&idx<=nomes.length)nova=normaFromBase(nomes[idx-1]);
  else nova={id:uid('n'),nome:v,itens:[]};
  if((e.normas||[]).some(function(n){return n.nome.toLowerCase()===nova.nome.toLowerCase();})){alert('Essa norma já está no escopo.');return;}
- e.normas=e.normas||[];e.normas.push(nova);normaSel=nova.id;salvar();render();
+ e.normas=e.normas||[];e.normas.push(nova);normaSel=nova.id;logHist('Norma "'+nova.nome+'" adicionada ao escopo',true);render();
 }
-function addItem(){var norma=(E().normas||[]).find(function(n){return n.id===normaSel;});if(!norma)return;var cod=(document.getElementById('itcod').value||'').trim();var tit=(document.getElementById('ittit').value||'').trim();if(!cod&&!tit)return;norma.itens=norma.itens||[];norma.itens.push({codigo:cod,titulo:tit,sel:true});salvar();render();}
+function addItem(){var norma=(E().normas||[]).find(function(n){return n.id===normaSel;});if(!norma)return;var cod=(document.getElementById('itcod').value||'').trim();var tit=(document.getElementById('ittit').value||'').trim();if(!cod&&!tit)return;norma.itens=norma.itens||[];norma.itens.push({codigo:cod,titulo:tit,sel:true,pool:[],docs:[]});logHist('Requisito '+cod+' incluído em '+norma.nome,true);render();}
 /* ── Processos ── */
 function renderProcessos(e){
  var rows=(e.processos||[]).map(function(p,i){var s=statusProc(p.nome);return '<tr><td><span class="setor">SETOR</span> <span contenteditable="true" data-pn="'+i+'">'+esc(p.nome)+'</span></td>'+
@@ -221,8 +260,8 @@ function renderResumo(e){
  var grade='';
  if(reqs.length&&procs.length){
   var head='<tr><th class="req">Requisito</th>'+procs.map(function(p){return '<th>'+esc(p.nome)+'</th>';}).join('')+'</tr>';
-  var body=reqs.map(function(r){var rk=r.norma+'|'+r.codigo;return '<tr><td class="rq">'+esc(r.codigo)+'</td>'+procs.map(function(p){var key=rk+'||'+p.id;var val=(e.grade&&e.grade[key])||'X';var cls=val==='NA'?'cellna':'cellx';return '<td class="'+cls+'" data-cell="'+esc(key)+'">'+val+'</td>';}).join('')+'</tr>';}).join('');
-  grade='<div class="gridwrap"><table class="grid"><thead>'+head+'</thead><tbody>'+body+'</tbody></table></div><p class="note">Clique numa célula para alternar <b>X</b> (aplicável) ↔ <b>NA</b> (não aplicável). Esta é a grade que o Programa de Auditoria vai usar (requisito × processo).</p>';
+  var body=reqs.map(function(r){var rk=r.norma+'|'+r.codigo;var it=findItem(e,r.norma,r.codigo);var hasReqQ=it&&((it.pool&&it.pool.length)||(it.docs&&it.docs.length));return '<tr><td class="rq" title="'+esc(r.titulo)+'">'+esc(r.codigo)+'</td>'+procs.map(function(p){var key=rk+'||'+p.id;var val=(e.grade&&e.grade[key])||'X';var cls=val==='NA'?'cellna':'cellx';var ind=(e.ind&&e.ind[key]&&e.ind[key].length);var dot=(val==='X'&&(hasReqQ||ind))?'<span class="qd"></span>':'';return '<td class="'+cls+'" data-cell="'+esc(key)+'" title="Clique: aplicabilidade, perguntas e documentos">'+val+dot+'</td>';}).join('')+'</tr>';}).join('');
+  grade='<div class="gridwrap"><table class="grid"><thead>'+head+'</thead><tbody>'+body+'</tbody></table></div><p class="note">Clique numa célula para definir a <b>aplicabilidade</b> (X ↔ NA), as <b>perguntas</b> (POOL comuns + individuais) e os <b>documentos sugeridos</b>. O ponto turquesa indica que já há perguntas/documentos. Esta é a grade que o Programa de Auditoria vai usar.</p>';
  } else grade='<div class="empty">Marque requisitos e cadastre processos para ver a grade.</div>';
  return '<div class="panel '+(aba==='resumo'?'on':'')+'">'+
   '<div style="font-family:var(--disp);font-weight:600;color:var(--mid);margin-bottom:4px">O que o Escopo entrega ao Programa de Auditoria</div>'+
@@ -230,18 +269,51 @@ function renderResumo(e){
   '<div class="rescols"><div class="box" style="padding:12px"><h4 style="border:none;padding:0 0 8px">Requisitos ('+reqs.length+')</h4><div class="reqlist">'+lista+'</div></div>'+
   '<div class="box" style="padding:12px"><h4 style="border:none;padding:0 0 8px">Grade requisito × processo</h4>'+grade+'</div></div></div>';
 }
+/* ── Revisão & histórico (item 4) ── */
+function renderRevisao(e){
+ var hist=(e.historico||[]).slice(0,300);
+ var rows=hist.map(function(h){return '<tr><td><span class="revtag">REV '+esc(h.rev)+'</span></td><td style="white-space:nowrap">'+esc(h.quando||'')+'</td><td>'+esc(h.acao)+'</td><td>'+(h.revisou?'<span class="tag rev">gera revisão</span>':'<span class="tag off">histórico</span>')+'</td></tr>';}).join('')||'<tr><td colspan="4" class="empty">Sem alterações registradas ainda.</td></tr>';
+ return '<div class="panel '+(aba==='revisao'?'on':'')+'">'+
+  '<div style="display:flex;align-items:center;gap:16px;margin-bottom:14px;flex-wrap:wrap"><div style="font-family:var(--disp);font-weight:700;font-size:30px;color:var(--mid);line-height:1">REV '+esc(e.rev||'01')+'</div>'+
+   '<div class="note" style="margin:0;flex:1;min-width:240px">Incluir, excluir ou alterar um requisito, e marcar/desmarcar a aplicabilidade (X ↔ NA), <b>geram nova revisão</b>. Editar perguntas ou documentos fica <b>só no histórico</b>. Cada auditoria congela a revisão vigente na sua data.</div></div>'+
+  '<div class="box"><table><thead><tr><th style="width:82px">Revisão</th><th style="width:150px">Quando</th><th>Alteração</th><th style="width:130px">Efeito</th></tr></thead><tbody>'+rows+'</tbody></table></div></div>';
+}
+/* ── Painel da célula: aplicabilidade + perguntas + documentos (item 3) ── */
+var celKey=null;
+function arrOf(tipo){var e=E();var c=parseCel(celKey);var it=findItem(e,c.norma,c.codigo);if(!it)return [];if(tipo==='docs'){it.docs=it.docs||[];return it.docs;}if(tipo==='pool'){it.pool=it.pool||[];return it.pool;}e.ind=e.ind||{};e.ind[celKey]=e.ind[celKey]||[];return e.ind[celKey];}
+function openCelula(k){celKey=k;var e=E();var c=parseCel(k);var it=findItem(e,c.norma,c.codigo);if(!it){return;}it.pool=it.pool||[];it.docs=it.docs||[];e.ind=e.ind||{};e.ind[k]=e.ind[k]||[];
+ var estado=(e.grade&&e.grade[k])||'X';
+ function lst(arr,tipo,vazio){return (arr.length?arr.map(function(v,i){return '<div class="ln"><span class="lt" contenteditable="true" data-le="'+tipo+'" data-i="'+i+'">'+esc(v)+'</span><span class="lx" data-lrm="'+tipo+'|'+i+'">✕</span></div>';}).join(''):'<div class="lnempty">'+vazio+'</div>');}
+ var body=(estado==='X'?(
+   '<div class="dsec"><div class="st2">Documentos sugeridos <small>· do requisito</small></div><div class="lns">'+lst(it.docs,'docs','Nenhum documento ainda.')+'</div><span class="addln" data-ladd="docs">＋ documento</span></div>'+
+   '<div class="dsec"><div class="st2">Perguntas — POOL <small>· comuns a todos os processos</small></div><div class="lns">'+lst(it.pool,'pool','Nenhuma pergunta comum ainda.')+'</div><span class="addln" data-ladd="pool">＋ pergunta comum</span></div>'+
+   '<div class="dsec"><div class="st2">Perguntas individuais <small>· só deste processo</small></div><div class="lns">'+lst(e.ind[k],'ind','Nenhuma pergunta individual ainda.')+'</div><span class="addln" data-ladd="ind">＋ pergunta do processo</span></div>'
+  ):'<div class="note" style="padding:6px 0 0">Marque como <b>aplicável (X)</b> para definir as perguntas e os documentos deste requisito neste processo.</div>');
+ var dr=document.getElementById('drawer');
+ dr.innerHTML='<div class="dhead"><div class="dt"><div class="dsub">'+esc(c.codigo)+' &nbsp;·&nbsp; '+esc(procNomeById(e,c.proc))+'</div><h3>'+esc(it.titulo||'Requisito')+'</h3></div><span class="dclose" onclick="closeCelula()">✕</span></div>'+
+  '<div class="dbody"><div class="dsec"><div class="st2">Aplicabilidade</div><div class="toggle2"><button class="tg'+(estado==='X'?' on':'')+'" onclick="setCel(\'X\')">X — aplicável</button><button class="tg'+(estado==='NA'?' onna':'')+'" onclick="setCel(\'NA\')">NA — não aplicável</button></div></div>'+body+'</div>';
+ document.getElementById('scrim').classList.add('on');dr.classList.add('on');bindCelula();
+}
+function setCel(v){var e=E();e.grade=e.grade||{};var cur=(e.grade[celKey]||'X');if(cur!==v){e.grade[celKey]=v;var c=parseCel(celKey);logHist('Aplicabilidade '+c.codigo+' × '+procNomeById(e,c.proc)+' → '+v,true);}openCelula(celKey);renderList();}
+function bindCelula(){
+ document.querySelectorAll('#drawer [data-le]').forEach(function(el){el.addEventListener('blur',function(){var arr=arrOf(this.getAttribute('data-le'));arr[+this.getAttribute('data-i')]=this.textContent.trim();logHist('Editou item de '+parseCel(celKey).codigo+' (perguntas/documentos)',false);});});
+ document.querySelectorAll('#drawer [data-lrm]').forEach(function(el){el.onclick=function(){var s=this.getAttribute('data-lrm').split('|');arrOf(s[0]).splice(+s[1],1);logHist('Removeu '+s[0]+' de '+parseCel(celKey).codigo,false);openCelula(celKey);};});
+ document.querySelectorAll('#drawer [data-ladd]').forEach(function(el){el.onclick=function(){var t=this.getAttribute('data-ladd');var v=prompt(t==='docs'?'Documento sugerido:':'Texto da pergunta:');if(!v)return;arrOf(t).push(v.trim());logHist('Adicionou '+(t==='docs'?'documento':'pergunta')+' em '+parseCel(celKey).codigo,false);openCelula(celKey);};});
+}
+function closeCelula(){celKey=null;var s=document.getElementById('scrim');if(s)s.classList.remove('on');var d=document.getElementById('drawer');if(d)d.classList.remove('on');renderMain();}
+document.addEventListener('keydown',function(ev){if(ev.key==='Escape')closeCelula();});
 /* ── Bind ── */
 function bind(){var e=E();
  document.querySelectorAll('.tab').forEach(function(b){b.onclick=function(){aba=this.getAttribute('data-ab');renderMain();};});
  var en=document.getElementById('enome');if(en)en.addEventListener('blur',function(){e.nome=this.textContent.trim()||e.nome;salvar();renderList();});
  document.querySelectorAll('.metaline [data-f]').forEach(function(el){el.addEventListener('blur',function(){var f=this.getAttribute('data-f');var v=this.textContent.trim();e[f]=(v==='—')?'':v;salvar();if(f==='empresa')renderList();});});
  document.querySelectorAll('[data-nsel]').forEach(function(el){el.onclick=function(ev){if(ev.target.getAttribute('data-nrm'))return;normaSel=this.getAttribute('data-nsel');renderMain();};});
- document.querySelectorAll('[data-nrm]').forEach(function(el){el.onclick=function(ev){ev.stopPropagation();var id=this.getAttribute('data-nrm');if(!confirm('Remover esta norma do escopo?'))return;e.normas=e.normas.filter(function(n){return n.id!==id;});if(normaSel===id)normaSel=e.normas[0]?e.normas[0].id:null;salvar();render();};});
- document.querySelectorAll('[data-tog]').forEach(function(el){el.onclick=function(ev){if(ev.target.getAttribute('data-irm'))return;var norma=e.normas.find(function(n){return n.id===normaSel;});if(!norma)return;var it=norma.itens[+this.getAttribute('data-tog')];it.sel=!it.sel;salvar();renderMain();renderList();};});
- document.querySelectorAll('[data-irm]').forEach(function(el){el.onclick=function(ev){ev.stopPropagation();var norma=e.normas.find(function(n){return n.id===normaSel;});if(!norma)return;norma.itens.splice(+this.getAttribute('data-irm'),1);salvar();renderMain();renderList();};});
+ document.querySelectorAll('[data-nrm]').forEach(function(el){el.onclick=function(ev){ev.stopPropagation();var id=this.getAttribute('data-nrm');var nrm=e.normas.find(function(n){return n.id===id;});if(!confirm('Remover esta norma do escopo?'))return;e.normas=e.normas.filter(function(n){return n.id!==id;});if(normaSel===id)normaSel=e.normas[0]?e.normas[0].id:null;logHist('Norma "'+(nrm?nrm.nome:'')+'" removida do escopo',true);render();};});
+ document.querySelectorAll('[data-tog]').forEach(function(el){el.onclick=function(ev){if(ev.target.getAttribute('data-irm'))return;var norma=e.normas.find(function(n){return n.id===normaSel;});if(!norma)return;var it=norma.itens[+this.getAttribute('data-tog')];it.sel=!it.sel;logHist('Requisito '+it.codigo+(it.sel?' incluído no':' removido do')+' programa',true);renderMain();renderList();};});
+ document.querySelectorAll('[data-irm]').forEach(function(el){el.onclick=function(ev){ev.stopPropagation();var norma=e.normas.find(function(n){return n.id===normaSel;});if(!norma)return;var it=norma.itens[+this.getAttribute('data-irm')];norma.itens.splice(+this.getAttribute('data-irm'),1);logHist('Requisito '+((it&&it.codigo)||'')+' excluído de '+norma.nome,true);renderMain();renderList();};});
  document.querySelectorAll('[data-pn]').forEach(function(el){el.addEventListener('blur',function(){e.processos[+this.getAttribute('data-pn')].nome=this.textContent.trim();salvar();renderMain();renderList();});});
  document.querySelectorAll('[data-prm]').forEach(function(el){el.onclick=function(){removeProc(+this.getAttribute('data-prm'));};});
- document.querySelectorAll('[data-cell]').forEach(function(el){el.onclick=function(){var k=this.getAttribute('data-cell');e.grade=e.grade||{};e.grade[k]=((e.grade[k]||'X')==='X')?'NA':'X';salvar();renderMain();};});
+ document.querySelectorAll('[data-cell]').forEach(function(el){el.onclick=function(){openCelula(this.getAttribute('data-cell'));};});
 }
 try{if(window.self!==window.top)document.body.classList.add('embedded');}catch(e){document.body.classList.add('embedded');}
 carregar();render();

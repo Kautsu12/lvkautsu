@@ -173,37 +173,43 @@
   .viewbtn{width:100%;border:1px solid var(--line);background:var(--card);border-radius:14px;padding:12px 14px;cursor:pointer;display:flex;align-items:center;gap:10px;font-weight:600;color:var(--mid);margin-bottom:10px;font-family:var(--disp);transition:.15s}
   .viewbtn:hover{border-color:#c6d4e0}.viewbtn.on{border-color:var(--petrol);background:#eef5f9}
   .viewbtn svg{width:18px;height:18px;stroke:var(--petrol);fill:none;stroke-width:1.8}
-  .macro{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:20px 22px 24px}
-  .macro-h{text-align:center;margin-bottom:18px}
-  .macro-h h2{font-family:var(--disp);font-size:21px;color:var(--mid);letter-spacing:.02em;outline:none}
+  .macro{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:22px 24px 20px}
+  .macro-h{text-align:center;margin-bottom:16px}
+  .macro-h h2{font-family:var(--disp);font-size:22px;color:var(--mid);letter-spacing:.01em;outline:none}
   .macro-h .un{font-family:var(--disp);font-size:14px;color:var(--petrol);font-weight:600;margin-top:2px;outline:none}
-  .macro-h .ap{font-size:12px;color:var(--slate);margin-top:7px}
-  .macro-h .ap [contenteditable]{outline:none;border-bottom:1px dashed transparent;padding:0 3px}.macro-h [contenteditable]:focus{background:#f2f7fb;border-radius:5px}.macro-h .ap [contenteditable]:hover{border-bottom-color:#cdd8e2}
-  .rails{display:grid;grid-template-columns:32px 1fr 32px;gap:12px;align-items:stretch}
-  .rail{background:linear-gradient(var(--petrol),var(--petrol-d));border-radius:10px;display:flex;align-items:center;justify-content:center}
-  .rail span{writing-mode:vertical-rl;transform:rotate(180deg);color:#fff;font-family:var(--disp);font-weight:600;font-size:10px;letter-spacing:.06em;text-transform:uppercase;text-align:center;padding:10px 0;line-height:1.3}
-  .rail.out{background:linear-gradient(var(--turq),var(--turq-d))}
-  .tiers{display:flex;flex-direction:column;gap:10px;min-width:0}
-  .tier{background:#f4f7fa;border:1px solid var(--line);border-radius:12px;padding:13px 15px 15px}
-  .tier .tl{font-family:var(--disp);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--mut);text-align:center;margin-bottom:12px;font-weight:700}
-  .strat{display:flex;justify-content:center}
-  .mcard{cursor:pointer;transition:.15s;border-radius:11px;position:relative;color:#fff}
-  .mcard:hover{transform:translateY(-2px);filter:brightness(1.06)}
-  .mcard .cd{font-family:var(--disp);font-weight:700;font-size:10.5px;letter-spacing:.04em;opacity:.85}
-  .mcard .nm{font-weight:700;font-size:12.5px;margin-top:2px;line-height:1.2}
-  .mcard .x{position:absolute;top:4px;right:7px;opacity:0;font-size:11px;cursor:pointer;color:rgba(255,255,255,.85)}
+  .macro-h [contenteditable]:focus{background:#f2f7fb;border-radius:6px;outline:none}
+  .rails{display:grid;grid-template-columns:38px 1fr 38px;gap:14px;align-items:stretch}
+  .rail{border-radius:12px;display:flex;align-items:center;justify-content:center;background:linear-gradient(160deg,var(--petrol),var(--petrol-d))}
+  .rail.out{background:linear-gradient(160deg,var(--turq),var(--turq-d))}
+  .rail span{writing-mode:vertical-rl;transform:rotate(180deg);color:#fff;font-family:var(--disp);font-weight:600;font-size:10px;letter-spacing:.05em;text-transform:uppercase;text-align:center;line-height:1.35;padding:14px 0}
+  .tiers{display:flex;flex-direction:column;gap:8px;min-width:0}
+  .tier{background:#f5f8fb;border:1px solid var(--line);border-radius:13px;padding:14px 16px}
+  .tier .tl{font-family:var(--disp);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--mut);text-align:center;margin-bottom:13px;font-weight:700}
+  .conn{display:flex;justify-content:center;color:#c2d0dd;font-size:14px;line-height:1;height:6px}
+  .mrow{display:grid;gap:10px}
+  .mrow.strat{grid-template-columns:minmax(220px,320px);justify-content:center}
+  .mrow.chain{grid-template-columns:repeat(auto-fit,minmax(150px,1fr))}
+  .mrow.support{grid-template-columns:repeat(auto-fit,minmax(142px,1fr))}
+  .mcard{cursor:pointer;border-radius:11px;color:#fff;padding:15px 14px;text-align:center;position:relative;transition:.15s;min-height:64px;display:flex;flex-direction:column;justify-content:center;box-shadow:0 10px 22px -16px rgba(20,32,46,.7)}
+  .mcard:hover{transform:translateY(-2px);filter:brightness(1.07)}
+  .mcard .cd{font-family:var(--disp);font-weight:700;font-size:10.5px;letter-spacing:.04em;opacity:.82}
+  .mcard .nm{font-weight:700;font-size:12.5px;margin-top:3px;line-height:1.22}
+  .mcard .x{position:absolute;top:5px;right:8px;opacity:0;font-size:11px;cursor:pointer;color:rgba(255,255,255,.85)}
   .mcard:hover .x{opacity:.8}
-  .mcard.e{background:linear-gradient(150deg,var(--mid),#1f2f45);padding:15px 26px;min-width:220px;text-align:center;box-shadow:0 14px 30px -18px rgba(43,63,92,.85)}
-  .chain{display:flex;gap:7px;flex-wrap:wrap;justify-content:center}
-  .mcard.c{background:linear-gradient(150deg,var(--petrol),var(--petrol-d));padding:16px 18px 16px 28px;flex:1;min-width:140px;text-align:center;clip-path:polygon(0 0,calc(100% - 15px) 0,100% 50%,calc(100% - 15px) 100%,0 100%,15px 50%);box-shadow:0 10px 22px -16px rgba(44,110,142,.9)}
-  .chain .mcard.c:first-child{clip-path:polygon(0 0,calc(100% - 15px) 0,100% 50%,calc(100% - 15px) 100%,0 100%)}
-  .support{display:grid;grid-template-columns:repeat(auto-fit,minmax(118px,1fr));gap:9px}
-  .mcard.a{background:linear-gradient(150deg,#3f7f96,var(--petrol-d));padding:13px 11px;text-align:center;min-height:56px;display:flex;flex-direction:column;justify-content:center}
-  .tierarrow{text-align:center;color:#bcccd9;font-size:16px;line-height:1;margin:-2px 0}
-  .addm{border:1.4px dashed #c2d0dd;background:transparent;color:var(--slate);border-radius:9px;padding:7px 12px;cursor:pointer;font-weight:600;font-size:11.5px;font-family:var(--disp);margin-top:10px}
+  .mcard.e{background:linear-gradient(155deg,var(--mid),#1d2c40)}
+  .mcard.c{background:linear-gradient(155deg,var(--petrol),var(--petrol-d))}
+  .mcard.a{background:linear-gradient(155deg,#3f7f96,var(--petrol-d))}
+  .addm{border:1.4px dashed #c2d0dd;background:transparent;color:var(--slate);border-radius:9px;padding:7px 12px;cursor:pointer;font-weight:600;font-size:11.5px;font-family:var(--disp);margin-top:11px}
   .addm:hover{border-color:var(--petrol);color:var(--petrol)}
-  .maphint{text-align:center;color:var(--mut);font-size:11.5px;margin-top:14px}
-  @media(max-width:700px){.rails{grid-template-columns:1fr}.rail{display:none}}
+  .maplegend{display:flex;flex-wrap:wrap;gap:14px 22px;justify-content:space-between;align-items:flex-start;margin-top:16px;padding-top:14px;border-top:1px solid var(--line)}
+  .mleg{display:flex;gap:14px;flex-wrap:wrap}
+  .mleg b{display:inline-flex;align-items:center;gap:7px;font-size:11.5px;color:var(--slate);font-weight:500}
+  .msw{width:22px;height:12px;border-radius:3px;display:inline-block}
+  .mmeta{display:grid;grid-template-columns:auto auto;gap:3px 16px;font-size:11px;color:var(--slate)}
+  .mmeta b{color:var(--mid);font-family:var(--disp);font-weight:600}
+  .mmeta [contenteditable]{outline:none;border-bottom:1px dashed transparent;padding:0 3px}.mmeta [contenteditable]:hover{border-bottom-color:#cdd8e2}.mmeta [contenteditable]:focus{background:#f2f7fb;border-radius:4px}
+  .maphint{text-align:center;color:var(--mut);font-size:11.5px;margin-top:12px}
+  @media(max-width:760px){.rails{grid-template-columns:1fr}.rail{padding:6px}.rail span{writing-mode:horizontal-tb;transform:none;padding:6px 10px}}
   .foot{max-width:1500px;margin:0 auto;padding:0 22px 30px;color:var(--mut);font-size:11px;text-align:center}
   @media(prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
   @media(max-width:960px){.wrap{grid-template-columns:1fr}.ip{grid-template-columns:1fr 1fr;grid-auto-rows:auto}.ip>div{grid-column:auto!important;grid-row:auto!important}.mcr-table{min-width:0}}
@@ -233,7 +239,7 @@
 <div class="scrim center" id="mscrim" onclick="closeScale()"><div class="mbox" id="mbox" onclick="event.stopPropagation()"></div></div>
 <script>
 var LS='ip_mcr_v2'; var state=null, ativo=null, aba='ip', heatMode='atual', dIdx=null, view='mapa';
-function seedMapa(){return {titulo:'Mapeamento de Processos',unidades:'Joinville / Resende / Curitiba',aprovado:'Bruna Schmoeller',itens:[
+function seedMapa(){return {titulo:'Mapeamento de Processos',unidades:'Joinville / Resende / Curitiba',elaborador:'Jucélio S.',aprovado:'Bruna Schmoeller',dataElab:'21/07/2022',dataAprov:'21/09/2022',dataRev:'25/06/2025',rev:'05',itens:[
  {codigo:'IP-001',nome:'Direção',cat:'estrategico'},
  {codigo:'IP-003',nome:'Comercial',cat:'cliente'},{codigo:'IP-004',nome:'Produção',cat:'cliente'},{codigo:'IP-008',nome:'Manutenção',cat:'cliente'},{codigo:'IP-012',nome:'Laboratório',cat:'cliente'},{codigo:'IP-006',nome:'Logística',cat:'cliente'},
  {codigo:'IP-002',nome:'Gestão Integrada',cat:'apoio'},{codigo:'IP-010',nome:'Manutenção',cat:'apoio'},{codigo:'IP-005',nome:'Compras / Recebimento',cat:'apoio'},{codigo:'IP-007',nome:'Gestão de Pessoas',cat:'apoio'},{codigo:'IP-009',nome:'Ambiental',cat:'apoio'},{codigo:'IP-011',nome:'SESMT',cat:'apoio'},{codigo:'IP-014',nome:'PCP',cat:'apoio'}
@@ -273,7 +279,7 @@ function procAltaDirecao(){return {id:uid('p'),codigo:'AD',nome:'Alta Direção'
   {sub:'Sustentabilidade e pegada de carbono',categoria:'SGA',norma:'ISO 9001:2026 / ISO 14001:2015',requisito:'4.1 · 6.1',ro:'R',risco:'Pressão por redução da pegada de carbono; perda de contratos por não atender critérios de sustentabilidade',conseq:'Imagem prejudicada, exclusão de mercados sustentáveis',barreira:'Inventário de emissões, programa de redução de carbono, relatórios ESG',grav:2,prob:1}
  ]};}
 function carregar(){try{var r=localStorage.getItem(LS);if(r)state=JSON.parse(r);}catch(e){}if(!state||!state.processos)state=seed();migrar();ativo=state.processos[0]&&state.processos[0].id;}
-function migrar(){if(!state.mapa)state.mapa=seedMapa();if(!state._seedAD){if(!state.processos.some(function(p){return /alta dire/i.test(p.nome||'');})){state.processos.push(procAltaDirecao());}state._seedAD=true;try{salvar();}catch(e){}}
+function migrar(){if(!state.mapa)state.mapa=seedMapa();else{var _sm=seedMapa();['titulo','unidades','elaborador','aprovado','dataElab','dataAprov','dataRev','rev'].forEach(function(k){if(state.mapa[k]==null)state.mapa[k]=_sm[k];});}if(!state._seedAD){if(!state.processos.some(function(p){return /alta dire/i.test(p.nome||'');})){state.processos.push(procAltaDirecao());}state._seedAD=true;try{salvar();}catch(e){}}
  state.processos.forEach(function(p){if(!p.mcrMeta)p.mcrMeta=novaMeta();(p.mcr||[]).forEach(function(r){['acao','prazo','resp','dataReal','respEfic','dataEfic','eficaz','categoria','norma','requisito','perda','freq'].forEach(function(k){if(r[k]==null)r[k]='';});if(r.gravP==null)r.gravP='';if(r.probP==null)r.probP='';});});}
 function fmtBRL(n){n=+n||0;return 'R$ '+n.toLocaleString('pt-BR',{maximumFractionDigits:0});}
 function impactoAnual(r){var p=+r.perda||0,f=+r.freq||0;return p*f;}
@@ -305,27 +311,32 @@ function mapaHTML(){var m=state.mapa||(state.mapa=seedMapa());
  var mapNames=m.itens.map(function(it){return (it.nome||'').trim().toLowerCase();});
  var orphans=state.processos.filter(function(p){return mapNames.indexOf((p.nome||'').trim().toLowerCase())<0;});
  var outros='';
- if(orphans.length){outros='<div class="tier"><div class="tl">Outros processos cadastrados</div><div class="support">'+orphans.map(function(p){return '<div class="mcard a" data-openid="'+p.id+'"><div class="cd">MCR-'+esc(p.codigo||'--')+'</div><div class="nm">'+esc(p.nome)+'</div></div>';}).join('')+'</div></div>';}
+ if(orphans.length){outros='<div class="conn">▼</div><div class="tier"><div class="tl">Outros processos cadastrados</div><div class="mrow support">'+orphans.map(function(p){return '<div class="mcard a" data-openid="'+p.id+'"><div class="cd">MCR-'+esc(p.codigo||'--')+'</div><div class="nm">'+esc(p.nome)+'</div></div>';}).join('')+'</div></div>';}
+ var swE='linear-gradient(155deg,var(--mid),#1d2c40)',swC='linear-gradient(155deg,var(--petrol),var(--petrol-d))',swA='linear-gradient(155deg,#3f7f96,var(--petrol-d))';
  return '<div class="macro">'+
-  '<div class="macro-h"><h2 contenteditable="true" data-mh="titulo">'+esc(m.titulo)+'</h2><div class="un" contenteditable="true" data-mh="unidades">'+esc(m.unidades)+'</div><div class="ap">Aprovado: <span contenteditable="true" data-mh="aprovado">'+esc(m.aprovado||'—')+'</span></div></div>'+
+  '<div class="macro-h"><h2 contenteditable="true" data-mh="titulo">'+esc(m.titulo)+'</h2><div class="un" contenteditable="true" data-mh="unidades">'+esc(m.unidades)+'</div></div>'+
   '<div class="rails"><div class="rail"><span>Requisitos de clientes / partes interessadas</span></div>'+
    '<div class="tiers">'+
-    '<div class="tier"><div class="tl">Processos Estratégicos</div><div class="strat">'+(estrat||'<span class="maphint">—</span>')+'</div><div style="text-align:center"><button class="addm" data-add="estrategico">＋ estratégico</button></div></div>'+
-    '<div class="tierarrow">▼</div>'+
-    '<div class="tier"><div class="tl">Processos Voltados ao Cliente</div><div class="chain">'+(cli||'<span class="maphint">—</span>')+'</div><div style="text-align:center"><button class="addm" data-add="cliente">＋ processo</button></div></div>'+
-    '<div class="tierarrow">▼</div>'+
-    '<div class="tier"><div class="tl">Processos de Apoio e Gestão</div><div class="support">'+(apoio||'<span class="maphint">—</span>')+'</div><div style="text-align:center"><button class="addm" data-add="apoio">＋ apoio</button></div></div>'+
+    '<div class="tier"><div class="tl">Processos Estratégicos</div><div class="mrow strat">'+estrat+'</div><div style="text-align:center"><button class="addm" data-add="estrategico">＋ estratégico</button></div></div>'+
+    '<div class="conn">▼</div>'+
+    '<div class="tier"><div class="tl">Processos Voltados ao Cliente</div><div class="mrow chain">'+cli+'</div><div style="text-align:center"><button class="addm" data-add="cliente">＋ processo</button></div></div>'+
+    '<div class="conn">▼</div>'+
+    '<div class="tier"><div class="tl">Processos de Apoio e Gestão</div><div class="mrow support">'+apoio+'</div><div style="text-align:center"><button class="addm" data-add="apoio">＋ apoio</button></div></div>'+
     outros+
    '</div>'+
    '<div class="rail out"><span>Satisfação de clientes / partes interessadas</span></div>'+
   '</div>'+
+  '<div class="maplegend"><div class="mleg"><b><span class="msw" style="background:'+swE+'"></span>Estratégicos</b><b><span class="msw" style="background:'+swC+'"></span>Voltados ao cliente</b><b><span class="msw" style="background:'+swA+'"></span>Apoio e gestão</b></div>'+
+   '<div class="mmeta"><span><b>Elaborado por:</b> <span contenteditable="true" data-mh="elaborador">'+esc(m.elaborador||'—')+'</span></span><span><b>Data elaboração:</b> <span contenteditable="true" data-mh="dataElab">'+esc(m.dataElab||'—')+'</span></span>'+
+   '<span><b>Aprovado por:</b> <span contenteditable="true" data-mh="aprovado">'+esc(m.aprovado||'—')+'</span></span><span><b>Data aprovação:</b> <span contenteditable="true" data-mh="dataAprov">'+esc(m.dataAprov||'—')+'</span></span>'+
+   '<span><b>Revisão:</b> <span contenteditable="true" data-mh="rev">'+esc(m.rev||'—')+'</span></span><span><b>Data revisão:</b> <span contenteditable="true" data-mh="dataRev">'+esc(m.dataRev||'—')+'</span></span></div></div>'+
   '<div class="maphint">Clique num processo para abrir sua Interação de Processo e Matriz de Risco.</div></div>';
 }
 function bindMapa(){
  document.querySelectorAll('[data-mi]').forEach(function(el){el.onclick=function(ev){if(ev.target.getAttribute('data-mrm')!=null)return;var it=state.mapa.itens[+this.getAttribute('data-mi')];abrirProcesso(it.nome,it.codigo);};});
  document.querySelectorAll('[data-openid]').forEach(function(el){el.onclick=function(){abrirId(this.getAttribute('data-openid'));};});
  document.querySelectorAll('[data-mrm]').forEach(function(el){el.onclick=function(ev){ev.stopPropagation();var i=+this.getAttribute('data-mrm');if(!confirm('Remover "'+state.mapa.itens[i].nome+'" do mapa?'))return;state.mapa.itens.splice(i,1);salvar();renderMain();};});
- document.querySelectorAll('.macro-h [data-mh]').forEach(function(el){el.addEventListener('blur',function(){state.mapa[this.getAttribute('data-mh')]=this.textContent.trim();salvar();});});
+ document.querySelectorAll('[data-mh]').forEach(function(el){el.addEventListener('blur',function(){var v=this.textContent.trim();state.mapa[this.getAttribute('data-mh')]=(v==='—')?'':v;salvar();});});
  document.querySelectorAll('[data-add]').forEach(function(el){el.onclick=function(){var cat=this.getAttribute('data-add');var nm=prompt('Nome do processo:');if(!nm)return;var cod=prompt('Código (ex.: IP-015):','')||'';state.mapa.itens.push({codigo:cod.trim(),nome:nm.trim(),cat:cat});salvar();renderMain();};});
 }
 function renderMain(){
