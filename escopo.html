@@ -107,11 +107,11 @@
   .foot{max-width:1500px;margin:0 auto;padding:0 22px 30px;color:var(--mut);font-size:11px;text-align:center}
   @media(prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
   @media(max-width:960px){.wrap{grid-template-columns:1fr}.cols{grid-template-columns:1fr}.rescols{grid-template-columns:1fr}}
-  /* Dentro do sistema (iframe): o cabeçalho METIS já é do index — some com a barra da marca aqui. */
-  body.embedded .top{padding:5px 18px;box-shadow:none}
+  /* Dentro do sistema (iframe): o cabeçalho METIS já é do index — remove a barra da marca por completo. */
+  body.embedded .top{position:static;background:transparent;border-bottom:none;box-shadow:none;backdrop-filter:none;padding:8px 18px 0}
   body.embedded .top .logo,body.embedded .top h1{display:none}
-  body.embedded .wrap{padding-top:12px}
-  body.embedded .aside{top:52px}
+  body.embedded .wrap{padding-top:4px}
+  body.embedded .aside{top:14px}
 </style>
 </head>
 <body>
