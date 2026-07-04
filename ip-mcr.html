@@ -160,7 +160,10 @@
   /* modal escala */
   .mbox{background:var(--card);border-radius:16px;max-width:600px;width:92vw;padding:24px;max-height:88vh;overflow:auto;box-shadow:0 30px 80px -30px rgba(20,32,46,.6)}
   .mbox h3{font-family:var(--disp);color:var(--mid);font-size:19px;margin-bottom:3px}
-  .mbox .msub{color:var(--mut);font-size:12.5px;margin-bottom:18px}
+  .mbox .msub{color:var(--mut);font-size:12.5px;margin-bottom:14px}
+  .impsrc{background:#f2f7fb;border:1px solid var(--line);border-radius:9px;padding:8px 11px;font-size:12px;color:var(--slate);margin-bottom:8px}
+  .impsrc b{color:var(--mid)}
+  .impwarn{background:var(--med-bg);border:1px solid #edcf9e;border-radius:9px;padding:9px 12px;font-size:12px;color:#8a5a12;line-height:1.45;margin-bottom:6px}
   .mbox .mclose{float:right;cursor:pointer;color:var(--mut);font-size:20px;padding:2px 6px;border-radius:8px}.mbox .mclose:hover{background:#f0f4f8}
   .scaletbl{width:100%;border-collapse:collapse;font-size:12.5px;margin:6px 0 18px}
   .scaletbl th,.scaletbl td{border:1px solid var(--line);padding:8px 10px;text-align:left;vertical-align:top}
@@ -517,7 +520,7 @@ function stripItem(s){return String(s==null?'':s).replace(/^[\s>\-\*'•·►▪
 function splitLines(s){return String(s==null?'':s).split(/\r?\n/).map(stripItem).filter(function(x){return x.length>0&&norm(x)!=='riscos'&&norm(x)!=='risco';});}
 function detIP(wb){for(var si=0;si<wb.SheetNames.length;si++){var nm=wb.SheetNames[si];var aoa;try{aoa=XLSX.utils.sheet_to_json(wb.Sheets[nm],{header:1,raw:false,defval:''});}catch(e){continue;}
    var flat=aoa.map(function(row){return (row||[]).map(norm).join(' ');}).join(' ');
-   if(/^ip[\s\-]/.test(norm(nm))||flat.indexOf('interacao de processo')>=0||(flat.indexOf('recursos')>=0&&flat.indexOf('missao do processo')>=0)){var res=parseIPaoa(aoa);if(res&&ipTem(res.ip))return res;}}
+   if(/^ip[\s\-]/.test(norm(nm))||flat.indexOf('interacao de processo')>=0||(flat.indexOf('recursos')>=0&&flat.indexOf('missao do processo')>=0)){var res=parseIPaoa(aoa);if(res&&ipTem(res.ip)){res.sheet=nm;return res;}}}
  return null;}
 function parseIPaoa(aoa){var ip=novoIP();var missao='';
  var zonas=[['recursos','recursos'],['maoDeObra','mao de obra'],['origem','origem'],['entradas','entradas'],['atividades','processo de'],['saidas','saida'],['destino','destino'],['metodos','metodo'],['medicao','medicao'],['missao','missao do processo']];
@@ -529,7 +532,7 @@ function parseIPaoa(aoa){var ip=novoIP();var missao='';
  if(pos.missao){var mr=aoa[pos.missao.r+1]||[];for(var cc=pos.missao.c;cc<mr.length;cc++){if(mr[cc]&&String(mr[cc]).trim()){missao=String(mr[cc]).trim();break;}}}
  return {ip:ip,missao:missao};}
 function detProcNome(aoa,hr){for(var i=0;i<hr;i++){var row=aoa[i]||[];for(var j=0;j<row.length;j++){var c=norm(row[j]);if(c.indexOf('processo')>=0){var nx=row[j+1];if(nx&&String(nx).trim())return String(nx).trim();var parts=String(row[j]).split(':');if(parts[1]&&parts[1].trim())return parts[1].trim();}}}return '';}
-function detMcr(wb){for(var si=0;si<wb.SheetNames.length;si++){var res;try{var aoa=XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[si]],{header:1,raw:false,defval:''});res=parseAoaMcr(aoa);}catch(e){res={rows:[],procNome:''};}if(res.rows.length)return res;}return {rows:[],procNome:''};}
+function detMcr(wb){for(var si=0;si<wb.SheetNames.length;si++){var res;try{var aoa=XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[si]],{header:1,raw:false,defval:''});res=parseAoaMcr(aoa);}catch(e){res={rows:[],procNome:''};}if(res.rows.length){res.sheet=wb.SheetNames[si];return res;}}return {rows:[],procNome:'',sheet:''};}
 function parseAoaMcr(aoa){
   var hr=-1;for(var i=0;i<Math.min(aoa.length,40);i++){var jn=(aoa[i]||[]).map(norm).join('|');if(jn.indexOf('risco')>=0&&(jn.indexOf('consequenc')>=0||jn.indexOf('barreira')>=0||jn.indexOf('grav')>=0)){hr=i;break;}}
   if(hr<0)return {rows:[],procNome:''};
@@ -638,8 +641,9 @@ function importExcel(ev){
   var dip=detIP(wb);var dmcr=detMcr(wb);
   var ip=(dip&&ipTem(dip.ip))?dip.ip:null;var missao=dip?dip.missao:'';
   var mcr=(dmcr.rows&&dmcr.rows.length)?dmcr.rows:null;
-  var procNome=dmcr.procNome||'';
-  if(ip||mcr){escolherImport(ip,mcr,procNome,file,missao);return;}
+  var procNome=dmcr.procNome||(dip&&dip.sheet)||'';
+  var src={nome:procNome,ipSheet:(dip&&dip.sheet)||'',mcrSheet:(dmcr&&dmcr.sheet)||''};
+  if(ip||mcr){escolherImport(ip,mcr,procNome,file,missao,src);return;}
   // Nada reconhecido diretamente → tenta IA como reforço.
   flash('Avaliando o documento com IA…');
   fetch('/api/importar-mcr',{method:'POST',headers:{'Content-Type':'application/json'},credentials:'same-origin',body:JSON.stringify({sheets:sheetsToCsv(wb)})})
@@ -648,7 +652,7 @@ function importExcel(ev){
      if(!res||!res.ok)throw new Error((res&&res.error)||'falha na IA');
      var aip=ipTem(res.ip)?normIpIA(res.ip):null;var amcr=(res.mcr&&res.mcr.length)?res.mcr.map(normRiscoIA):null;
      if(!aip&&!amcr){flash('');alert('Não encontrei Interação de Processo nem Matriz de Risco neste documento.\n\nConfira se ele tem a matriz (Risco/Consequências/Barreira) e/ou a aba de Interação de Processo.');return;}
-     escolherImport(aip,amcr,res.processo,file,(res.ip&&res.ip.missao)||'');
+     escolherImport(aip,amcr,res.processo,file,(res.ip&&res.ip.missao)||'',{nome:res.processo||'',ipSheet:'',mcrSheet:''});
    })
    .catch(function(err){flash('');alert('Não consegui ler o documento automaticamente e a IA falhou ('+(err.message||err)+').\n\nConfira o GEMINI_API_KEY no servidor.');});
  };
@@ -662,18 +666,22 @@ function aplicarImport(ip,mcr,procNome,file,missao){
  state.processos.push(novo);ativo=novo.id;aba=mcr?'mcr':'ip';salvar();render();
  flash('Importado: '+(ip?'IP':'')+(ip&&mcr?' + ':'')+(mcr?('MCR ('+mcr.length+')'):'')+' ✓');
 }
-function escolherImport(ip,mcr,procNome,file,missao){
- function apply(op){aplicarImport((op==='ip'||op==='ambos')?ip:null,(op==='mcr'||op==='ambos')?mcr:null,procNome,file,missao);}
- if(ip&&!mcr){apply('ip');return;}
- if(mcr&&!ip){apply('mcr');return;}
- var nip=0;['recursos','dono','maoDeObra','origem','entradas','atividades','saidas','destino','metodos','medicao'].forEach(function(k){if(ip[k])nip+=ip[k].length;});
+function tokShare(a,b){a=norm(a);b=norm(b);function any(x,y){return x.split(' ').some(function(t){return t.length>=4&&y.indexOf(t)>=0;});}return any(a,b)||any(b,a);}
+function escolherImport(ip,mcr,procNome,file,missao,src){
+ var into=(view==='proc'&&P());
+ function apply(op){var i=(op==='ip'||op==='ambos')?ip:null;var m=(op==='mcr'||op==='ambos')?mcr:null;if(into)aplicarNoProcesso(i,m,missao,null,null);else aplicarImport(i,m,procNome,file,missao);}
+ if(!into){if(ip&&!mcr){apply('ip');return;}if(mcr&&!ip){apply('mcr');return;}}
+ var nip=0;['recursos','dono','maoDeObra','origem','entradas','atividades','saidas','destino','metodos','medicao'].forEach(function(k){if(ip&&ip[k])nip+=ip[k].length;});
+ var srcNome=(src&&src.nome)||'';
+ var srcline=(src&&(srcNome||src.ipSheet||src.mcrSheet))?('<div class="impsrc">📄 Do arquivo'+(srcNome?': <b>'+esc(srcNome)+'</b>':'')+(src.ipSheet?(' · aba IP: '+esc(src.ipSheet)):'')+(src.mcrSheet?(' · aba MCR: '+esc(src.mcrSheet)):'')+'</div>'):'';
+ var warn=(into&&srcNome&&!tokShare(P().nome,srcNome))?('<div class="impwarn">⚠ O arquivo parece ser do processo <b>“'+esc(srcNome)+'”</b>, diferente do aberto (<b>“'+esc(P().nome)+'”</b>). Confira antes de importar.</div>'):'';
+ var btns='';
+ if(ip&&mcr)btns+='<button class="btn pri" style="justify-content:flex-start" onclick="_impPick(\'ambos\')">Tudo — IP + MCR ('+nip+' itens de IP · '+mcr.length+' riscos)</button>';
+ if(ip)btns+='<button class="btn'+((ip&&mcr)?'':' pri')+'" style="justify-content:flex-start" onclick="_impPick(\'ip\')">'+((ip&&mcr)?'Só a Interação de Processo':'Importar a Interação de Processo')+' ('+nip+' itens)</button>';
+ if(mcr)btns+='<button class="btn'+((ip&&mcr)?'':' pri')+'" style="justify-content:flex-start" onclick="_impPick(\'mcr\')">'+((ip&&mcr)?'Só a Matriz de Risco':'Importar a Matriz de Risco')+' ('+mcr.length+' riscos)</button>';
  var box=document.getElementById('mbox');
- box.innerHTML='<span class="mclose" onclick="closeScale()">✕</span><h3>Importar do documento</h3><div class="msub">A IA encontrou Interação de Processo e Matriz de Risco. O que você quer trazer?</div>'+
-  '<div style="display:flex;flex-direction:column;gap:10px;margin-top:4px">'+
-   '<button class="btn pri" style="justify-content:flex-start" onclick="_impPick(\'ambos\')">Tudo — IP + MCR ('+nip+' itens de IP · '+mcr.length+' riscos)</button>'+
-   '<button class="btn" style="justify-content:flex-start" onclick="_impPick(\'ip\')">Só a Interação de Processo ('+nip+' itens)</button>'+
-   '<button class="btn" style="justify-content:flex-start" onclick="_impPick(\'mcr\')">Só a Matriz de Risco ('+mcr.length+' riscos)</button>'+
-  '</div>';
+ box.innerHTML='<span class="mclose" onclick="closeScale()">✕</span><h3>'+(into?('Importar para “'+esc(P().nome)+'”'):'Importar do documento')+'</h3><div class="msub">O que você quer trazer'+(into?' para este processo':'')+'?</div>'+srcline+warn+
+  '<div style="display:flex;flex-direction:column;gap:10px;margin-top:12px">'+btns+'</div>';
  window._impCb=apply;document.getElementById('mscrim').classList.add('on');}
 function _impPick(op){closeScale();var cb=window._impCb;window._impCb=null;if(cb)cb(op);}
 function exportar(){var b=new Blob([JSON.stringify(state,null,2)],{type:'application/json'});var a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='ip-mcr.json';a.click();}
