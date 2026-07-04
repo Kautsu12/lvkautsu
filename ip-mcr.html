@@ -1,0 +1,511 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mapa de Processos · IP e MCR — METIS</title>
+<link rel="icon" href="/assets/favicon.svg">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+  :root{
+    --petrol:#2C6E8E;--petrol-d:#245F7C;--mid:#2B3F5C;--turq:#1FA59E;--turq-d:#0e6f69;
+    --ink:#22303f;--slate:#5b6b7e;--mut:#8698a8;--line:#e5ebf1;--bg:#eef2f6;--card:#fff;
+    --lo:#1FA59E;--lo-bg:#e4f4f1;--med:#c8781c;--med-bg:#faefdd;--hi:#c0392b;--hi-bg:#fbe9e6;
+    --disp:'Space Grotesk','Segoe UI',system-ui,sans-serif;--body:'Segoe UI',system-ui,-apple-system,Arial,sans-serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%}
+  body{font-family:var(--body);color:var(--ink);background:radial-gradient(1100px 520px at 80% -10%, rgba(31,165,158,.08), transparent 60%),var(--bg)}
+  .top{position:sticky;top:0;z-index:30;background:rgba(255,255,255,.9);backdrop-filter:blur(8px);border-bottom:1px solid var(--line);display:flex;align-items:center;gap:14px;padding:11px 22px}
+  .logo{display:flex;align-items:center;gap:10px}.logo img{width:30px;height:30px}
+  .logo b{font-family:var(--disp);font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--mid);font-size:16px}
+  .logo small{display:block;font-size:10px;color:var(--mut);letter-spacing:.08em;margin-top:1px}
+  .top h1{font-family:var(--disp);font-weight:600;font-size:15px;color:var(--mid);margin-left:6px}
+  .sp{flex:1}.st{font-size:12px;color:var(--turq-d);min-width:52px}
+  .btn{font-family:var(--body);font-size:13px;font-weight:600;cursor:pointer;padding:8px 14px;border-radius:10px;border:1px solid var(--line);background:#fff;color:var(--ink);display:inline-flex;align-items:center;gap:7px;transition:.15s}
+  .btn:hover{border-color:#9fb2c2;box-shadow:0 8px 20px -12px rgba(34,48,63,.45)}
+  .btn.pri{background:var(--petrol);border-color:var(--petrol);color:#fff}.btn.pri:hover{background:var(--petrol-d)}
+  .btn.gh{border-color:transparent;background:transparent;padding:5px 8px}.btn.sm{padding:5px 9px;font-size:12px}
+  .wrap{display:grid;grid-template-columns:280px 1fr;gap:20px;max-width:1500px;margin:0 auto;padding:20px 22px 70px}
+  .aside{align-self:start;position:sticky;top:76px}
+  .aside h2{font-family:var(--disp);font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--mut);margin:2px 4px 10px}
+  .plist{display:flex;flex-direction:column;gap:8px}
+  .pcard{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:13px 14px;cursor:pointer;transition:.15s;position:relative;overflow:hidden}
+  .pcard::before{content:'';position:absolute;left:0;top:0;bottom:0;width:4px;background:transparent}
+  .pcard:hover{border-color:#c6d4e0;transform:translateY(-1px)}.pcard.on{border-color:var(--petrol)}.pcard.on::before{background:var(--turq)}
+  .pcard .cod{font-family:var(--disp);font-weight:600;font-size:11px;color:var(--petrol);letter-spacing:.06em}
+  .pcard .nm{font-weight:600;font-size:14px;color:var(--mid);margin-top:2px}
+  .pcard .meta{font-size:11px;color:var(--mut);margin-top:6px;display:flex;gap:8px}
+  .dot{width:7px;height:7px;border-radius:50%;display:inline-block;margin-right:4px;vertical-align:1px}
+  .addp{width:100%;border:1.5px dashed #c2d0dd;background:transparent;color:var(--slate);border-radius:14px;padding:12px;cursor:pointer;font-weight:600;font-size:13px}
+  .addp:hover{border-color:var(--petrol);color:var(--petrol)}
+  .main{min-width:0}
+  .phead{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:18px 20px;margin-bottom:16px;box-shadow:0 1px 2px rgba(34,48,63,.04)}
+  .phead .row1{display:flex;align-items:center;gap:12px}
+  .badge{font-family:var(--disp);font-weight:600;background:var(--mid);color:#fff;border-radius:10px;padding:5px 11px;font-size:13px;letter-spacing:.04em}
+  .phead h3{font-family:var(--disp);font-size:20px;color:var(--mid);outline:none}
+  .tabs{display:flex;gap:4px;margin:16px 0 4px;background:#e9eef4;padding:4px;border-radius:12px;width:fit-content}
+  .tab{font-family:var(--disp);font-weight:600;font-size:13.5px;padding:8px 16px;border:none;background:none;color:var(--slate);border-radius:9px;cursor:pointer;transition:.15s}
+  .tab.on{background:#fff;color:var(--petrol);box-shadow:0 2px 8px -4px rgba(34,48,63,.3)}
+  .panel{display:none}.panel.on{display:block;animation:fade .2s ease}
+  @keyframes fade{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+  /* ── DIAGRAMA DE TARTARUGA (caixas) ── */
+  .ipwrap{position:relative;margin-top:18px}
+  .ipwrap::before{content:'';position:absolute;inset:-8px;background:radial-gradient(480px 320px at 50% 48%, rgba(31,165,158,.08), transparent 72%);pointer-events:none;z-index:0}
+  .ip{position:relative;z-index:1;display:grid;grid-template-columns:1fr 1fr 1.45fr 1fr 1fr;gap:42px 48px;align-items:stretch}
+  .wires{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:3;overflow:visible}
+  .wires .flow{animation:dashmove 1s linear infinite;opacity:.9}
+  @keyframes dashmove{to{stroke-dashoffset:-18}}
+  .zbox{background:var(--card);border:1px solid var(--line);border-radius:13px;padding:12px 14px;position:relative;overflow:hidden}
+  .zbox::before{content:'';position:absolute;left:0;right:0;top:0;height:4px;background:var(--petrol)}
+  .zbox.io::before{background:var(--turq)}.zbox.sup::before{background:var(--mid)}
+  .zbox h4{font-family:var(--disp);font-size:12px;letter-spacing:.04em;color:var(--mid);margin-bottom:8px;text-transform:uppercase}
+  .lst{display:flex;flex-direction:column;gap:4px}
+  .li{display:flex;gap:6px;align-items:flex-start;font-size:12px;color:var(--ink)}
+  .li .b{color:var(--turq);font-weight:700;line-height:1.3}
+  .li .txt{flex:1;outline:none;border-radius:5px;padding:1px 4px;line-height:1.35}.li .txt:focus{background:#f2f7fb}
+  .li .x{opacity:0;color:var(--mut);cursor:pointer;font-size:11px;padding:0 2px}.li:hover .x{opacity:.7}.li .x:hover{color:var(--hi)}
+  .addli{font-size:11.5px;color:var(--petrol);font-weight:600;cursor:pointer;margin-top:5px;display:inline-block}
+  .z-rec{grid-column:1/3;grid-row:1}.z-dono{grid-column:3;grid-row:1}.z-mo{grid-column:4/6;grid-row:1}
+  .z-ori{grid-column:1;grid-row:2}.z-ent{grid-column:2;grid-row:2}.z-proc{grid-column:3;grid-row:2}.z-sai{grid-column:4;grid-row:2}.z-des{grid-column:5;grid-row:2}
+  .z-met{grid-column:1/3;grid-row:3}.z-mis{grid-column:3;grid-row:3}.z-med{grid-column:4/6;grid-row:3}
+  .z-dono::before,.z-mis::before{background:var(--mid)}
+  /* Processo (centro) */
+  .proc{background:linear-gradient(165deg,#f0fbf9,#dff2ee);border:1.6px solid #93d4ca;box-shadow:0 0 0 5px rgba(31,165,158,.10),0 24px 54px -26px rgba(31,165,158,.65)}
+  .proc::before{background:linear-gradient(90deg,var(--turq),var(--petrol))}
+  .proc h4{color:var(--petrol-d);text-align:center}
+  .proc .core-lbl{display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:6px}
+  .proc .core-lbl svg{width:26px;height:26px}
+  .abadge{position:absolute;background:var(--petrol);color:#fff;font-family:var(--disp);font-weight:700;font-size:11px;width:22px;height:22px;border-radius:7px;display:flex;align-items:center;justify-content:center;z-index:4;box-shadow:0 2px 6px rgba(0,0,0,.2)}
+  .abadge.e{left:-11px;top:50%;transform:translateY(-50%)}
+  .abadge.s{right:-11px;top:50%;transform:translateY(-50%);background:var(--turq)}
+  .abadge.g{top:-11px;left:50%;transform:translateX(-50%);background:var(--mid)}
+  .abadge.m{bottom:-11px;left:50%;transform:translateX(-50%);background:var(--mid)}
+  .risco{position:absolute;font-size:8.5px;color:var(--mut);font-weight:700;letter-spacing:.04em}
+  .risco.re{left:-8px;top:calc(50% - 20px)}.risco.rs{right:-8px;top:calc(50% - 20px)}
+  .zbox.mis .mtxt{font-size:12px;color:var(--mid);outline:none;line-height:1.4;border-radius:6px;padding:2px 4px}.zbox.mis .mtxt:focus{background:#f2f7fb}
+  .iplegend{grid-column:1/6;grid-row:4;display:flex;gap:18px;flex-wrap:wrap;justify-content:center;color:var(--slate);font-size:11px;margin-top:2px}
+  .iplegend b{font-family:var(--disp);color:var(--petrol)}
+  /* MCR */
+  .mcr-top{display:flex;flex-wrap:wrap;gap:16px;margin-top:14px;align-items:flex-start}
+  .mcr-table{flex:1;min-width:520px;background:var(--card);border:1px solid var(--line);border-radius:14px;overflow:hidden}
+  table{border-collapse:collapse;width:100%;font-size:12.5px}
+  th{background:#f6f9fb;text-align:left;padding:10px;color:var(--mid);font-family:var(--disp);font-weight:600;font-size:11px;letter-spacing:.03em;border-bottom:1px solid var(--line)}
+  td{padding:8px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+  td [contenteditable]{outline:none;border-radius:5px;padding:2px 4px;display:block;min-height:18px}td [contenteditable]:focus{background:#f2f7fb}
+  select{border:1px solid var(--line);border-radius:7px;padding:4px 6px;font-family:inherit;font-size:12px;background:#fff}
+  .ro{display:inline-block;font-weight:700;font-size:11px;border-radius:6px;padding:2px 7px}.ro.R{background:var(--med-bg);color:var(--med)}.ro.O{background:var(--lo-bg);color:var(--turq-d)}
+  .cls{font-family:var(--disp);font-weight:700;text-align:center;border-radius:8px;padding:3px 0;color:#fff;font-size:13px}
+  .heat{width:300px;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px}
+  .heat h4{font-family:var(--disp);font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--mid);margin-bottom:12px}
+  .hgrid{display:grid;grid-template-columns:44px repeat(3,1fr);grid-auto-rows:52px;gap:5px;align-items:center}
+  .hh{font-size:10.5px;color:var(--mut);text-align:center;font-weight:600}
+  .cell{border-radius:9px;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#fff;font-family:var(--disp);font-weight:700}.cell small{font-size:10px;font-weight:500;opacity:.85}
+  .leg{display:flex;gap:12px;margin-top:12px;font-size:11.5px;color:var(--slate);flex-wrap:wrap}.leg b{display:inline-flex;align-items:center;gap:5px}
+  .sw{width:14px;height:14px;border-radius:4px;display:inline-block}
+  /* ── MCR · ciclo de risco ── */
+  .mcrmeta{display:flex;flex-wrap:wrap;gap:6px 22px;margin:2px 0 14px;font-size:12px;color:var(--slate)}
+  .mcrmeta b{color:var(--mid);font-family:var(--disp);font-weight:600}
+  .mcrmeta [contenteditable]{outline:none;border-bottom:1px dashed transparent;padding:0 2px;min-width:36px;display:inline-block}
+  .mcrmeta [contenteditable]:hover{border-bottom-color:#cdd8e2}.mcrmeta [contenteditable]:focus{border-bottom-color:var(--petrol);background:#f2f7fb}
+  .mcr-kpis{display:flex;gap:10px;flex-wrap:wrap;margin:0 0 14px}
+  .kpi{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:11px 14px;min-width:112px;flex:1;position:relative;overflow:hidden}
+  .kpi::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--petrol)}
+  .kpi.hi::before{background:var(--hi)}.kpi.ok::before{background:var(--turq)}.kpi.med::before{background:var(--med)}
+  .kpi .n{font-family:var(--disp);font-weight:700;font-size:23px;color:var(--mid);line-height:1}
+  .kpi .n small{font-size:12px;font-weight:600;color:var(--mut)}
+  .kpi .l{font-size:10px;color:var(--mut);text-transform:uppercase;letter-spacing:.05em;margin-top:6px;font-weight:600}
+  .bna{display:inline-flex;align-items:center;gap:7px}
+  .chip{font-family:var(--disp);font-weight:700;font-size:12.5px;color:#fff;border-radius:7px;min-width:26px;text-align:center;padding:3px 8px;display:inline-block}
+  .chip.gh2{background:transparent;color:var(--mut);border:1px dashed #cdd8e2;font-weight:600}
+  .bna .arw{color:var(--mut);font-size:13px}
+  .status{font-size:10.5px;font-weight:700;border-radius:20px;padding:3px 10px;display:inline-block;letter-spacing:.02em;white-space:nowrap}
+  .status.none{background:#eef2f6;color:var(--mut)}.status.plan{background:var(--med-bg);color:var(--med)}
+  .status.done{background:#e7eef6;color:var(--petrol)}.status.ok{background:var(--lo-bg);color:var(--turq-d)}.status.no{background:var(--hi-bg);color:var(--hi)}
+  tr.mrow{cursor:pointer;transition:.12s}tr.mrow:hover td{background:#f6fafc}
+  tr.mrow td .risktit{font-weight:600;color:var(--ink)}
+  tr.mrow td .subtit{font-size:11px;color:var(--mut);margin-top:3px;display:flex;align-items:center;gap:6px}
+  .cat{font-family:var(--disp);font-weight:700;font-size:9.5px;letter-spacing:.04em;border-radius:5px;padding:1px 6px}
+  .chev{color:#c2d0dd;font-size:15px}tr.mrow:hover .chev{color:var(--petrol)}
+  td.tcell{font-size:12px;color:var(--slate);line-height:1.4}
+  /* drawer */
+  .scrim{position:fixed;inset:0;background:rgba(20,32,46,.42);backdrop-filter:blur(2px);opacity:0;pointer-events:none;transition:.2s;z-index:40}
+  .scrim.on{opacity:1;pointer-events:auto}
+  .scrim.center{display:flex;align-items:center;justify-content:center}
+  .drawer{position:fixed;top:0;right:0;height:100%;width:min(480px,94vw);background:var(--card);border-left:1px solid var(--line);box-shadow:-24px 0 60px -30px rgba(20,32,46,.55);transform:translateX(101%);transition:transform .24s cubic-bezier(.4,0,.2,1);z-index:41;display:flex;flex-direction:column}
+  .drawer.on{transform:none}
+  .dhead{padding:17px 22px;border-bottom:1px solid var(--line);display:flex;align-items:flex-start;gap:12px}
+  .dhead .dt{flex:1;min-width:0}.dhead h3{font-family:var(--disp);font-size:16px;color:var(--mid);line-height:1.3}
+  .dhead .dclose{cursor:pointer;color:var(--mut);font-size:20px;line-height:1;padding:2px 6px;border-radius:8px}.dhead .dclose:hover{background:#f0f4f8;color:var(--ink)}
+  .dbody{padding:16px 22px 34px;overflow-y:auto;flex:1}
+  .dsec{margin-bottom:20px}
+  .dsec .st2{font-family:var(--disp);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--turq-d);margin-bottom:11px;display:flex;align-items:center;gap:10px}
+  .dsec .st2::after{content:'';flex:1;height:1px;background:var(--line)}
+  .field{margin-bottom:11px}
+  .field>label{display:block;font-size:11px;color:var(--mut);margin-bottom:4px;font-weight:600}
+  .field .inp{width:100%;border:1px solid var(--line);border-radius:9px;padding:8px 10px;font-family:inherit;font-size:13px;color:var(--ink);background:#fff;resize:vertical}
+  textarea.inp{min-height:38px;line-height:1.4}
+  .field .inp:focus{outline:none;border-color:var(--petrol);background:#f8fbfd}
+  .frow{display:flex;gap:10px}.frow .field{flex:1}
+  .clsbox{display:flex;align-items:center;gap:13px;background:#f6f9fb;border-radius:11px;padding:11px 14px}
+  .clsbox .big{font-family:var(--disp);font-weight:700;font-size:22px;color:#fff;border-radius:10px;width:44px;height:44px;display:flex;align-items:center;justify-content:center;flex:none}
+  .clsbox .cl{font-size:11px;color:var(--mut)}.clsbox .cl b{display:block;font-size:14px;color:var(--mid);font-family:var(--disp);margin-top:1px}
+  .redu{margin-top:11px;font-size:12px;font-weight:600;border-radius:9px;padding:9px 12px;display:flex;align-items:center;gap:8px}
+  .redu.down{background:var(--lo-bg);color:var(--turq-d)}.redu.flat{background:#eef2f6;color:var(--slate)}.redu.up{background:var(--hi-bg);color:var(--hi)}
+  .htoggle{display:flex;gap:4px;background:#e9eef4;padding:3px;border-radius:9px;margin-bottom:12px;width:fit-content}
+  .htoggle button{border:none;background:none;font-family:var(--disp);font-weight:600;font-size:11px;padding:5px 11px;border-radius:7px;color:var(--slate);cursor:pointer}
+  .htoggle button.on{background:#fff;color:var(--petrol);box-shadow:0 2px 6px -3px rgba(34,48,63,.3)}
+  /* modal escala */
+  .mbox{background:var(--card);border-radius:16px;max-width:600px;width:92vw;padding:24px;max-height:88vh;overflow:auto;box-shadow:0 30px 80px -30px rgba(20,32,46,.6)}
+  .mbox h3{font-family:var(--disp);color:var(--mid);font-size:19px;margin-bottom:3px}
+  .mbox .msub{color:var(--mut);font-size:12.5px;margin-bottom:18px}
+  .mbox .mclose{float:right;cursor:pointer;color:var(--mut);font-size:20px;padding:2px 6px;border-radius:8px}.mbox .mclose:hover{background:#f0f4f8}
+  .scaletbl{width:100%;border-collapse:collapse;font-size:12.5px;margin:6px 0 18px}
+  .scaletbl th,.scaletbl td{border:1px solid var(--line);padding:8px 10px;text-align:left;vertical-align:top}
+  .scaletbl th{background:#f6f9fb;font-family:var(--disp);color:var(--mid);font-size:11px;letter-spacing:.03em}
+  .lvl{font-family:var(--disp);font-weight:700;color:#fff;border-radius:6px;padding:1px 8px;font-size:12px;display:inline-block}
+  .mmatrix{display:grid;grid-template-columns:52px repeat(3,1fr);grid-auto-rows:46px;gap:5px;margin-top:6px}
+  .mmatrix .mc{border-radius:8px;display:flex;align-items:center;justify-content:center;color:#fff;font-family:var(--disp);font-weight:700;font-size:14px}
+  .mmatrix .mhh{font-size:10.5px;color:var(--mut);font-weight:600;display:flex;align-items:center;justify-content:center;text-align:center}
+  .foot{max-width:1500px;margin:0 auto;padding:0 22px 30px;color:var(--mut);font-size:11px;text-align:center}
+  @media(prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+  @media(max-width:960px){.wrap{grid-template-columns:1fr}.ip{grid-template-columns:1fr 1fr;grid-auto-rows:auto}.ip>div{grid-column:auto!important;grid-row:auto!important}.mcr-table{min-width:0}}
+</style>
+</head>
+<body>
+<div class="top">
+  <div class="logo"><img src="/assets/metis-icon.svg" alt="" onerror="this.style.display='none'"><div><b>METIS</b><small>Central SGI</small></div></div>
+  <h1>Mapa de Processos · IP e MCR</h1>
+  <div class="sp"></div><span class="st" id="st"></span>
+  <input type="file" id="xlsxin" accept=".xlsx,.xls" style="display:none" onchange="importExcel(event)">
+  <button class="btn" onclick="document.getElementById('xlsxin').click()">📥 Importar Excel</button>
+  <button class="btn" onclick="exportar()">⬇ Exportar</button>
+  <button class="btn pri" onclick="salvar(true)">Salvar</button>
+</div>
+<div class="wrap">
+  <aside class="aside"><h2>Processos</h2><div class="plist" id="plist"></div><div style="height:8px"></div><button class="addp" onclick="addProc()">＋ Novo processo</button></aside>
+  <main class="main" id="main"></main>
+</div>
+<div class="foot">Interação de Processo (IP) + Matriz de Classificação de Riscos (MCR) · dados salvos no navegador.</div>
+<div class="scrim" id="scrim" onclick="closeDrawer()"></div>
+<aside class="drawer" id="drawer" aria-hidden="true"></aside>
+<div class="scrim center" id="mscrim" onclick="closeScale()"><div class="mbox" id="mbox" onclick="event.stopPropagation()"></div></div>
+<script>
+var LS='ip_mcr_v2'; var state=null, ativo=null, aba='ip', heatMode='atual', dIdx=null;
+function uid(p){return p+Math.random().toString(36).slice(2,7);}
+function novoIP(){return {recursos:[],dono:[],maoDeObra:[],origem:[],entradas:[],atividades:[],saidas:[],destino:[],metodos:[],medicao:[]};}
+function novoRisco(){return {sub:'',categoria:'',norma:'',requisito:'',ro:'R',risco:'',conseq:'',barreira:'',grav:1,prob:1,perda:'',freq:'',acao:'',prazo:'',resp:'',dataReal:'',gravP:'',probP:'',eficaz:'',dataEfic:'',respEfic:''};}
+function novaMeta(){return {rev:'01',resp:'',time:'',data:''};}
+function seed(){return {processos:[{id:uid('p'),codigo:'004',nome:'Realização do serviço',missao:'Realizar serviço de galvanização com qualidade e alta performance, atendendo os prazos e requisitos solicitados pelo cliente.',
+ ip:{
+  recursos:['Ponte rolante / gancheiras','Matéria-prima (zinco)','Cuba, queimador, centrífuga','Dispositivos e gabaritos','Sistema WTTI / OP / Protheus'],
+  dono:['Coordenador de Produção','Coordenador de Operação'],
+  maoDeObra:['Encarregado / Líder de Produção','Operador de Produção / Processo','Operador de Ponte Rolante','Galvanizador / Metalizador / Jateador','Auxiliar de Produção / Manutenção'],
+  origem:['Alta Direção','Clientes','SGQ · Vendas','Recursos Humanos','Todos os processos'],
+  entradas:['Requisitos do cliente','Necessidade de produção','Requisito 8.1 e 8.5 · ISO 9001:2015','Sequenciamento de produção','Equipamentos operantes','Reclamações dos clientes'],
+  atividades:['Planejar produção','Analisar capacidade de atendimento','Galvanização conforme especificações','Atender metas de produtividade','Testar produtos'],
+  saidas:['Produção planejada e atendida','Peças acabadas','Equipamentos operantes e mantidos','Atendimento no prazo ao cliente','Produtos testados OK','Fechamento de OP'],
+  destino:['Alta Direção','Clientes','Financeiro','Manutenção · RH','Comercial · Logística','Segurança do Trabalho'],
+  metodos:['Política e Objetivos (Integrado)','POP · Procedimento Operacional Padrão','FIT · Folha de Instrução de Trabalho','Ordem de Produção','Controle da Produção'],
+  medicao:['Indicadores de Operação','Metas de produtividade','Monitoramento de máquinas']
+ },
+ mcrMeta:{rev:'01',resp:'Jaime Jr',time:'Leandro P. · Marcelo · Diego · Maison · Stephani · Ayrton · Juzélio',data:'28/06/2024'},
+ mcr:[{sub:'Amarração',ro:'R',risco:'Amarração sem furação p/ fluxo do zinco',conseq:'Arraste e contaminação entre banhos',barreira:'Seguir FIT — Amarração de peças',grav:3,prob:1,acao:'Revisar FIT de amarração e treinar operadores no ponto de furação',prazo:'2024-08-15',resp:'Encarregado de Produção',dataReal:'2024-08-10',gravP:2,probP:1,eficaz:'Eficaz',dataEfic:'2024-09-05',respEfic:'Coord. de Produção'},
+  {sub:'Decapagem',ro:'R',risco:'Não realizar decapagem',conseq:'Falha na remoção de carepa da superfície',barreira:'Seguir FIT — Pré-tratamento',grav:3,prob:1,acao:'Checklist de pré-tratamento obrigatório por lote',prazo:'2024-09-30',resp:'Líder de Operação',dataReal:'',gravP:'',probP:'',eficaz:'',dataEfic:'',respEfic:''},
+  {sub:'Galvanização',ro:'R',risco:'Tempo de imersão não conforme',conseq:'Baixa espessura e aderência do zinco',barreira:'FIT Galvanização + inspeção diária',grav:2,prob:2,acao:'',prazo:'',resp:'',dataReal:'',gravP:'',probP:'',eficaz:'',dataEfic:'',respEfic:''},
+  {sub:'Ponte rolante',ro:'R',risco:'Operação por colaborador despreparado',conseq:'Acidente e dano às peças',barreira:'POP Treinamento + Matriz de Competência',grav:3,prob:1,acao:'Bloquear operação sem treinamento registrado na Matriz de Competência',prazo:'2024-07-31',resp:'RH · SESMT',dataReal:'2024-07-28',gravP:1,probP:1,eficaz:'Eficaz',dataEfic:'2024-08-20',respEfic:'Coord. de Operação'},
+  {sub:'Apontamento',ro:'O',risco:'Apontamento de carga via sistema',conseq:'Agilidade e melhora na rastreabilidade',barreira:'Estudo de viabilidade — TI no processo',grav:1,prob:2,acao:'',prazo:'',resp:'',dataReal:'',gravP:'',probP:'',eficaz:'',dataEfic:'',respEfic:''}]}]};}
+function procAltaDirecao(){return {id:uid('p'),codigo:'AD',nome:'Alta Direção',missao:'Definir diretrizes, prover recursos e assegurar a eficácia do sistema de gestão integrado, considerando riscos, oportunidades e partes interessadas.',ip:novoIP(),
+ mcrMeta:{rev:'02',resp:'Anderson Raitz',time:'Anderson Raitz · Jaime Dutra Junior · Douglas Arpini · Bruna Schmoeller · Ayrton R. · Jucélio S.',data:'26/08/2024'},
+ mcr:[
+  {sub:'Controle de qualidade',categoria:'SGQ',norma:'ISO 9001',requisito:'8.5',ro:'R',risco:'Falha no controle de qualidade',conseq:'Retrabalho, aumento de custos e insatisfação do cliente',barreira:'Treinamento e revisão de processos',grav:3,prob:1,perda:200000,freq:3},
+  {sub:'Oscilação no preço do zinco',categoria:'SGA',norma:'ISO 14001',requisito:'6.1',ro:'R',risco:'Oscilação no preço do zinco',conseq:'Redução de margens e aumento nos custos operacionais',barreira:'Contratos de longo prazo com fornecedores',grav:3,prob:1,perda:900000,freq:3},
+  {sub:'Expansão da geração fotovoltaica',categoria:'SGA',norma:'ISO 14001',requisito:'6.1',ro:'O',risco:'Redução de custos energéticos',conseq:'Menor dependência de fontes externas e sustentabilidade',barreira:'Sistema de monitoramento de desempenho',grav:2,prob:1,perda:150000,freq:''},
+  {sub:'Crescimento da demanda por galvanização',categoria:'SGQ',norma:'ISO 9001',requisito:'6.1',ro:'O',risco:'Aumento da procura por serviços',conseq:'Maior receita e crescimento no mercado',barreira:'Capacidade produtiva atual',grav:2,prob:1},
+  {sub:'Gestão Estratégica de Mudanças',categoria:'SGQ',norma:'ISO 9001:2026',requisito:'6.3 Planejamento de mudanças',ro:'R',risco:'Falha na gestão de mudanças organizacionais',conseq:'Impacto direto nos processos, perda de controle, baixa eficiência',barreira:'Procedimentos estruturados de gestão de mudanças, capacitação e comunicação',grav:3,prob:1},
+  {sub:'Integração ESG',categoria:'Outro',norma:'ISO 9001:2026 / ISO 14001 / ISO 45001',requisito:'4.1 · 4.2',ro:'R',risco:'Falha na consideração de critérios ESG',conseq:'Risco reputacional, não atendimento a requisitos legais e perda de mercado',barreira:'Comitê ESG, políticas integradas, monitoramento de legislações',grav:3,prob:1},
+  {sub:'Sustentabilidade e pegada de carbono',categoria:'SGA',norma:'ISO 9001:2026 / ISO 14001:2015',requisito:'4.1 · 6.1',ro:'R',risco:'Pressão por redução da pegada de carbono; perda de contratos por não atender critérios de sustentabilidade',conseq:'Imagem prejudicada, exclusão de mercados sustentáveis',barreira:'Inventário de emissões, programa de redução de carbono, relatórios ESG',grav:2,prob:1}
+ ]};}
+function carregar(){try{var r=localStorage.getItem(LS);if(r)state=JSON.parse(r);}catch(e){}if(!state||!state.processos)state=seed();migrar();ativo=state.processos[0]&&state.processos[0].id;}
+function migrar(){if(!state._seedAD){if(!state.processos.some(function(p){return /alta dire/i.test(p.nome||'');})){state.processos.push(procAltaDirecao());}state._seedAD=true;try{salvar();}catch(e){}}
+ state.processos.forEach(function(p){if(!p.mcrMeta)p.mcrMeta=novaMeta();(p.mcr||[]).forEach(function(r){['acao','prazo','resp','dataReal','respEfic','dataEfic','eficaz','categoria','norma','requisito','perda','freq'].forEach(function(k){if(r[k]==null)r[k]='';});if(r.gravP==null)r.gravP='';if(r.probP==null)r.probP='';});});}
+function fmtBRL(n){n=+n||0;return 'R$ '+n.toLocaleString('pt-BR',{maximumFractionDigits:0});}
+function impactoAnual(r){var p=+r.perda||0,f=+r.freq||0;return p*f;}
+function catInfo(c){var m={SGQ:{c:'var(--petrol)',bg:'#e7eef6'},SGA:{c:'var(--turq-d)',bg:'var(--lo-bg)'},SSO:{c:'var(--med)',bg:'var(--med-bg)'},Outro:{c:'var(--mid)',bg:'#e9edf3'}};return m[c]||null;}
+function salvar(m){try{localStorage.setItem(LS,JSON.stringify(state));}catch(e){}if(m)flash('Salvo ✓');}
+function flash(m){var e=document.getElementById('st');e.textContent=m;clearTimeout(window._t);window._t=setTimeout(function(){e.textContent='';},2200);}
+function esc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+function P(){return state.processos.find(function(x){return x.id===ativo;});}
+function classe(g,p){return g*p;}
+function classInfo(v){if(v>=6)return{t:'Alto',c:'var(--hi)',bg:'var(--hi-bg)'};if(v>=3)return{t:'Médio',c:'var(--med)',bg:'var(--med-bg)'};return{t:'Baixo',c:'var(--lo)',bg:'var(--lo-bg)'};}
+function hasPos(r){return r.gravP&&r.probP;}
+function clsPos(r){return hasPos(r)?r.gravP*r.probP:null;}
+function statusOf(r){if(r.eficaz==='Eficaz')return{k:'ok',t:'Eficaz'};if(r.eficaz==='Não eficaz')return{k:'no',t:'Não eficaz'};if(r.eficaz==='Em análise')return{k:'done',t:'Em análise'};if(r.dataReal)return{k:'done',t:'Ação feita'};if((r.acao&&r.acao.trim())||r.prazo)return{k:'plan',t:'Planejada'};return{k:'none',t:'Sem ação'};}
+function addProc(){var nm=prompt('Nome do processo:');if(!nm)return;var cod=prompt('Código (ex.: 006):','')||'';var p={id:uid('p'),codigo:cod.trim(),nome:nm.trim(),missao:'',ip:novoIP(),mcr:[]};state.processos.push(p);ativo=p.id;salvar();render();}
+function removeProc(id){var p=state.processos.find(function(x){return x.id===id;});if(state.processos.length<=1){alert('Deixe ao menos um processo.');return;}if(!confirm('Remover o processo "'+p.nome+'"?'))return;state.processos=state.processos.filter(function(x){return x.id!==id;});if(ativo===id)ativo=state.processos[0].id;salvar();render();}
+function render(){renderList();renderMain();}
+function renderList(){var el=document.getElementById('plist');el.innerHTML='';state.processos.forEach(function(p){var risk=(p.mcr||[]).reduce(function(a,r){return Math.max(a,classe(r.grav,r.prob));},0);var ci=classInfo(risk||1);var d=document.createElement('div');d.className='pcard'+(p.id===ativo?' on':'');d.innerHTML='<div class="cod">IP-'+esc(p.codigo||'--')+' · MCR-'+esc(p.codigo||'--')+'</div><div class="nm">'+esc(p.nome)+'</div><div class="meta"><span><span class="dot" style="background:'+ci.c+'"></span>risco '+ci.t.toLowerCase()+'</span><span>'+(p.mcr?p.mcr.length:0)+' riscos</span></div>';d.onclick=function(){ativo=p.id;render();};el.appendChild(d);});}
+function zona(campo,label,cls,pos){var p=P();var arr=p.ip[campo]||(p.ip[campo]=[]);var items=arr.map(function(v,i){return '<div class="li"><span class="b">›</span><span class="txt" contenteditable="true" data-c="'+campo+'" data-i="'+i+'">'+esc(v)+'</span><span class="x" data-rm="'+campo+'|'+i+'">✕</span></div>';}).join('');return '<div class="zbox '+(cls||'')+' '+pos+'"><h4>'+label+'</h4><div class="lst">'+items+'</div><span class="addli" data-add="'+campo+'">＋ adicionar</span></div>';}
+function procBox(){var p=P();var arr=p.ip.atividades||(p.ip.atividades=[]);var items=arr.map(function(v,i){return '<div class="li"><span class="b">›</span><span class="txt" contenteditable="true" data-c="atividades" data-i="'+i+'">'+esc(v)+'</span><span class="x" data-rm="atividades|'+i+'">✕</span></div>';}).join('');
+ return '<div class="zbox proc z-proc">'+
+  '<div class="core-lbl"><svg viewBox="0 0 100 100"><g stroke="#2C6E8E" stroke-width="3" opacity=".5"><line x1="14" y1="50" x2="34" y2="34"/><line x1="34" y1="34" x2="66" y2="34"/><line x1="66" y1="34" x2="86" y2="50"/><line x1="14" y1="50" x2="34" y2="66"/><line x1="34" y1="66" x2="66" y2="66"/><line x1="66" y1="66" x2="86" y2="50"/></g><g fill="#2B3F5C"><circle cx="14" cy="50" r="4.5"/><circle cx="86" cy="50" r="4.5"/><circle cx="34" cy="34" r="4.5"/><circle cx="66" cy="34" r="4.5"/><circle cx="34" cy="66" r="4.5"/><circle cx="66" cy="66" r="4.5"/></g><circle cx="50" cy="50" r="9" fill="#2C6E8E"/><circle cx="50" cy="50" r="4" fill="#1FA59E"/></svg><h4 style="margin:0">Processo</h4></div>'+
+  '<div class="lst">'+items+'</div><span class="addli" data-add="atividades">＋ atividade</span></div>';}
+function renderMain(){var p=P();if(!p){document.getElementById('main').innerHTML='';return;}
+ var risk=(p.mcr||[]).reduce(function(a,r){return Math.max(a,classe(r.grav,r.prob));},0);var ci=classInfo(risk||1);
+ var h='<div class="phead"><div class="row1"><span class="badge">IP · MCR '+esc(p.codigo||'--')+'</span><h3 contenteditable="true" id="pn">'+esc(p.nome)+'</h3><div class="sp" style="flex:1"></div><span class="ro '+((risk>=6)?'R':'O')+'" style="background:'+ci.bg+';color:'+ci.c+'">risco máx.: '+ci.t+'</span><button class="btn gh sm" onclick="removeProc(\''+p.id+'\')" title="Remover">🗑</button></div>'+
+  '<div class="tabs"><button class="tab '+(aba==='ip'?'on':'')+'" data-ab="ip">Interação de Processo (IP)</button><button class="tab '+(aba==='mcr'?'on':'')+'" data-ab="mcr">Matriz de Riscos (MCR)</button></div></div>';
+ // IP — diagrama de tartaruga em caixas (igual ao documento)
+ h+='<div class="panel '+(aba==='ip'?'on':'')+'"><div class="ipwrap" id="ipwrap"><svg id="wires" class="wires" aria-hidden="true"></svg><div class="ip">'+
+   zona('recursos','Recursos','','z-rec')+
+   zona('dono','Dono do processo','sup','z-dono')+
+   zona('maoDeObra','Mão de obra','','z-mo')+
+   zona('origem','Origem / Informações','sup','z-ori')+
+   zona('entradas','Entradas','io','z-ent')+
+   procBox()+
+   zona('saidas','Saída','io','z-sai')+
+   zona('destino','Destino / Informações','sup','z-des')+
+   zona('metodos','Métodos','','z-met')+
+   '<div class="zbox mis z-mis"><h4>Missão do processo</h4><div class="mtxt" contenteditable="true" id="pmis">'+esc(p.missao||'Descreva a missão do processo…')+'</div></div>'+
+   zona('medicao','Medição / Monitoramento','','z-med')+
+   '<div class="iplegend"><span><b>E</b> entrada</span><span><b>S</b> saída</span><span><b>G</b> gestão (dono)</span><span><b>M</b> missão</span></div>'+
+   '</div></div></div>';
+ // ── MCR · matriz de risco ──
+ var M=p.mcr||[];
+ var kTot=M.length;
+ var kAlto=M.filter(function(r){return classe(r.grav,r.prob)>=6;}).length;
+ var kComAcao=M.filter(function(r){return statusOf(r).k!=='none';}).length;
+ var kFeitas=M.filter(function(r){return r.dataReal;}).length;
+ var kEfic=M.filter(function(r){return r.eficaz==='Eficaz';}).length;
+ var kAltoPos=M.filter(function(r){var vv=clsPos(r);return vv!=null&&vv>=6;}).length;
+ var pctAcao=kTot?Math.round(kComAcao/kTot*100):0;
+ var pctEfic=kFeitas?Math.round(kEfic/kFeitas*100):0;
+ var kExpo=M.reduce(function(a,r){return a+impactoAnual(r);},0);
+ var expoCard=kExpo>0?('<div class="kpi hi"><div class="n" style="font-size:18px">'+fmtBRL(kExpo)+'</div><div class="l">Exposição anual</div></div>'):'';
+ var kpis='<div class="mcr-kpis">'+
+   '<div class="kpi"><div class="n">'+kTot+'</div><div class="l">Riscos / oport.</div></div>'+
+   '<div class="kpi hi"><div class="n">'+kAlto+'</div><div class="l">Alto — atual</div></div>'+
+   '<div class="kpi med"><div class="n">'+pctAcao+'<small>%</small></div><div class="l">Com plano de ação</div></div>'+
+   '<div class="kpi ok"><div class="n">'+pctEfic+'<small>%</small></div><div class="l">Ações eficazes</div></div>'+
+   '<div class="kpi ok"><div class="n">'+kAltoPos+'</div><div class="l">Alto — residual</div></div>'+expoCard+'</div>';
+ var mm=p.mcrMeta||novaMeta();
+ var meta='<div class="mcrmeta"><span><b>Código:</b> MCR-'+esc(p.codigo||'--')+'</span>'+
+   '<span><b>Rev.:</b> <span contenteditable="true" data-meta="rev">'+esc(mm.rev)+'</span></span>'+
+   '<span><b>Responsável:</b> <span contenteditable="true" data-meta="resp">'+esc(mm.resp||'—')+'</span></span>'+
+   '<span><b>Time que analisou:</b> <span contenteditable="true" data-meta="time">'+esc(mm.time||'—')+'</span></span>'+
+   '<span><b>Data:</b> <span contenteditable="true" data-meta="data">'+esc(mm.data||'—')+'</span></span></div>';
+ var rows=M.map(function(r,i){var v=classe(r.grav,r.prob);var ci=classInfo(v);var vp=clsPos(r);var cip=vp!=null?classInfo(vp):null;var stt=statusOf(r);
+   var after=vp!=null?'<span class="chip" style="background:'+cip.c+'">'+vp+'</span>':'<span class="chip gh2">–</span>';
+   var cat=r.categoria&&catInfo(r.categoria)?'<span class="cat" style="color:'+catInfo(r.categoria).c+';background:'+catInfo(r.categoria).bg+'">'+esc(r.categoria)+'</span>':'';
+   var subline=esc(r.sub||'—')+(r.requisito?' · '+esc(r.requisito):'');
+   return '<tr class="mrow" data-open="'+i+'"><td><div class="risktit">'+(esc(r.risco)||'<span style=\'color:var(--mut)\'>(sem descrição)</span>')+'</div><div class="subtit">'+cat+'<span>'+subline+'</span></div></td>'+
+     '<td class="tcell">'+(esc(r.conseq)||'<span style=\'color:var(--mut)\'>—</span>')+'</td>'+
+     '<td class="tcell">'+(esc(r.barreira)||'<span style=\'color:var(--mut)\'>—</span>')+'</td>'+
+     '<td><span class="ro '+r.ro+'">'+r.ro+'</span></td>'+
+     '<td><span class="bna"><span class="chip" style="background:'+ci.c+'">'+v+'</span><span class="arw">→</span>'+after+'</span></td>'+
+     '<td><span class="status '+stt.k+'">'+esc(stt.t)+'</span></td>'+
+     '<td style="text-align:right"><span class="chev">›</span></td></tr>';}).join('');
+ h+='<div class="panel '+(aba==='mcr'?'on':'')+'">'+meta+kpis+
+   '<div style="display:flex;justify-content:space-between;align-items:center;gap:10px;margin:2px 0 10px;flex-wrap:wrap"><div style="font-family:var(--disp);font-weight:600;color:var(--mid)">Matriz de Classificação de Riscos e Oportunidades</div><div style="display:flex;gap:8px"><button class="btn sm" onclick="openScale()">⚖ Matriz de avaliação</button><button class="btn pri sm" onclick="addRisco()">＋ Risco</button></div></div>'+
+   '<div class="mcr-table"><table><thead><tr><th style="width:23%">Risco / Oportunidade</th><th style="width:22%">Consequências</th><th style="width:22%">Barreira de proteção</th><th>R/O</th><th>Classe · antes → depois</th><th>Status</th><th></th></tr></thead><tbody>'+(rows||'<tr><td colspan="7" style="text-align:center;color:var(--mut);padding:24px">Sem riscos ainda. Clique em “＋ Risco”.</td></tr>')+'</tbody></table></div>'+
+   '<p style="font-size:11px;color:var(--mut);margin-top:10px">Clique numa linha para abrir o tratamento completo do risco.</p></div>';
+ document.getElementById('main').innerHTML=h;bind();if(aba==='ip'){requestAnimationFrame(drawWires);ensureResize();}}
+function drawWires(){
+ var wrap=document.getElementById('ipwrap');if(!wrap)return;var svg=document.getElementById('wires');if(!svg)return;
+ function b(sel){var e=wrap.querySelector(sel);if(!e)return null;var r=e.getBoundingClientRect(),w=wrap.getBoundingClientRect();return{l:r.left-w.left,t:r.top-w.top,r:r.right-w.left,bt:r.bottom-w.top,cx:(r.left+r.right)/2-w.left,cy:(r.top+r.bottom)/2-w.top};}
+ var ent=b('.z-ent'),pr=b('.z-proc'),sa=b('.z-sai'),ori=b('.z-ori'),des=b('.z-des'),don=b('.z-dono'),mis=b('.z-mis');if(!pr)return;
+ svg.setAttribute('viewBox','0 0 '+wrap.clientWidth+' '+wrap.clientHeight);
+ var defs='<defs>'+
+  '<marker id="ahp" markerWidth="10" markerHeight="10" refX="7" refY="3.5" orient="auto"><path d="M0,0 L7,3.5 L0,7 Z" fill="#2C6E8E"/></marker>'+
+  '<marker id="aht" markerWidth="10" markerHeight="10" refX="7" refY="3.5" orient="auto"><path d="M0,0 L7,3.5 L0,7 Z" fill="#1FA59E"/></marker>'+
+  '<marker id="ahm" markerWidth="10" markerHeight="10" refX="7" refY="3.5" orient="auto"><path d="M0,0 L7,3.5 L0,7 Z" fill="#2B3F5C"/></marker></defs>';
+ function seg(x1,y1,x2,y2,c,mk){return '<line x1="'+x1+'" y1="'+y1+'" x2="'+x2+'" y2="'+y2+'" stroke="'+c+'" stroke-width="2.4" stroke-linecap="round" marker-end="url(#'+mk+')"/><line x1="'+x1+'" y1="'+y1+'" x2="'+x2+'" y2="'+y2+'" stroke="'+c+'" stroke-width="2.4" stroke-linecap="round" stroke-dasharray="1 8" class="flow"/>';}
+ function nd(x,y,t,c){return '<circle cx="'+x+'" cy="'+y+'" r="13" fill="#fff" stroke="'+c+'" stroke-width="2"/><text x="'+x+'" y="'+y+'" text-anchor="middle" dominant-baseline="central" font-family="Space Grotesk,Segoe UI,sans-serif" font-weight="700" font-size="12.5" fill="'+c+'">'+t+'</text>';}
+ function cap(x,y,t){return '<text x="'+x+'" y="'+y+'" text-anchor="middle" font-family="Space Grotesk,Segoe UI,sans-serif" font-weight="700" font-size="9" fill="#9aa8b6" letter-spacing="1.5">'+t+'</text>';}
+ function mid(a,c){return (a+c)/2;}var g='';
+ if(ori&&ent)g+=seg(ori.r+2,ent.cy,ent.l-4,ent.cy,'#2C6E8E','ahp');
+ if(ent){g+=seg(ent.r+2,pr.cy,pr.l-4,pr.cy,'#2C6E8E','ahp');g+=cap(mid(ent.r,pr.l),pr.cy-22,'RISCOS');g+=nd(mid(ent.r,pr.l),pr.cy,'E','#2C6E8E');}
+ if(sa){g+=seg(pr.r+2,pr.cy,sa.l-4,pr.cy,'#1FA59E','aht');g+=cap(mid(pr.r,sa.l),pr.cy-22,'RISCOS');g+=nd(mid(pr.r,sa.l),pr.cy,'S','#1FA59E');}
+ if(sa&&des)g+=seg(sa.r+2,sa.cy,des.l-4,sa.cy,'#1FA59E','aht');
+ if(don){g+=seg(pr.cx,don.bt+2,pr.cx,pr.t-4,'#2B3F5C','ahm');g+=nd(pr.cx,mid(don.bt,pr.t),'G','#2B3F5C');}
+ if(mis){g+=seg(pr.cx,mis.t-2,pr.cx,pr.bt+4,'#2B3F5C','ahm');g+=nd(pr.cx,mid(mis.t,pr.bt),'M','#2B3F5C');}
+ svg.innerHTML=defs+g;}
+var _rz=false;function ensureResize(){if(_rz)return;_rz=true;window.addEventListener('resize',function(){if(aba==='ip')drawWires();});}
+function bind(){var p=P();
+ document.querySelectorAll('.tab').forEach(function(b){b.onclick=function(){aba=this.getAttribute('data-ab');renderMain();};});
+ var pn=document.getElementById('pn');if(pn)pn.addEventListener('blur',function(){p.nome=this.textContent.trim()||p.nome;salvar();renderList();});
+ var pm=document.getElementById('pmis');if(pm)pm.addEventListener('blur',function(){p.missao=this.textContent.trim();salvar();});
+ document.querySelectorAll('.li .txt').forEach(function(t){t.addEventListener('blur',function(){p.ip[this.getAttribute('data-c')][+this.getAttribute('data-i')]=this.textContent.trim();salvar();});});
+ document.querySelectorAll('[data-rm]').forEach(function(b){b.onclick=function(){var s=this.getAttribute('data-rm').split('|');p.ip[s[0]].splice(+s[1],1);salvar();renderMain();};});
+ document.querySelectorAll('[data-add]').forEach(function(b){b.onclick=function(){var c=this.getAttribute('data-add');p.ip[c]=p.ip[c]||[];p.ip[c].push('');salvar();renderMain();var l=document.querySelector('.txt[data-c="'+c+'"][data-i="'+(p.ip[c].length-1)+'"]');if(l)l.focus();};});
+ document.querySelectorAll('tr.mrow').forEach(function(row){row.onclick=function(){openDrawer(+this.getAttribute('data-open'));};});
+ document.querySelectorAll('.mcrmeta [data-meta]').forEach(function(e){e.addEventListener('blur',function(){var mt=P().mcrMeta||(P().mcrMeta=novaMeta());var k=this.getAttribute('data-meta');var val=this.textContent.trim();mt[k]=(val==='—')?'':val;salvar();});});}
+function setHeat(m){heatMode=m;renderMain();}
+/* ── Drawer de tratamento do risco ── */
+function drawerHTML(i){var p=P();var r=p.mcr[i];if(!r)return'';
+ var v=classe(r.grav,r.prob),ci=classInfo(v),vp=clsPos(r),cip=vp!=null?classInfo(vp):null;
+ function ta(k,ph){return '<textarea class="inp" data-d="'+k+'" rows="2" placeholder="'+ph+'">'+esc(r[k])+'</textarea>';}
+ function tx(k,ph,ty){return '<input class="inp" data-d="'+k+'" type="'+(ty||'text')+'" placeholder="'+ph+'" value="'+esc(r[k])+'">';}
+ function selN(k){var o=[1,2,3].map(function(n){return '<option value="'+n+'"'+(r[k]==n?' selected':'')+'>'+n+'</option>';}).join('');return '<select class="inp" data-d="'+k+'">'+o+'</select>';}
+ function selP(k){var o='<option value=""'+(!r[k]?' selected':'')+'>—</option>'+[1,2,3].map(function(n){return '<option value="'+n+'"'+(r[k]==n?' selected':'')+'>'+n+'</option>';}).join('');return '<select class="inp" data-d="'+k+'">'+o+'</select>';}
+ function catSel(){var o=['','SGQ','SGA','SSO','Outro'].map(function(x){return '<option value="'+x+'"'+(r.categoria===x?' selected':'')+'>'+(x||'—')+'</option>';}).join('');return '<select class="inp" data-d="categoria">'+o+'</select>';}
+ function freqSel(){var o=[['','—'],['1','Baixa (1×/ano)'],['3','Média (3×/ano)'],['5','Alta (5×/ano)']].map(function(a){return '<option value="'+a[0]+'"'+(String(r.freq||'')===a[0]?' selected':'')+'>'+a[1]+'</option>';}).join('');return '<select class="inp" data-d="freq">'+o+'</select>';}
+ var ef=['','Em análise','Eficaz','Não eficaz'].map(function(o){return '<option value="'+o+'"'+(r.eficaz===o?' selected':'')+'>'+(o||'—')+'</option>';}).join('');
+ var redu='';if(vp!=null){var d=v-vp;var kls=d>0?'down':(d<0?'up':'flat');var ico=d>0?'▼':(d<0?'▲':'–');var msg=d>0?('Risco reduzido em '+d+' ponto'+(d>1?'s':'')+' · '+ci.t+' → '+cip.t):(d<0?('Atenção: risco aumentou · '+ci.t+' → '+cip.t):'Sem alteração de classe após a ação');redu='<div class="redu '+kls+'">'+ico+' '+msg+'</div>';}
+ return '<div class="dhead"><div class="dt"><div style="margin-bottom:5px"><span class="ro '+r.ro+'">'+(r.ro==='O'?'Oportunidade':'Risco')+'</span></div><h3>'+(esc(r.risco)||'Novo risco')+'</h3></div><span class="dclose" onclick="closeDrawer()">✕</span></div>'+
+ '<div class="dbody">'+
+  '<div class="dsec"><div class="st2">Identificação</div>'+
+   '<div class="field"><label>Item / sub-atividade</label>'+tx('sub','Ex.: Amarração · Controle de qualidade')+'</div>'+
+   '<div class="frow"><div class="field"><label>Categoria</label>'+catSel()+'</div><div class="field"><label>Requisito / cláusula</label>'+tx('requisito','Ex.: 8.5')+'</div></div>'+
+   '<div class="field"><label>Normas relacionadas</label>'+tx('norma','Ex.: ISO 9001:2026 / ISO 14001')+'</div>'+
+   '<div class="field"><label>Tipo</label><select class="inp" data-d="ro"><option value="R"'+(r.ro==='R'?' selected':'')+'>Risco</option><option value="O"'+(r.ro==='O'?' selected':'')+'>Oportunidade</option></select></div>'+
+   '<div class="field"><label>Risco / Oportunidade</label>'+ta('risco','Descreva o risco ou a oportunidade')+'</div>'+
+   '<div class="field"><label>Consequências</label>'+ta('conseq','O que acontece se ocorrer')+'</div>'+
+   '<div class="field"><label>Barreira de proteção</label>'+ta('barreira','Controle / barreira existente')+'</div></div>'+
+  '<div class="dsec"><div class="st2">Classificação atual</div>'+
+   '<div class="frow"><div class="field"><label>Gravidade</label>'+selN('grav')+'</div><div class="field"><label>Probabilidade</label>'+selN('prob')+'</div></div>'+
+   '<div class="clsbox"><div class="big" style="background:'+ci.c+'">'+v+'</div><div class="cl">Classe atual<b>'+ci.t+'</b></div></div></div>'+
+  '<div class="dsec"><div class="st2">Exposição financeira</div>'+
+   '<div class="frow"><div class="field"><label>Perda média (R$)</label>'+tx('perda','0','number')+'</div><div class="field"><label>Frequência anual</label>'+freqSel()+'</div></div>'+
+   '<div class="clsbox"><div class="big" style="background:var(--mid);width:auto;min-width:44px;padding:0 14px;font-size:15px">'+fmtBRL(impactoAnual(r))+'</div><div class="cl">Impacto anual<b>perda média × frequência</b></div></div></div>'+
+  '<div class="dsec"><div class="st2">Plano de ação</div>'+
+   '<div class="field"><label>Ação</label>'+ta('acao','O que será feito para tratar o risco')+'</div>'+
+   '<div class="frow"><div class="field"><label>Prazo</label>'+tx('prazo','','date')+'</div><div class="field"><label>Data realizada</label>'+tx('dataReal','','date')+'</div></div>'+
+   '<div class="field"><label>Responsável</label>'+tx('resp','Quem executa')+'</div></div>'+
+  '<div class="dsec"><div class="st2">Classificação após ação</div>'+
+   '<div class="frow"><div class="field"><label>Gravidade</label>'+selP('gravP')+'</div><div class="field"><label>Probabilidade</label>'+selP('probP')+'</div></div>'+
+   '<div class="clsbox"><div class="big" style="background:'+(cip?cip.c:'#cdd8e2')+'">'+(vp!=null?vp:'–')+'</div><div class="cl">Classe residual<b>'+(cip?cip.t:'a avaliar')+'</b></div></div>'+redu+'</div>'+
+  '<div class="dsec"><div class="st2">Verificação de eficácia</div>'+
+   '<div class="field"><label>Resultado</label><select class="inp" data-d="eficaz">'+ef+'</select></div>'+
+   '<div class="frow"><div class="field"><label>Data</label>'+tx('dataEfic','','date')+'</div><div class="field"><label>Responsável</label>'+tx('respEfic','Quem verificou')+'</div></div></div>'+
+  '<div style="margin-top:8px"><button class="btn sm" style="color:var(--hi);border-color:#f0d0cb" onclick="delRisco('+i+')">🗑 Excluir este risco</button></div>'+
+ '</div>';}
+function openDrawer(i){dIdx=i;var dr=document.getElementById('drawer');dr.innerHTML=drawerHTML(i);dr.classList.add('on');dr.setAttribute('aria-hidden','false');document.getElementById('scrim').classList.add('on');bindDrawer();}
+function bindDrawer(){var p=P();if(dIdx==null)return;var r=p.mcr[dIdx];
+ document.querySelectorAll('#drawer .inp[data-d]').forEach(function(el){
+  var k=el.getAttribute('data-d');var numeric=(k==='grav'||k==='prob'||k==='gravP'||k==='probP'||k==='freq'||k==='perda');
+  var ev=(el.tagName==='SELECT')?'change':'input';
+  el.addEventListener(ev,function(){var val=this.value;if(numeric)val=(val===''?'':+val);r[k]=val;salvar();
+   if(this.tagName==='SELECT'){renderMcrOnly();openDrawer(dIdx);}
+  });
+  if(ev==='input')el.addEventListener('blur',function(){renderMcrOnly();if(k==='perda')openDrawer(dIdx);});
+ });}
+function renderMcrOnly(){renderList();if(aba==='mcr')renderMain();}
+function closeDrawer(){var dr=document.getElementById('drawer');dr.classList.remove('on');dr.setAttribute('aria-hidden','true');document.getElementById('scrim').classList.remove('on');dIdx=null;renderList();if(aba==='mcr')renderMain();}
+function delRisco(i){if(!confirm('Excluir este risco?'))return;P().mcr.splice(i,1);salvar();closeDrawer();}
+/* ── Modal: Matriz de avaliação (escala) ── */
+function openScale(){var box=document.getElementById('mbox');
+ var grav=[['1','Baixa','Impacto leve, sem parada de processo, sem afetar o cliente','var(--lo)'],['2','Média','Retrabalho, atraso ou custo moderado; controlável internamente','var(--med)'],['3','Alta','Parada de processo, não conformidade ao cliente ou risco à segurança','var(--hi)']];
+ var prob=[['1','Rara','Praticamente não ocorre; controles fortes','var(--lo)'],['2','Possível','Pode ocorrer ocasionalmente','var(--med)'],['3','Frequente','Ocorre com regularidade ou controles fracos','var(--hi)']];
+ function tbl(t,rows){return '<table class="scaletbl"><thead><tr><th style="width:70px">'+t+'</th><th style="width:90px">Nível</th><th>Descrição</th></tr></thead><tbody>'+rows.map(function(x){return '<tr><td><span class="lvl" style="background:'+x[3]+'">'+x[0]+'</span></td><td>'+x[1]+'</td><td>'+x[2]+'</td></tr>';}).join('')+'</tbody></table>';}
+ var mtx='<div class="mmatrix"><div class="mhh"></div><div class="mhh">Grav 1</div><div class="mhh">Grav 2</div><div class="mhh">Grav 3</div>';[3,2,1].forEach(function(pr){mtx+='<div class="mhh">Prob '+pr+'</div>';[1,2,3].forEach(function(g){var vv=g*pr;var c=classInfo(vv);mtx+='<div class="mc" style="background:'+c.c+'">'+vv+'</div>';});});mtx+='</div>';
+ box.innerHTML='<span class="mclose" onclick="closeScale()">✕</span><h3>Matriz de avaliação</h3><div class="msub">Classe = Gravidade × Probabilidade. Define a prioridade de tratamento de cada risco.</div>'+
+  tbl('Gravidade',grav)+tbl('Probabilidade',prob)+
+  '<div style="font-family:var(--disp);font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--mid);margin:4px 0 4px">Classe resultante</div>'+mtx+
+  '<div class="leg" style="margin-top:14px"><b><span class="sw" style="background:var(--lo)"></span>Baixo 1-2 — controles suficientes</b><b><span class="sw" style="background:var(--med)"></span>Médio 3-4 — acompanhar</b><b><span class="sw" style="background:var(--hi)"></span>Alto 6-9 — ação obrigatória</b></div>';
+ document.getElementById('mscrim').classList.add('on');}
+function closeScale(){document.getElementById('mscrim').classList.remove('on');}
+document.addEventListener('keydown',function(e){if(e.key==='Escape'){closeDrawer();closeScale();}});
+function addRisco(){var p=P();if(aba!=='mcr'){aba='mcr';}p.mcr.push(novoRisco());salvar();renderMain();renderList();openDrawer(p.mcr.length-1);}
+/* ── Importação de Excel (SheetJS) ── */
+function norm(s){return String(s==null?'':s).toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/\s+/g,' ').trim();}
+function freqNum(x){if(x===''||x==null)return '';var n=+x;if(!isNaN(n)&&n!==0)return n;var s=norm(x);if(s.indexOf('baix')>=0)return 1;if(s.indexOf('med')>=0)return 3;if(s.indexOf('alt')>=0)return 5;return '';}
+function parseNum(x){var n=+String(x==null?'':x).replace(/[^0-9,.-]/g,'').replace(/\.(?=\d{3}(\D|$))/g,'').replace(',','.');return isNaN(n)?'':n;}
+function lvl(x){var n=+x;return (n>=1&&n<=3)?n:'';}
+function sheetsToCsv(wb){return wb.SheetNames.map(function(n){return {name:n,csv:XLSX.utils.sheet_to_csv(wb.Sheets[n])};});}
+function ipTem(ip){if(!ip)return false;var n=0;['recursos','dono','maoDeObra','origem','entradas','atividades','saidas','destino','metodos','medicao'].forEach(function(k){if(Array.isArray(ip[k]))n+=ip[k].length;});return n>0||!!(ip.missao&&String(ip.missao).trim());}
+function normIpIA(ip){var base=novoIP();if(!ip)return base;['recursos','dono','maoDeObra','origem','entradas','atividades','saidas','destino','metodos','medicao'].forEach(function(k){if(Array.isArray(ip[k]))base[k]=ip[k].map(function(v){return String(v);}).filter(function(v){return v.trim();});});base.missao=ip.missao?String(ip.missao):'';return base;}
+function normRiscoIA(x){var o=novoRisco();['sub','categoria','norma','requisito','risco','conseq','barreira','acao','prazo','resp','dataReal','eficaz','dataEfic','respEfic'].forEach(function(k){if(x[k]!=null)o[k]=String(x[k]);});o.ro=(String(x.ro||'R').toUpperCase().charAt(0)==='O')?'O':'R';o.categoria=/^(SGQ|SGA|SSO|Outro)$/i.test(o.categoria)?o.categoria.toUpperCase():(o.categoria||'');o.grav=lvl(x.grav)||1;o.prob=lvl(x.prob)||1;o.gravP=lvl(x.gravP);o.probP=lvl(x.probP);o.perda=(x.perda===''||x.perda==null)?'':(parseNum(x.perda)||'');o.freq=freqNum(x.freq);return o;}
+function parseMcrDet(wb){try{
+  var ws=wb.Sheets[wb.SheetNames[0]];var aoa=XLSX.utils.sheet_to_json(ws,{header:1,raw:false,defval:''});
+  var hr=-1;for(var i=0;i<Math.min(aoa.length,25);i++){var jn=aoa[i].map(norm).join('|');if(jn.indexOf('risco')>=0&&(jn.indexOf('consequenc')>=0||jn.indexOf('barreira')>=0)){hr=i;break;}}
+  if(hr<0)return [];
+  var h2=(aoa[hr+1]||[]).map(norm).join('|');var twoRow=(h2.indexOf('grav')>=0||h2.indexOf('prob')>=0||h2.indexOf('class')>=0||h2.indexOf('resultado')>=0);
+  var ncol=Math.max(aoa[hr].length,twoRow?(aoa[hr+1]||[]).length:0);
+  var head=[];for(var j=0;j<ncol;j++){var a=norm(aoa[hr][j]);var b=twoRow?norm((aoa[hr+1]||[])[j]):'';head[j]=(a+' '+b).trim();}
+  var dataStart=twoRow?hr+2:hr+1;var col={};
+  head.forEach(function(h,idx){function set(k){if(col[k]==null)col[k]=idx;}
+   if(h==='id')return;
+   if(h==='item'||h.indexOf('item ')===0){set('item');return;}
+   if(h.indexOf('categoria')>=0){set('categoria');return;}
+   if(h.indexOf('norma')>=0){set('norma');return;}
+   if(h.indexOf('requisito')>=0){set('requisito');return;}
+   if(h==='r / o'||h.replace(/[^a-z]/g,'')==='ro'){set('ro');return;}
+   if(h.indexOf('risco')>=0||h.indexOf('oportunidade')>=0){set('risco');return;}
+   if(h.indexOf('consequenc')>=0){set('conseq');return;}
+   if(h.indexOf('barreira')>=0){set('barreira');return;}
+   if(h.indexOf('grav')>=0){if(col.grav==null)col.grav=idx;else if(col.gravP==null)col.gravP=idx;return;}
+   if(h.indexOf('prob')>=0){if(col.prob==null)col.prob=idx;else if(col.probP==null)col.probP=idx;return;}
+   if(h.indexOf('perda')>=0){set('perda');return;}
+   if(h.indexOf('frequenc')>=0){set('freq');return;}
+   if(h.indexOf('acao')>=0){set('acao');return;}
+   if(h.indexOf('prazo')>=0){set('prazo');return;}
+   if(h.indexOf('resultado')>=0){set('eficaz');return;}
+   if(h.indexOf('data')>=0){if(col.dataReal==null)col.dataReal=idx;else if(col.dataEfic==null)col.dataEfic=idx;return;}
+   if(h.indexOf('responsavel')>=0){if(col.resp==null)col.resp=idx;else if(col.respEfic==null)col.respEfic=idx;return;}
+  });
+  var subCol=(col.item!=null)?col.item:(col.requisito!=null?col.requisito:null);var reqCol=(col.item!=null)?col.requisito:null;
+  function cell(row,idx){return idx==null?'':String(row[idx]==null?'':row[idx]).trim();}
+  var carry={sub:'',categoria:'',norma:'',requisito:''};var out=[];
+  for(var r=dataStart;r<aoa.length;r++){var row=aoa[r];if(!row)continue;
+   var risco=cell(row,col.risco);var s=cell(row,subCol),ct=cell(row,col.categoria),nm=cell(row,col.norma),rq=cell(row,reqCol);
+   if(s)carry.sub=s;if(ct)carry.categoria=ct;if(nm)carry.norma=nm;if(rq)carry.requisito=rq;
+   if(!risco)continue;var o=novoRisco();
+   o.sub=carry.sub;o.categoria=/^(sgq|sga|sso|outro)$/i.test(carry.categoria)?carry.categoria.toUpperCase():carry.categoria;
+   o.norma=carry.norma;o.requisito=carry.requisito;
+   var ro=cell(row,col.ro).toUpperCase();o.ro=(ro.charAt(0)==='O')?'O':'R';
+   o.risco=risco;o.conseq=cell(row,col.conseq);o.barreira=cell(row,col.barreira);
+   o.grav=lvl(cell(row,col.grav))||1;o.prob=lvl(cell(row,col.prob))||1;o.gravP=lvl(cell(row,col.gravP));o.probP=lvl(cell(row,col.probP));
+   o.perda=parseNum(cell(row,col.perda));o.freq=freqNum(cell(row,col.freq));
+   o.acao=cell(row,col.acao);o.prazo=cell(row,col.prazo);o.resp=cell(row,col.resp);o.dataReal=cell(row,col.dataReal);
+   o.eficaz=cell(row,col.eficaz);o.dataEfic=cell(row,col.dataEfic);o.respEfic=cell(row,col.respEfic);
+   out.push(o);}
+  return out;
+ }catch(e){return [];}}
+function importExcel(ev){
+ var file=ev.target.files&&ev.target.files[0];ev.target.value='';if(!file)return;
+ if(typeof XLSX==='undefined'){alert('A biblioteca de leitura de Excel não carregou (sem conexão?). Tente novamente.');return;}
+ var rd=new FileReader();
+ rd.onload=function(e){
+  var wb;try{wb=XLSX.read(new Uint8Array(e.target.result),{type:'array',cellDates:true});}catch(err){alert('Não consegui abrir o Excel: '+(err.message||err));return;}
+  flash('Lendo com IA…');
+  fetch('/api/importar-mcr',{method:'POST',headers:{'Content-Type':'application/json'},credentials:'same-origin',body:JSON.stringify({sheets:sheetsToCsv(wb)})})
+   .then(function(r){return r.json();})
+   .then(function(res){
+     if(!res||!res.ok)throw new Error((res&&res.error)||'falha na IA');
+     var ip=ipTem(res.ip)?normIpIA(res.ip):null;
+     var mcr=(res.mcr&&res.mcr.length)?res.mcr.map(normRiscoIA):null;
+     if(!ip&&!mcr){alert('A IA não encontrou Interação de Processo nem Matriz de Risco nesta planilha.');flash('');return;}
+     if(ip&&mcr){escolherImport(function(op){aplicarImport(op!=='mcr'?ip:null,op!=='ip'?mcr:null,res.processo,file);});}
+     else aplicarImport(ip,mcr,res.processo,file);
+   })
+   .catch(function(err){
+     var out=parseMcrDet(wb);
+     if(out.length){aplicarImport(null,out,'',file);flash('IA indisponível — importado por leitura automática');}
+     else{flash('');alert('Não consegui importar. '+(err.message||err)+'\n\nVerifique se o GEMINI_API_KEY está configurado no servidor.');}
+   });
+ };
+ rd.readAsArrayBuffer(file);
+}
+function aplicarImport(ip,mcr,procNome,file){
+ var nome=prompt('Nome do processo para importar'+(mcr?(' ('+mcr.length+' riscos)'):'')+':',procNome||file.name.replace(/\.[^.]+$/,''));
+ if(nome==null)return;
+ var cod=String(state.processos.length+1);while(cod.length<3)cod='0'+cod;
+ var novo={id:uid('p'),codigo:cod,nome:(nome.trim()||'Importado'),missao:(ip&&ip.missao)||'',ip:ip||novoIP(),mcrMeta:novaMeta(),mcr:mcr||[]};
+ state.processos.push(novo);ativo=novo.id;aba=mcr?'mcr':'ip';salvar();render();
+ flash('Importado: '+(ip?'IP':'')+(ip&&mcr?' + ':'')+(mcr?('MCR ('+mcr.length+')'):'')+' ✓');
+}
+function escolherImport(cb){var box=document.getElementById('mbox');
+ box.innerHTML='<span class="mclose" onclick="closeScale()">✕</span><h3>Importar do Excel</h3><div class="msub">Esta planilha tem Interação de Processo e Matriz de Risco. O que você quer importar?</div>'+
+  '<div style="display:flex;flex-direction:column;gap:10px;margin-top:4px">'+
+   '<button class="btn" style="justify-content:flex-start" onclick="_impPick(\'ip\')">Só a Interação de Processo (IP)</button>'+
+   '<button class="btn" style="justify-content:flex-start" onclick="_impPick(\'mcr\')">Só a Matriz de Risco (MCR)</button>'+
+   '<button class="btn pri" style="justify-content:flex-start" onclick="_impPick(\'ambos\')">Os dois — IP + MCR</button></div>';
+ window._impCb=cb;document.getElementById('mscrim').classList.add('on');}
+function _impPick(op){closeScale();var cb=window._impCb;window._impCb=null;if(cb)cb(op);}
+function exportar(){var b=new Blob([JSON.stringify(state,null,2)],{type:'application/json'});var a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='ip-mcr.json';a.click();}
+carregar();render();
+</script>
+</body>
+</html>
