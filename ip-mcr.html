@@ -512,6 +512,21 @@ function sheetsToCsv(wb){return wb.SheetNames.map(function(n){return {name:n,csv
 function ipTem(ip){if(!ip)return false;var n=0;['recursos','dono','maoDeObra','origem','entradas','atividades','saidas','destino','metodos','medicao'].forEach(function(k){if(Array.isArray(ip[k]))n+=ip[k].length;});return n>0||!!(ip.missao&&String(ip.missao).trim());}
 function normIpIA(ip){var base=novoIP();if(!ip)return base;['recursos','dono','maoDeObra','origem','entradas','atividades','saidas','destino','metodos','medicao'].forEach(function(k){if(Array.isArray(ip[k]))base[k]=ip[k].map(function(v){return String(v);}).filter(function(v){return v.trim();});});base.missao=ip.missao?String(ip.missao):'';return base;}
 function normRiscoIA(x){var o=novoRisco();['sub','categoria','norma','requisito','risco','conseq','barreira','acao','prazo','resp','dataReal','eficaz','dataEfic','respEfic'].forEach(function(k){if(x[k]!=null)o[k]=String(x[k]);});o.ro=(String(x.ro||'R').toUpperCase().charAt(0)==='O')?'O':'R';o.categoria=/^(SGQ|SGA|SSO|Outro)$/i.test(o.categoria)?o.categoria.toUpperCase():(o.categoria||'');o.grav=lvl(x.grav)||1;o.prob=lvl(x.prob)||1;o.gravP=lvl(x.gravP);o.probP=lvl(x.probP);o.perda=(x.perda===''||x.perda==null)?'':(parseNum(x.perda)||'');o.freq=freqNum(x.freq);return o;}
+function stripItem(s){return String(s==null?'':s).replace(/^[\s>\-\*'•·►▪|]+/,'').replace(/[;,•·|\s]+$/,'').replace(/\s+/g,' ').trim();}
+function splitLines(s){return String(s==null?'':s).split(/\r?\n/).map(stripItem).filter(function(x){return x.length>0&&norm(x)!=='riscos'&&norm(x)!=='risco';});}
+function detIP(wb){for(var si=0;si<wb.SheetNames.length;si++){var nm=wb.SheetNames[si];var aoa;try{aoa=XLSX.utils.sheet_to_json(wb.Sheets[nm],{header:1,raw:false,defval:''});}catch(e){continue;}
+   var flat=aoa.map(function(row){return (row||[]).map(norm).join(' ');}).join(' ');
+   if(/^ip[\s\-]/.test(norm(nm))||flat.indexOf('interacao de processo')>=0||(flat.indexOf('recursos')>=0&&flat.indexOf('missao do processo')>=0)){var res=parseIPaoa(aoa);if(res&&ipTem(res.ip))return res;}}
+ return null;}
+function parseIPaoa(aoa){var ip=novoIP();var missao='';
+ var zonas=[['recursos','recursos'],['maoDeObra','mao de obra'],['origem','origem'],['entradas','entradas'],['atividades','processo de'],['saidas','saida'],['destino','destino'],['metodos','metodo'],['medicao','medicao'],['missao','missao do processo']];
+ function findLabel(pat){for(var r=0;r<aoa.length;r++){var row=aoa[r]||[];for(var c=0;c<row.length;c++){var t=norm(row[c]);if(t&&(t===pat||t.indexOf(pat)===0))return {r:r,c:c};}}return null;}
+ var pos={};zonas.forEach(function(z){var p=findLabel(z[1]);if(p)pos[z[0]]=p;});
+ for(var r=0;r<aoa.length;r++){var row=aoa[r]||[];var brk=false;for(var c=0;c<row.length;c++){if(norm(row[c]).indexOf('dono do processo')>=0){var dl=splitLines(row[c]).filter(function(x){return norm(x).indexOf('dono do processo')<0;});if(dl.length)ip.dono=dl;brk=true;break;}}if(brk)break;}
+ function contentFor(key){var p=pos[key];if(!p)return [];var r=p.r,c=p.c;var cEnd=((aoa[r]||[]).length)||99;for(var k in pos){if(pos[k].r===r&&pos[k].c>c&&pos[k].c<cEnd)cEnd=pos[k].c;}var items=[];for(var cc=c;cc<cEnd;cc++){var cell=(aoa[r+1]||[])[cc];if(cell==null||!String(cell).trim())continue;if(norm(cell).indexOf('dono do processo')>=0)continue;items=items.concat(splitLines(cell));}return items;}
+ ['recursos','maoDeObra','origem','entradas','atividades','saidas','destino','metodos','medicao'].forEach(function(k){var it=contentFor(k);if(it.length)ip[k]=it;});
+ if(pos.missao){var mr=aoa[pos.missao.r+1]||[];for(var cc=pos.missao.c;cc<mr.length;cc++){if(mr[cc]&&String(mr[cc]).trim()){missao=String(mr[cc]).trim();break;}}}
+ return {ip:ip,missao:missao};}
 function detProcNome(aoa,hr){for(var i=0;i<hr;i++){var row=aoa[i]||[];for(var j=0;j<row.length;j++){var c=norm(row[j]);if(c.indexOf('processo')>=0){var nx=row[j+1];if(nx&&String(nx).trim())return String(nx).trim();var parts=String(row[j]).split(':');if(parts[1]&&parts[1].trim())return parts[1].trim();}}}return '';}
 function detMcr(wb){for(var si=0;si<wb.SheetNames.length;si++){var res;try{var aoa=XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[si]],{header:1,raw:false,defval:''});res=parseAoaMcr(aoa);}catch(e){res={rows:[],procNome:''};}if(res.rows.length)return res;}return {rows:[],procNome:''};}
 function parseAoaMcr(aoa){
@@ -541,7 +556,7 @@ function parseAoaMcr(aoa){
    if(h.indexOf('data')>=0){if(col.dataReal==null)col.dataReal=idx;else if(col.dataEfic==null)col.dataEfic=idx;return;}
    if(h.indexOf('responsavel')>=0){if(col.resp==null)col.resp=idx;else if(col.respEfic==null)col.respEfic=idx;return;}
   });
-  var subCol=(col.item!=null)?col.item:(col.requisito!=null?col.requisito:null);var reqCol=(col.item!=null)?col.requisito:null;
+  var subCol,reqCol;if(col.categoria!=null){subCol=(col.item!=null)?col.item:col.requisito;reqCol=(col.item!=null)?col.requisito:null;}else{subCol=(col.requisito!=null)?col.requisito:col.item;reqCol=null;}
   function cell(row,idx){return idx==null?'':String(row[idx]==null?'':row[idx]).trim();}
   var carry={sub:'',categoria:'',norma:'',requisito:''};var out=[];
   for(var r=dataStart;r<aoa.length;r++){var row=aoa[r];if(!row)continue;
@@ -565,36 +580,36 @@ function importExcel(ev){
  var rd=new FileReader();
  rd.onload=function(e){
   var wb;try{wb=XLSX.read(new Uint8Array(e.target.result),{type:'array',cellDates:true});}catch(err){alert('Não consegui abrir o Excel: '+(err.message||err));return;}
-  // IA primeiro: avalia o documento inteiro (IP + MCR).
+  // Leitura direta puxa TUDO (IP da aba de interação + MCR da matriz), sem depender de IA.
+  var dip=detIP(wb);var dmcr=detMcr(wb);
+  var ip=(dip&&ipTem(dip.ip))?dip.ip:null;var missao=dip?dip.missao:'';
+  var mcr=(dmcr.rows&&dmcr.rows.length)?dmcr.rows:null;
+  var procNome=dmcr.procNome||'';
+  if(ip||mcr){escolherImport(ip,mcr,procNome,file,missao);return;}
+  // Nada reconhecido diretamente → tenta IA como reforço.
   flash('Avaliando o documento com IA…');
   fetch('/api/importar-mcr',{method:'POST',headers:{'Content-Type':'application/json'},credentials:'same-origin',body:JSON.stringify({sheets:sheetsToCsv(wb)})})
    .then(function(r){return r.json();})
    .then(function(res){
      if(!res||!res.ok)throw new Error((res&&res.error)||'falha na IA');
-     var ip=ipTem(res.ip)?normIpIA(res.ip):null;
-     var mcr=(res.mcr&&res.mcr.length)?res.mcr.map(normRiscoIA):null;
-     if(!ip&&!mcr){var det=detMcr(wb);if(det.rows.length){aplicarImport(null,det.rows,det.procNome,file);return;}flash('');alert('Não encontrei Interação de Processo nem Matriz de Risco neste documento.');return;}
-     escolherImport(ip,mcr,res.processo,file);
+     var aip=ipTem(res.ip)?normIpIA(res.ip):null;var amcr=(res.mcr&&res.mcr.length)?res.mcr.map(normRiscoIA):null;
+     if(!aip&&!amcr){flash('');alert('Não encontrei Interação de Processo nem Matriz de Risco neste documento.\n\nConfira se ele tem a matriz (Risco/Consequências/Barreira) e/ou a aba de Interação de Processo.');return;}
+     escolherImport(aip,amcr,res.processo,file,(res.ip&&res.ip.missao)||'');
    })
-   .catch(function(err){
-     // IA indisponível → leitura direta (só a MCR)
-     var det=detMcr(wb);
-     if(det.rows.length){aplicarImport(null,det.rows,det.procNome,file);flash('IA indisponível — importei os riscos por leitura direta (o IP precisa da IA)');return;}
-     flash('');alert('Não consegui avaliar o documento. '+(err.message||err)+'\n\nConfira o GEMINI_API_KEY no servidor, ou se a planilha tem as colunas Risco / Consequências / Barreira.');
-   });
+   .catch(function(err){flash('');alert('Não consegui ler o documento automaticamente e a IA falhou ('+(err.message||err)+').\n\nConfira o GEMINI_API_KEY no servidor.');});
  };
  rd.readAsArrayBuffer(file);
 }
-function aplicarImport(ip,mcr,procNome,file){
- var nome=prompt('Nome do processo para importar'+(mcr?(' ('+mcr.length+' riscos)'):'')+':',procNome||file.name.replace(/\.[^.]+$/,''));
+function aplicarImport(ip,mcr,procNome,file,missao){
+ var nome=prompt('Nome do processo para importar'+(mcr?(' ('+mcr.length+' riscos'+(ip?' + IP':'')+')'):(ip?' (IP)':''))+':',procNome||file.name.replace(/\.[^.]+$/,''));
  if(nome==null)return;
  var cod=String(state.processos.length+1);while(cod.length<3)cod='0'+cod;
- var novo={id:uid('p'),codigo:cod,nome:(nome.trim()||'Importado'),missao:(ip&&ip.missao)||'',ip:ip||novoIP(),mcrMeta:novaMeta(),mcr:mcr||[]};
+ var novo={id:uid('p'),codigo:cod,nome:(nome.trim()||'Importado'),missao:missao||(ip&&ip.missao)||'',ip:ip||novoIP(),mcrMeta:novaMeta(),mcr:mcr||[]};
  state.processos.push(novo);ativo=novo.id;aba=mcr?'mcr':'ip';salvar();render();
  flash('Importado: '+(ip?'IP':'')+(ip&&mcr?' + ':'')+(mcr?('MCR ('+mcr.length+')'):'')+' ✓');
 }
-function escolherImport(ip,mcr,procNome,file){
- function apply(op){aplicarImport((op==='ip'||op==='ambos')?ip:null,(op==='mcr'||op==='ambos')?mcr:null,procNome,file);}
+function escolherImport(ip,mcr,procNome,file,missao){
+ function apply(op){aplicarImport((op==='ip'||op==='ambos')?ip:null,(op==='mcr'||op==='ambos')?mcr:null,procNome,file,missao);}
  if(ip&&!mcr){apply('ip');return;}
  if(mcr&&!ip){apply('mcr');return;}
  var nip=0;['recursos','dono','maoDeObra','origem','entradas','atividades','saidas','destino','metodos','medicao'].forEach(function(k){if(ip[k])nip+=ip[k].length;});
