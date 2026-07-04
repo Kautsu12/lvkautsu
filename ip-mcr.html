@@ -186,9 +186,13 @@
   .tier{background:#f5f8fb;border:1px solid var(--line);border-radius:13px;padding:14px 16px}
   .tier .tl{font-family:var(--disp);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--mut);text-align:center;margin-bottom:13px;font-weight:700}
   .conn{display:flex;justify-content:center;color:#c2d0dd;font-size:14px;line-height:1;height:6px}
+  .cbus{position:relative;display:flex;justify-content:space-around;height:24px;padding:0 46px;margin:1px 0}
+  .cbus::before{content:'';position:absolute;left:9%;right:9%;top:50%;height:2px;background:#c4d2df;transform:translateY(-50%)}
+  .cbus span{position:relative;z-index:1;color:var(--petrol);font-size:13px;line-height:24px}
   .mrow{display:grid;gap:10px}
   .mrow.strat{grid-template-columns:minmax(220px,320px);justify-content:center}
-  .mrow.chain{grid-template-columns:repeat(auto-fit,minmax(150px,1fr))}
+  .chainwrap{overflow-x:auto;padding-bottom:3px}
+  .mrow.chain{display:flex;gap:0;min-width:min-content}
   .mrow.support{grid-template-columns:repeat(auto-fit,minmax(142px,1fr))}
   .mcard{cursor:pointer;border-radius:11px;color:#fff;padding:15px 14px;text-align:center;position:relative;transition:.15s;min-height:64px;display:flex;flex-direction:column;justify-content:center;box-shadow:0 10px 22px -16px rgba(20,32,46,.7)}
   .mcard:hover{transform:translateY(-2px);filter:brightness(1.07)}
@@ -197,7 +201,8 @@
   .mcard .x{position:absolute;top:5px;right:8px;opacity:0;font-size:11px;cursor:pointer;color:rgba(255,255,255,.85)}
   .mcard:hover .x{opacity:.8}
   .mcard.e{background:linear-gradient(155deg,var(--mid),#1d2c40)}
-  .mcard.c{background:linear-gradient(155deg,var(--petrol),var(--petrol-d))}
+  .mcard.c{background:linear-gradient(155deg,var(--petrol),var(--petrol-d));flex:1 0 152px;margin-left:-13px;padding-left:30px;border-radius:6px;clip-path:polygon(0 0,calc(100% - 18px) 0,100% 50%,calc(100% - 18px) 100%,0 100%,18px 50%)}
+  .mrow.chain .mcard.c:first-child{margin-left:0;padding-left:16px;clip-path:polygon(0 0,calc(100% - 18px) 0,100% 50%,calc(100% - 18px) 100%,0 100%)}
   .mcard.a{background:linear-gradient(155deg,#3f7f96,var(--petrol-d))}
   .addm{border:1.4px dashed #c2d0dd;background:transparent;color:var(--slate);border-radius:9px;padding:7px 12px;cursor:pointer;font-weight:600;font-size:11.5px;font-family:var(--disp);margin-top:11px}
   .addm:hover{border-color:var(--petrol);color:var(--petrol)}
@@ -305,7 +310,8 @@ function procBox(){var p=P();var arr=p.ip.atividades||(p.ip.atividades=[]);var i
 function setView(v){view=v;render();}
 function abrirProcesso(nome,codigo){var alvo=(nome||'').trim().toLowerCase();var found=state.processos.find(function(p){return (p.nome||'').trim().toLowerCase()===alvo;});if(found){ativo=found.id;view='proc';aba='ip';render();return;}if(!confirm('O processo "'+nome+'" ainda não tem IP/MCR. Criar agora?'))return;var np={id:uid('p'),codigo:(codigo||'').replace(/^IP-?/i,'')||'',nome:nome,missao:'',ip:novoIP(),mcrMeta:novaMeta(),mcr:[]};state.processos.push(np);ativo=np.id;view='proc';aba='ip';salvar();render();}
 function abrirId(id){ativo=id;view='proc';aba='ip';render();}
-function mapaHTML(){var m=state.mapa||(state.mapa=seedMapa());
+function busArr(dir,n){var a='';var c=Math.min(Math.max(n,1),9);for(var i=0;i<c;i++)a+='<span>'+(dir==='down'?'▼':'▲')+'</span>';return '<div class="cbus '+dir+'">'+a+'</div>';}
+function mapaHTML(){var m=state.mapa||(state.mapa=seedMapa());var nCli=m.itens.filter(function(it){return it.cat==='cliente';}).length;
  var estrat='',cli='',apoio='';
  m.itens.forEach(function(it,i){var cls=it.cat==='estrategico'?'e':(it.cat==='cliente'?'c':'a');var card='<div class="mcard '+cls+'" data-mi="'+i+'"><span class="x" data-mrm="'+i+'">✕</span>'+(it.codigo?'<div class="cd">'+esc(it.codigo)+'</div>':'')+'<div class="nm">'+esc(it.nome)+'</div></div>';if(it.cat==='estrategico')estrat+=card;else if(it.cat==='cliente')cli+=card;else apoio+=card;});
  var mapNames=m.itens.map(function(it){return (it.nome||'').trim().toLowerCase();});
@@ -318,9 +324,9 @@ function mapaHTML(){var m=state.mapa||(state.mapa=seedMapa());
   '<div class="rails"><div class="rail"><span>Requisitos de clientes / partes interessadas</span></div>'+
    '<div class="tiers">'+
     '<div class="tier"><div class="tl">Processos Estratégicos</div><div class="mrow strat">'+estrat+'</div><div style="text-align:center"><button class="addm" data-add="estrategico">＋ estratégico</button></div></div>'+
-    '<div class="conn">▼</div>'+
-    '<div class="tier"><div class="tl">Processos Voltados ao Cliente</div><div class="mrow chain">'+cli+'</div><div style="text-align:center"><button class="addm" data-add="cliente">＋ processo</button></div></div>'+
-    '<div class="conn">▼</div>'+
+    busArr('down',nCli)+
+    '<div class="tier"><div class="tl">Processos Voltados ao Cliente</div><div class="chainwrap"><div class="mrow chain">'+cli+'</div></div><div style="text-align:center"><button class="addm" data-add="cliente">＋ processo</button></div></div>'+
+    busArr('up',nCli)+
     '<div class="tier"><div class="tl">Processos de Apoio e Gestão</div><div class="mrow support">'+apoio+'</div><div style="text-align:center"><button class="addm" data-add="apoio">＋ apoio</button></div></div>'+
     outros+
    '</div>'+
