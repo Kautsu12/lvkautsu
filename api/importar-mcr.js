@@ -79,26 +79,50 @@ module.exports = async function handler(req, res) {
   const reqBody = {
     system_instruction: { parts: [{ text: SYS }] },
     contents: [{ role: 'user', parts: [{ text: userText }] }],
-    generationConfig: { temperature: 0, maxOutputTokens: 8192, responseMimeType: 'application/json' }
+    generationConfig: {
+      temperature: 0,
+      maxOutputTokens: 32768,
+      responseMimeType: 'application/json',
+      // gemini-2.5-* liga "thinking" por padrão, o que consome o orçamento de saída
+      // e trunca o JSON. Desligamos para a resposta sair completa.
+      thinkingConfig: { thinkingBudget: 0 }
+    }
   };
 
-  try {
-    const r = await fetch('https://generativelanguage.googleapis.com/v1beta/models/' + encodeURIComponent(MODEL) + ':generateContent?key=' + encodeURIComponent(KEY), {
-      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(reqBody)
-    });
+  const URL = 'https://generativelanguage.googleapis.com/v1beta/models/' + encodeURIComponent(MODEL) + ':generateContent?key=' + encodeURIComponent(KEY);
+  async function call(body) {
+    const r = await fetch(URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
     const j = await r.json().catch(function () { return {}; });
+    return { r: r, j: j };
+  }
+  try {
+    let { r, j } = await call(reqBody);
+    // Alguns modelos não aceitam thinkingConfig → tenta de novo sem ele.
+    if (!r.ok && JSON.stringify(j.error || '').indexOf('thinking') >= 0) {
+      const b2 = JSON.parse(JSON.stringify(reqBody)); delete b2.generationConfig.thinkingConfig;
+      ({ r, j } = await call(b2));
+    }
     if (!r.ok) return res.status(502).json({ ok: false, error: (j && j.error && j.error.message) ? j.error.message : ('Erro IA (' + r.status + ')') });
-    const parts = (((j.candidates || [])[0] || {}).content || {}).parts || [];
+
+    const cand = (j.candidates || [])[0] || {};
+    const finish = cand.finishReason || '';
+    const parts = ((cand.content || {}).parts) || [];
     let text = parts.map(function (p) { return p.text || ''; }).join('').trim();
-    // remove cercas de código, se houver
-    text = text.replace(/^```(?:json)?/i, '').replace(/```$/,'').trim();
+    text = text.replace(/^```(?:json)?/i, '').replace(/```$/, '').trim();
+
     let parsed;
     try { parsed = JSON.parse(text); }
     catch (e) {
       const a = text.indexOf('{'), b = text.lastIndexOf('}');
       if (a >= 0 && b > a) { try { parsed = JSON.parse(text.slice(a, b + 1)); } catch (e2) {} }
     }
-    if (!parsed) return res.status(502).json({ ok: false, error: 'A IA não retornou um JSON válido.' });
+    if (!parsed) {
+      let msg = 'A IA não retornou um JSON válido.';
+      if (finish === 'MAX_TOKENS') msg = 'A planilha é grande e a resposta da IA foi cortada. Tente importar uma aba por vez.';
+      else if (finish === 'SAFETY' || finish === 'RECITATION') msg = 'A IA bloqueou a resposta (' + finish + ').';
+      else if (!text) msg = 'A IA retornou vazio' + (finish ? (' (' + finish + ')') : '') + '. Verifique o GEMINI_API_KEY e o modelo (GEMINI_MODEL).';
+      return res.status(502).json({ ok: false, error: msg });
+    }
     return res.status(200).json({ ok: true, processo: parsed.processo || '', has: parsed.has || {}, ip: parsed.ip || null, mcr: Array.isArray(parsed.mcr) ? parsed.mcr : [] });
   } catch (e) {
     return res.status(500).json({ ok: false, error: (e && e.message) ? e.message : String(e) });

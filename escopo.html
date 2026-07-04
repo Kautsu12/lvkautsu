@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Escopo · Auditoria — METIS</title>
+<link rel="icon" href="/assets/favicon.svg">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --petrol:#2C6E8E;--petrol-d:#245F7C;--mid:#2B3F5C;--turq:#1FA59E;--turq-d:#0e6f69;
+    --ink:#22303f;--slate:#5b6b7e;--mut:#8698a8;--line:#e5ebf1;--bg:#eef2f6;--card:#fff;
+    --lo:#1FA59E;--lo-bg:#e4f4f1;--med:#c8781c;--med-bg:#faefdd;--hi:#c0392b;--hi-bg:#fbe9e6;
+    --disp:'Space Grotesk','Segoe UI',system-ui,sans-serif;--body:'Segoe UI',system-ui,-apple-system,Arial,sans-serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%}
+  body{font-family:var(--body);color:var(--ink);background:radial-gradient(1100px 520px at 80% -10%, rgba(31,165,158,.08), transparent 60%),var(--bg)}
+  .top{position:sticky;top:0;z-index:30;background:rgba(255,255,255,.9);backdrop-filter:blur(8px);border-bottom:1px solid var(--line);display:flex;align-items:center;gap:14px;padding:11px 22px}
+  .logo{display:flex;align-items:center;gap:10px}.logo img{width:30px;height:30px}
+  .logo b{font-family:var(--disp);font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--mid);font-size:16px}
+  .logo small{display:block;font-size:10px;color:var(--mut);letter-spacing:.08em;margin-top:1px}
+  .top h1{font-family:var(--disp);font-weight:600;font-size:15px;color:var(--mid);margin-left:6px}
+  .sp{flex:1}.st{font-size:12px;color:var(--turq-d);min-width:52px}
+  .btn{font-family:var(--body);font-size:13px;font-weight:600;cursor:pointer;padding:8px 14px;border-radius:10px;border:1px solid var(--line);background:#fff;color:var(--ink);display:inline-flex;align-items:center;gap:7px;transition:.15s}
+  .btn:hover{border-color:#9fb2c2;box-shadow:0 8px 20px -12px rgba(34,48,63,.45)}
+  .btn.pri{background:var(--petrol);border-color:var(--petrol);color:#fff}.btn.pri:hover{background:var(--petrol-d)}
+  .btn.gh{border-color:transparent;background:transparent;padding:5px 8px}.btn.sm{padding:5px 9px;font-size:12px}
+  .wrap{display:grid;grid-template-columns:280px 1fr;gap:20px;max-width:1500px;margin:0 auto;padding:20px 22px 70px}
+  .aside{align-self:start;position:sticky;top:76px}
+  .aside h2{font-family:var(--disp);font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--mut);margin:2px 4px 10px}
+  .plist{display:flex;flex-direction:column;gap:8px}
+  .pcard{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:13px 14px;cursor:pointer;transition:.15s;position:relative;overflow:hidden}
+  .pcard::before{content:'';position:absolute;left:0;top:0;bottom:0;width:4px;background:transparent}
+  .pcard:hover{border-color:#c6d4e0;transform:translateY(-1px)}.pcard.on{border-color:var(--petrol)}.pcard.on::before{background:var(--turq)}
+  .pcard .cod{font-family:var(--disp);font-weight:600;font-size:11px;color:var(--petrol);letter-spacing:.06em}
+  .pcard .nm{font-weight:600;font-size:14px;color:var(--mid);margin-top:2px}
+  .pcard .meta{font-size:11px;color:var(--mut);margin-top:6px;display:flex;gap:10px;flex-wrap:wrap}
+  .addp{width:100%;border:1.5px dashed #c2d0dd;background:transparent;color:var(--slate);border-radius:14px;padding:12px;cursor:pointer;font-weight:600;font-size:13px}
+  .addp:hover{border-color:var(--petrol);color:var(--petrol)}
+  .main{min-width:0}
+  .phead{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:18px 20px;margin-bottom:16px;box-shadow:0 1px 2px rgba(34,48,63,.04)}
+  .phead .row1{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+  .badge{font-family:var(--disp);font-weight:600;background:var(--mid);color:#fff;border-radius:10px;padding:5px 11px;font-size:12px;letter-spacing:.04em}
+  .phead h3{font-family:var(--disp);font-size:20px;color:var(--mid);outline:none}
+  .metaline{display:flex;flex-wrap:wrap;gap:6px 22px;margin-top:10px;font-size:12px;color:var(--slate)}
+  .metaline b{color:var(--mid);font-family:var(--disp);font-weight:600}
+  .metaline [contenteditable]{outline:none;border-bottom:1px dashed transparent;padding:0 2px;min-width:36px;display:inline-block}
+  .metaline [contenteditable]:hover{border-bottom-color:#cdd8e2}.metaline [contenteditable]:focus{border-bottom-color:var(--petrol);background:#f2f7fb}
+  .tabs{display:flex;gap:4px;margin:16px 0 4px;background:#e9eef4;padding:4px;border-radius:12px;width:fit-content;flex-wrap:wrap}
+  .tab{font-family:var(--disp);font-weight:600;font-size:13px;padding:8px 15px;border:none;background:none;color:var(--slate);border-radius:9px;cursor:pointer;transition:.15s}
+  .tab.on{background:#fff;color:var(--petrol);box-shadow:0 2px 8px -4px rgba(34,48,63,.3)}
+  .panel{display:none}.panel.on{display:block;animation:fade .2s ease}
+  @keyframes fade{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+  /* KPIs */
+  .kpis{display:flex;gap:10px;flex-wrap:wrap;margin:0 0 16px}
+  .kpi{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:11px 14px;min-width:120px;flex:1;position:relative;overflow:hidden}
+  .kpi::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--petrol)}
+  .kpi.ok::before{background:var(--turq)}.kpi.med::before{background:var(--med)}
+  .kpi .n{font-family:var(--disp);font-weight:700;font-size:23px;color:var(--mid);line-height:1}
+  .kpi .l{font-size:10px;color:var(--mut);text-transform:uppercase;letter-spacing:.05em;margin-top:6px;font-weight:600}
+  /* Normas layout */
+  .cols{display:grid;grid-template-columns:270px 1fr;gap:16px}
+  .box{background:var(--card);border:1px solid var(--line);border-radius:14px;overflow:hidden}
+  .box h4{font-family:var(--disp);font-size:12px;letter-spacing:.05em;text-transform:uppercase;color:var(--mid);padding:13px 15px;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between}
+  .nlist{display:flex;flex-direction:column;padding:8px}
+  .nitem{display:flex;align-items:center;gap:8px;padding:10px 12px;border-radius:10px;cursor:pointer;transition:.12s}
+  .nitem:hover{background:#f5f9fc}.nitem.on{background:#eaf1f7}
+  .nitem .nm{flex:1;font-weight:600;font-size:13px;color:var(--mid)}
+  .nitem .ct{font-size:11px;color:var(--turq-d);font-weight:700}
+  .nitem .x{opacity:0;color:var(--mut);cursor:pointer;font-size:12px}.nitem:hover .x{opacity:.6}.nitem .x:hover{color:var(--hi)}
+  .items{padding:6px 8px;max-height:60vh;overflow:auto}
+  .irow{display:flex;align-items:flex-start;gap:10px;padding:9px 11px;border-radius:9px;cursor:pointer}
+  .irow:hover{background:#f6fafc}
+  .ck{width:19px;height:19px;border-radius:6px;border:2px solid #c2d0dd;flex:none;margin-top:1px;display:flex;align-items:center;justify-content:center;transition:.12s}
+  .irow.sel .ck{background:var(--turq);border-color:var(--turq)}
+  .ck svg{width:12px;height:12px;stroke:#fff;stroke-width:3;fill:none;opacity:0}.irow.sel .ck svg{opacity:1}
+  .irow .cd{font-family:var(--disp);font-weight:700;font-size:12px;color:var(--petrol);min-width:34px}
+  .irow .ti{font-size:12.5px;color:var(--ink);flex:1;line-height:1.35}
+  .irow.sel .ti{color:var(--mid);font-weight:600}
+  .additem{display:flex;gap:8px;padding:10px}
+  .additem input{flex:1;border:1px solid var(--line);border-radius:8px;padding:7px 9px;font-family:inherit;font-size:12.5px}
+  .additem input:focus{outline:none;border-color:var(--petrol)}
+  .empty{color:var(--mut);font-size:13px;text-align:center;padding:30px 16px}
+  /* Processos */
+  table{border-collapse:collapse;width:100%;font-size:13px}
+  th{background:#f6f9fb;text-align:left;padding:10px 12px;color:var(--mid);font-family:var(--disp);font-weight:600;font-size:11px;letter-spacing:.03em;border-bottom:1px solid var(--line)}
+  td{padding:10px 12px;border-bottom:1px solid var(--line);vertical-align:middle}
+  td [contenteditable]{outline:none;border-radius:5px;padding:2px 5px;display:inline-block;min-width:120px}td [contenteditable]:focus{background:#f2f7fb}
+  .tag{font-size:10.5px;font-weight:700;border-radius:20px;padding:3px 10px;display:inline-block}
+  .tag.on{background:var(--lo-bg);color:var(--turq-d)}.tag.off{background:#eef2f6;color:var(--mut)}
+  .setor{font-family:var(--disp);font-weight:700;font-size:10px;color:var(--petrol);background:#e7eef6;border-radius:6px;padding:2px 7px}
+  /* Resumo */
+  .rescols{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  .reqlist{display:flex;flex-direction:column;gap:5px;max-height:52vh;overflow:auto;padding-right:4px}
+  .req{display:flex;gap:8px;align-items:baseline;font-size:12.5px;padding:5px 8px;border-radius:7px;background:#f6f9fb}
+  .req b{font-family:var(--disp);color:var(--petrol);min-width:34px}
+  .gridwrap{overflow:auto;border:1px solid var(--line);border-radius:12px;background:var(--card)}
+  .grid{border-collapse:collapse;font-size:11px}
+  .grid th,.grid td{border:1px solid var(--line);padding:5px 7px;text-align:center;white-space:nowrap}
+  .grid th.req{background:#f6f9fb;text-align:left;position:sticky;left:0;z-index:1}
+  .grid td.rq{text-align:left;font-family:var(--disp);font-weight:600;color:var(--mid);position:sticky;left:0;background:#fff;z-index:1}
+  .cellx{font-family:var(--disp);font-weight:700;color:var(--turq-d);cursor:pointer}
+  .cellna{color:var(--mut);cursor:pointer}
+  .note{font-size:11.5px;color:var(--mut);margin-top:10px;line-height:1.5}
+  .foot{max-width:1500px;margin:0 auto;padding:0 22px 30px;color:var(--mut);font-size:11px;text-align:center}
+  @media(prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+  @media(max-width:960px){.wrap{grid-template-columns:1fr}.cols{grid-template-columns:1fr}.rescols{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="top">
+  <div class="logo"><img src="/assets/metis-icon.svg" alt="" onerror="this.style.display='none'"><div><b>METIS</b><small>Central SGI</small></div></div>
+  <h1>Escopo · Auditoria</h1>
+  <div class="sp"></div><span class="st" id="st"></span>
+  <button class="btn pri" onclick="salvar(true)">Salvar</button>
+</div>
+<div class="wrap">
+  <aside class="aside"><h2>Escopos (empresas)</h2><div class="plist" id="plist"></div><div style="height:8px"></div><button class="addp" onclick="addEscopo()">＋ Novo escopo</button></aside>
+  <main class="main" id="main"></main>
+</div>
+<div class="foot">Escopo — define normas/itens (requisitos) e processos (setores) que alimentam o Programa de Auditoria · dados no navegador.</div>
+<script>
+var LS='escopo_v1', MAPA_LS='ip_mcr_v2';
+var state=null, ativo=null, aba='normas', normaSel=null;
+function uid(p){return p+Math.random().toString(36).slice(2,7);}
+function esc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+/* ── Biblioteca base de normas ── */
+function itensDe(pares){return pares.map(function(a){return {codigo:a[0],titulo:a[1],sel:false};});}
+var NORMA_BASE={
+ 'ISO 9001:2015':itensDe([['4.1','Contexto da organização'],['4.2','Partes interessadas'],['4.3','Escopo do SGQ'],['4.4','SGQ e seus processos'],['5.1','Liderança e comprometimento'],['5.2','Política'],['5.3','Papéis e responsabilidades'],['6.1','Ações para riscos e oportunidades'],['6.2','Objetivos da qualidade'],['6.3','Planejamento de mudanças'],['7.1','Recursos'],['7.2','Competência'],['7.3','Conscientização'],['7.4','Comunicação'],['7.5','Informação documentada'],['8.1','Planejamento e controle operacional'],['8.2','Requisitos de produtos e serviços'],['8.3','Projeto e desenvolvimento'],['8.4','Controle de processos e produtos externos'],['8.5','Produção e provisão de serviço'],['8.6','Liberação de produtos e serviços'],['8.7','Controle de saídas não conformes'],['9.1','Monitoramento, medição e análise'],['9.2','Auditoria interna'],['9.3','Análise crítica pela direção'],['10.1','Melhoria — geral'],['10.2','Não conformidade e ação corretiva'],['10.3','Melhoria contínua']]),
+ 'ISO 14001:2015':itensDe([['4.1','Contexto da organização'],['4.2','Partes interessadas'],['4.3','Escopo do SGA'],['4.4','SGA'],['5.1','Liderança e comprometimento'],['5.2','Política ambiental'],['5.3','Papéis e responsabilidades'],['6.1','Riscos, aspectos e requisitos legais'],['6.2','Objetivos ambientais'],['7.1','Recursos'],['7.2','Competência'],['7.3','Conscientização'],['7.4','Comunicação'],['7.5','Informação documentada'],['8.1','Planejamento e controle operacional'],['8.2','Preparação e resposta a emergências'],['9.1','Monitoramento e avaliação do atendimento legal'],['9.2','Auditoria interna'],['9.3','Análise crítica pela direção'],['10.2','Não conformidade e ação corretiva'],['10.3','Melhoria contínua']]),
+ 'ISO 45001:2018':itensDe([['4.1','Contexto da organização'],['4.2','Partes interessadas'],['4.3','Escopo do SGSST'],['4.4','SGSST'],['5.1','Liderança e comprometimento'],['5.2','Política de SST'],['5.3','Papéis e responsabilidades'],['5.4','Consulta e participação'],['6.1','Perigos, riscos e requisitos legais'],['6.2','Objetivos de SST'],['7.1','Recursos'],['7.2','Competência'],['7.3','Conscientização'],['7.4','Comunicação'],['7.5','Informação documentada'],['8.1','Planejamento e controle operacional'],['8.2','Preparação e resposta a emergências'],['9.1','Monitoramento e avaliação legal'],['9.2','Auditoria interna'],['9.3','Análise crítica pela direção'],['10.2','Incidente, não conformidade e ação corretiva'],['10.3','Melhoria contínua']])
+};
+function normaFromBase(nome,selCods){var base=(NORMA_BASE[nome]||[]).map(function(it){return {codigo:it.codigo,titulo:it.titulo,sel:selCods?selCods.indexOf(it.codigo)>=0:false};});return {id:uid('n'),nome:nome,itens:base};}
+/* ── Estado ── */
+function seed(){
+ var e={id:uid('e'),empresa:'Raitz Galvanização',nome:'Serviço de galvanização a fogo',rev:'01',data:'',
+  normas:[normaFromBase('ISO 9001:2015',['4.1','5.1','6.1','8.1','8.5','8.6','9.1','9.2','9.3']),normaFromBase('ISO 14001:2015',['6.1','8.1','8.2','9.2'])],
+  processos:[{id:uid('p'),nome:'Realização do serviço'},{id:uid('p'),nome:'PCP'},{id:uid('p'),nome:'Infraestrutura'}],
+  grade:{}};
+ return {escopos:[e],ativo:e.id};
+}
+function carregar(){try{var r=localStorage.getItem(LS);if(r)state=JSON.parse(r);}catch(e){}if(!state||!state.escopos||!state.escopos.length)state=seed();ativo=state.ativo||state.escopos[0].id;E().normas.forEach(function(n){if(!n.id)n.id=uid('n');});normaSel=E().normas[0]?E().normas[0].id:null;}
+function salvar(m){try{state.ativo=ativo;localStorage.setItem(LS,JSON.stringify(state));}catch(e){}if(m)flash('Salvo ✓');}
+function flash(m){var e=document.getElementById('st');e.textContent=m;clearTimeout(window._t);window._t=setTimeout(function(){e.textContent='';},2200);}
+function E(){return state.escopos.find(function(x){return x.id===ativo;})||state.escopos[0];}
+/* ── Interop com o Mapa de Processos (mesma origem, mesmo localStorage) ── */
+function mapaProcs(){try{var r=localStorage.getItem(MAPA_LS);if(!r)return[];var s=JSON.parse(r);return (s.processos||[]).map(function(p){var ip=p.ip||{};var n=0;['recursos','dono','maoDeObra','origem','entradas','atividades','saidas','destino','metodos','medicao'].forEach(function(k){if(Array.isArray(ip[k]))n+=ip[k].length;});return {nome:p.nome,temIP:n>0||!!(p.missao&&p.missao.trim()),temMCR:(p.mcr&&p.mcr.length>0)};});}catch(e){return[];}}
+function statusProc(nome){var list=mapaProcs();var alvo=(nome||'').trim().toLowerCase();for(var i=0;i<list.length;i++){if(list[i].nome&&list[i].nome.trim().toLowerCase()===alvo)return list[i];}return {temIP:false,temMCR:false,ausente:true};}
+/* ── Contadores ── */
+function reqCount(e){return (e.normas||[]).reduce(function(a,n){return a+(n.itens||[]).filter(function(i){return i.sel;}).length;},0);}
+function reqList(e){var out=[];(e.normas||[]).forEach(function(n){(n.itens||[]).forEach(function(i){if(i.sel)out.push({norma:n.nome,codigo:i.codigo,titulo:i.titulo});});});return out;}
+/* ── Escopos ── */
+function addEscopo(){var emp=prompt('Nome da empresa:');if(!emp)return;var nm=prompt('Nome do escopo (ex.: Serviço de galvanização):','')||'Escopo';var e={id:uid('e'),empresa:emp.trim(),nome:nm.trim(),rev:'01',data:'',normas:[],processos:[],grade:{}};state.escopos.push(e);ativo=e.id;normaSel=null;aba='normas';salvar();render();}
+function removeEscopo(id){if(state.escopos.length<=1){alert('Deixe ao menos um escopo.');return;}var e=state.escopos.find(function(x){return x.id===id;});if(!confirm('Remover o escopo "'+e.empresa+'"?'))return;state.escopos=state.escopos.filter(function(x){return x.id!==id;});if(ativo===id)ativo=state.escopos[0].id;salvar();render();}
+/* ── Render ── */
+function render(){renderList();renderMain();}
+function renderList(){var el=document.getElementById('plist');el.innerHTML='';state.escopos.forEach(function(e){var d=document.createElement('div');d.className='pcard'+(e.id===ativo?' on':'');d.innerHTML='<div class="cod">'+esc(e.empresa)+'</div><div class="nm">'+esc(e.nome)+'</div><div class="meta"><span>'+(e.normas?e.normas.length:0)+' normas</span><span>'+reqCount(e)+' requisitos</span><span>'+(e.processos?e.processos.length:0)+' processos</span></div>';d.onclick=function(){ativo=e.id;normaSel=(e.normas[0]?e.normas[0].id:null);render();};el.appendChild(d);});}
+function renderMain(){var e=E();if(!e){document.getElementById('main').innerHTML='';return;}
+ var procs=e.processos||[];var comIP=procs.filter(function(p){return statusProc(p.nome).temIP;}).length;var comMCR=procs.filter(function(p){return statusProc(p.nome).temMCR;}).length;
+ var h='<div class="phead"><div class="row1"><span class="badge">ESCOPO</span><h3 contenteditable="true" id="enome">'+esc(e.nome)+'</h3><div class="sp"></div><button class="btn gh sm" onclick="removeEscopo(\''+e.id+'\')" title="Remover">🗑</button></div>'+
+  '<div class="metaline"><span><b>Empresa:</b> <span contenteditable="true" data-f="empresa">'+esc(e.empresa)+'</span></span><span><b>Rev.:</b> <span contenteditable="true" data-f="rev">'+esc(e.rev||'01')+'</span></span><span><b>Data:</b> <span contenteditable="true" data-f="data">'+esc(e.data||'—')+'</span></span></div>'+
+  '<div class="tabs"><button class="tab '+(aba==='normas'?'on':'')+'" data-ab="normas">Normas &amp; requisitos</button><button class="tab '+(aba==='processos'?'on':'')+'" data-ab="processos">Processos (setores)</button><button class="tab '+(aba==='resumo'?'on':'')+'" data-ab="resumo">Resumo</button></div></div>';
+ // KPIs
+ h+='<div class="kpis"><div class="kpi"><div class="n">'+(e.normas?e.normas.length:0)+'</div><div class="l">Normas</div></div>'+
+   '<div class="kpi ok"><div class="n">'+reqCount(e)+'</div><div class="l">Requisitos (itens)</div></div>'+
+   '<div class="kpi"><div class="n">'+procs.length+'</div><div class="l">Processos / setores</div></div>'+
+   '<div class="kpi med"><div class="n">'+comIP+'<span style="font-size:13px;color:var(--mut)"> / '+procs.length+'</span></div><div class="l">Com IP</div></div>'+
+   '<div class="kpi med"><div class="n">'+comMCR+'<span style="font-size:13px;color:var(--mut)"> / '+procs.length+'</span></div><div class="l">Com MCR</div></div></div>';
+ h+=renderNormas(e)+renderProcessos(e)+renderResumo(e);
+ document.getElementById('main').innerHTML=h;bind();
+}
+/* ── Normas ── */
+function renderNormas(e){
+ var nlist=(e.normas||[]).map(function(n){var sel=(n.itens||[]).filter(function(i){return i.sel;}).length;return '<div class="nitem'+(n.id===normaSel?' on':'')+'" data-nsel="'+n.id+'"><span class="nm">'+esc(n.nome)+'</span><span class="ct">'+sel+'/'+(n.itens?n.itens.length:0)+'</span><span class="x" data-nrm="'+n.id+'">✕</span></div>';}).join('')||'<div class="empty">Sem normas ainda.</div>';
+ var norma=(e.normas||[]).find(function(n){return n.id===normaSel;});
+ var items='';
+ if(norma){items=(norma.itens||[]).map(function(it,i){return '<div class="irow'+(it.sel?' sel':'')+'" data-tog="'+i+'"><span class="ck"><svg viewBox="0 0 24 24"><path d="M5 13l4 4L19 7"/></svg></span><span class="cd">'+esc(it.codigo)+'</span><span class="ti">'+esc(it.titulo)+'</span><span class="x" data-irm="'+i+'" style="opacity:.4;cursor:pointer;color:var(--mut)">✕</span></div>';}).join('')||'<div class="empty">Sem itens. Adicione abaixo.</div>';}
+ else items='<div class="empty">Selecione uma norma à esquerda.</div>';
+ return '<div class="panel '+(aba==='normas'?'on':'')+'"><div class="cols">'+
+  '<div class="box"><h4>Normas <button class="btn sm" onclick="addNorma()" style="padding:3px 8px">＋</button></h4><div class="nlist">'+nlist+'</div></div>'+
+  '<div class="box"><h4>'+(norma?('Itens de '+esc(norma.nome)+' — marcados viram requisitos'):'Itens')+'</h4><div class="items">'+items+'</div>'+(norma?'<div class="additem"><input id="itcod" placeholder="Código (ex.: 8.5)"><input id="ittit" placeholder="Título do item"><button class="btn sm pri" onclick="addItem()">Adicionar</button></div>':'')+'</div>'+
+  '</div></div>';
+}
+function addNorma(){
+ var nomes=Object.keys(NORMA_BASE);
+ var msg='Escolha uma norma base ou digite um nome novo:\n';nomes.forEach(function(n,i){msg+=(i+1)+' = '+n+'\n';});msg+='(ou digite o nome de uma norma personalizada)';
+ var v=prompt(msg,'1');if(v==null)return;v=v.trim();if(!v)return;
+ var e=E();var nova;var idx=parseInt(v,10);
+ if(!isNaN(idx)&&idx>=1&&idx<=nomes.length)nova=normaFromBase(nomes[idx-1]);
+ else nova={id:uid('n'),nome:v,itens:[]};
+ if((e.normas||[]).some(function(n){return n.nome.toLowerCase()===nova.nome.toLowerCase();})){alert('Essa norma já está no escopo.');return;}
+ e.normas=e.normas||[];e.normas.push(nova);normaSel=nova.id;salvar();render();
+}
+function addItem(){var norma=(E().normas||[]).find(function(n){return n.id===normaSel;});if(!norma)return;var cod=(document.getElementById('itcod').value||'').trim();var tit=(document.getElementById('ittit').value||'').trim();if(!cod&&!tit)return;norma.itens=norma.itens||[];norma.itens.push({codigo:cod,titulo:tit,sel:true});salvar();render();}
+/* ── Processos ── */
+function renderProcessos(e){
+ var rows=(e.processos||[]).map(function(p,i){var s=statusProc(p.nome);return '<tr><td><span class="setor">SETOR</span> <span contenteditable="true" data-pn="'+i+'">'+esc(p.nome)+'</span></td>'+
+   '<td><span class="tag '+(s.temIP?'on':'off')+'">'+(s.temIP?'IP definido':'IP pendente')+'</span></td>'+
+   '<td><span class="tag '+(s.temMCR?'on':'off')+'">'+(s.temMCR?'MCR definida':'MCR pendente')+'</span></td>'+
+   '<td style="text-align:right"><span class="btn gh sm" data-prm="'+i+'" style="color:var(--mut)">✕</span></td></tr>';}).join('')||'<tr><td colspan="4" class="empty">Sem processos. Adicione ou importe do Mapa de Processos.</td></tr>';
+ return '<div class="panel '+(aba==='processos'?'on':'')+'">'+
+  '<div style="display:flex;justify-content:space-between;align-items:center;gap:10px;margin:2px 0 12px;flex-wrap:wrap"><div style="font-family:var(--disp);font-weight:600;color:var(--mid)">Processos do escopo — cada processo é um setor da auditoria</div><div style="display:flex;gap:8px"><button class="btn sm" onclick="importarDoMapa()">↧ Importar do Mapa de Processos</button><button class="btn pri sm" onclick="addProc()">＋ Processo</button></div></div>'+
+  '<div class="box"><table><thead><tr><th>Processo (setor)</th><th>Interação de Processo</th><th>Matriz de Risco</th><th></th></tr></thead><tbody>'+rows+'</tbody></table></div>'+
+  '<p class="note">O IP e a MCR de cada processo são editados no módulo <b>Mapa de Processos</b>. Os status acima são lidos de lá automaticamente (pelo nome do processo).</p></div>';
+}
+function addProc(){var nm=prompt('Nome do processo (setor):');if(!nm)return;var e=E();e.processos=e.processos||[];e.processos.push({id:uid('p'),nome:nm.trim()});salvar();render();}
+function importarDoMapa(){var e=E();var list=mapaProcs();if(!list.length){alert('Não encontrei processos no Mapa de Processos. Abra o módulo Mapa de Processos e cadastre-os primeiro.');return;}var existentes=(e.processos||[]).map(function(p){return (p.nome||'').trim().toLowerCase();});var add=0;list.forEach(function(p){if(existentes.indexOf((p.nome||'').trim().toLowerCase())<0){e.processos.push({id:uid('p'),nome:p.nome});add++;}});salvar();render();flash(add?('Importados '+add+' processo(s) ✓'):'Nenhum processo novo para importar');}
+function removeProc(i){var e=E();if(!confirm('Remover este processo do escopo?'))return;e.processos.splice(i,1);salvar();render();}
+/* ── Resumo ── */
+function renderResumo(e){
+ var reqs=reqList(e);var procs=e.processos||[];
+ var lista=reqs.map(function(r){return '<div class="req"><b>'+esc(r.codigo)+'</b><span>'+esc(r.titulo)+' <span style="color:var(--mut)">· '+esc(r.norma)+'</span></span></div>';}).join('')||'<div class="empty">Nenhum requisito marcado ainda.</div>';
+ var grade='';
+ if(reqs.length&&procs.length){
+  var head='<tr><th class="req">Requisito</th>'+procs.map(function(p){return '<th>'+esc(p.nome)+'</th>';}).join('')+'</tr>';
+  var body=reqs.map(function(r){var rk=r.norma+'|'+r.codigo;return '<tr><td class="rq">'+esc(r.codigo)+'</td>'+procs.map(function(p){var key=rk+'||'+p.id;var val=(e.grade&&e.grade[key])||'X';var cls=val==='NA'?'cellna':'cellx';return '<td class="'+cls+'" data-cell="'+esc(key)+'">'+val+'</td>';}).join('')+'</tr>';}).join('');
+  grade='<div class="gridwrap"><table class="grid"><thead>'+head+'</thead><tbody>'+body+'</tbody></table></div><p class="note">Clique numa célula para alternar <b>X</b> (aplicável) ↔ <b>NA</b> (não aplicável). Esta é a grade que o Programa de Auditoria vai usar (requisito × processo).</p>';
+ } else grade='<div class="empty">Marque requisitos e cadastre processos para ver a grade.</div>';
+ return '<div class="panel '+(aba==='resumo'?'on':'')+'">'+
+  '<div style="font-family:var(--disp);font-weight:600;color:var(--mid);margin-bottom:4px">O que o Escopo entrega ao Programa de Auditoria</div>'+
+  '<p class="note" style="margin-bottom:14px">Saída do Escopo → entrada do Programa: <b>'+reqs.length+'</b> requisitos × <b>'+procs.length+'</b> processos.</p>'+
+  '<div class="rescols"><div class="box" style="padding:12px"><h4 style="border:none;padding:0 0 8px">Requisitos ('+reqs.length+')</h4><div class="reqlist">'+lista+'</div></div>'+
+  '<div class="box" style="padding:12px"><h4 style="border:none;padding:0 0 8px">Grade requisito × processo</h4>'+grade+'</div></div></div>';
+}
+/* ── Bind ── */
+function bind(){var e=E();
+ document.querySelectorAll('.tab').forEach(function(b){b.onclick=function(){aba=this.getAttribute('data-ab');renderMain();};});
+ var en=document.getElementById('enome');if(en)en.addEventListener('blur',function(){e.nome=this.textContent.trim()||e.nome;salvar();renderList();});
+ document.querySelectorAll('.metaline [data-f]').forEach(function(el){el.addEventListener('blur',function(){var f=this.getAttribute('data-f');var v=this.textContent.trim();e[f]=(v==='—')?'':v;salvar();if(f==='empresa')renderList();});});
+ document.querySelectorAll('[data-nsel]').forEach(function(el){el.onclick=function(ev){if(ev.target.getAttribute('data-nrm'))return;normaSel=this.getAttribute('data-nsel');renderMain();};});
+ document.querySelectorAll('[data-nrm]').forEach(function(el){el.onclick=function(ev){ev.stopPropagation();var id=this.getAttribute('data-nrm');if(!confirm('Remover esta norma do escopo?'))return;e.normas=e.normas.filter(function(n){return n.id!==id;});if(normaSel===id)normaSel=e.normas[0]?e.normas[0].id:null;salvar();render();};});
+ document.querySelectorAll('[data-tog]').forEach(function(el){el.onclick=function(ev){if(ev.target.getAttribute('data-irm'))return;var norma=e.normas.find(function(n){return n.id===normaSel;});if(!norma)return;var it=norma.itens[+this.getAttribute('data-tog')];it.sel=!it.sel;salvar();renderMain();renderList();};});
+ document.querySelectorAll('[data-irm]').forEach(function(el){el.onclick=function(ev){ev.stopPropagation();var norma=e.normas.find(function(n){return n.id===normaSel;});if(!norma)return;norma.itens.splice(+this.getAttribute('data-irm'),1);salvar();renderMain();renderList();};});
+ document.querySelectorAll('[data-pn]').forEach(function(el){el.addEventListener('blur',function(){e.processos[+this.getAttribute('data-pn')].nome=this.textContent.trim();salvar();renderMain();renderList();});});
+ document.querySelectorAll('[data-prm]').forEach(function(el){el.onclick=function(){removeProc(+this.getAttribute('data-prm'));};});
+ document.querySelectorAll('[data-cell]').forEach(function(el){el.onclick=function(){var k=this.getAttribute('data-cell');e.grade=e.grade||{};e.grade[k]=((e.grade[k]||'X')==='X')?'NA':'X';salvar();renderMain();};});
+}
+carregar();render();
+</script>
+</body>
+</html>
