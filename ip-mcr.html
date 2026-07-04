@@ -231,6 +231,7 @@
   <h1>Mapa de Processos · IP e MCR</h1>
   <div class="sp"></div><span class="st" id="st"></span>
   <input type="file" id="xlsxin" accept=".xlsx,.xls" style="display:none" onchange="importExcel(event)">
+  <input type="file" id="xlsxproc" accept=".xlsx,.xls" style="display:none" onchange="importProcExcel(event)">
   <button class="btn" onclick="document.getElementById('xlsxin').click()">📥 Importar Excel</button>
   <button class="btn" onclick="exportar()">⬇ Exportar</button>
   <button class="btn pri" onclick="salvar(true)">Salvar</button>
@@ -349,7 +350,7 @@ function renderMain(){
  if(view==='mapa'){document.getElementById('main').innerHTML=mapaHTML();bindMapa();return;}
  var p=P();if(!p){view='mapa';document.getElementById('main').innerHTML=mapaHTML();bindMapa();return;}
  var risk=(p.mcr||[]).reduce(function(a,r){return Math.max(a,classe(r.grav,r.prob));},0);var ci=classInfo(risk||1);
- var h='<div class="phead"><div class="row1"><button class="btn gh sm" onclick="setView(\'mapa\')" title="Voltar ao mapa">← Mapa</button><span class="badge">IP · MCR '+esc(p.codigo||'--')+'</span><h3 contenteditable="true" id="pn">'+esc(p.nome)+'</h3><div class="sp" style="flex:1"></div><span class="ro '+((risk>=6)?'R':'O')+'" style="background:'+ci.bg+';color:'+ci.c+'">risco máx.: '+ci.t+'</span><button class="btn gh sm" onclick="removeProc(\''+p.id+'\')" title="Remover">🗑</button></div>'+
+ var h='<div class="phead"><div class="row1"><button class="btn gh sm" onclick="setView(\'mapa\')" title="Voltar ao mapa">← Mapa</button><span class="badge">IP · MCR '+esc(p.codigo||'--')+'</span><h3 contenteditable="true" id="pn">'+esc(p.nome)+'</h3><div class="sp" style="flex:1"></div><span class="ro '+((risk>=6)?'R':'O')+'" style="background:'+ci.bg+';color:'+ci.c+'">risco máx.: '+ci.t+'</span><button class="btn gh sm" onclick="document.getElementById(\'xlsxproc\').click()" title="Importar o IP/MCR deste processo de uma planilha (busca a aba pelo nome/código)">📥 Excel</button><button class="btn gh sm" onclick="removeProc(\''+p.id+'\')" title="Remover">🗑</button></div>'+
   '<div class="tabs"><button class="tab '+(aba==='ip'?'on':'')+'" data-ab="ip">Interação de Processo (IP)</button><button class="tab '+(aba==='mcr'?'on':'')+'" data-ab="mcr">Matriz de Riscos (MCR)</button></div></div>';
  // IP — diagrama de tartaruga em caixas (igual ao documento)
  h+='<div class="panel '+(aba==='ip'?'on':'')+'"><div class="ipwrap" id="ipwrap"><svg id="wires" class="wires" aria-hidden="true"></svg><div class="ip">'+
@@ -573,6 +574,59 @@ function parseAoaMcr(aoa){
    o.eficaz=cell(row,col.eficaz);o.dataEfic=cell(row,col.dataEfic);o.respEfic=cell(row,col.respEfic);
    out.push(o);}
   return {rows:out,procNome:detProcNome(aoa,hr)};
+}
+/* ── Importação POR PROCESSO: casa a aba do Excel com o processo aberto ── */
+function findSheetFor(wb,proc,tipo){
+ var code=norm(proc.codigo).replace(/[^0-9a-z]/g,'');
+ var toks=norm(proc.nome).split(' ').filter(function(w){return w.length>=4;});
+ function matches(sn,flat){sn=norm(sn);if(code&&code.length>=2&&sn.indexOf(code)>=0)return true;for(var i=0;i<toks.length;i++){if(sn.indexOf(toks[i])>=0)return true;}if(tipo==='mcr'){for(var i=0;i<toks.length;i++){if(flat.indexOf(toks[i])>=0)return true;}}return false;}
+ var lista=[];
+ for(var si=0;si<wb.SheetNames.length;si++){var name=wb.SheetNames[si];var aoa;try{aoa=XLSX.utils.sheet_to_json(wb.Sheets[name],{header:1,raw:false,defval:''});}catch(e){continue;}
+  var flat=aoa.map(function(r){return (r||[]).map(norm).join(' ');}).join(' ');
+  var isIP=/^ip[\s\-]/.test(norm(name))||flat.indexOf('interacao de processo')>=0||(flat.indexOf('recursos')>=0&&flat.indexOf('missao do processo')>=0);
+  var isMCR=(flat.indexOf('risco')>=0&&(flat.indexOf('consequenc')>=0||flat.indexOf('barreira')>=0));
+  if((tipo==='ip'&&isIP)||(tipo==='mcr'&&isMCR)){lista.push({name:name,aoa:aoa,flat:flat});}
+ }
+ for(var i=0;i<lista.length;i++){if(matches(lista[i].name,lista[i].flat))return lista[i];}
+ return null;
+}
+function importProcExcel(ev){
+ var file=ev.target.files&&ev.target.files[0];ev.target.value='';if(!file)return;
+ if(typeof XLSX==='undefined'){alert('A biblioteca de leitura de Excel não carregou (sem conexão?). Tente novamente.');return;}
+ var proc=P();if(!proc){alert('Abra um processo primeiro.');return;}
+ var rd=new FileReader();
+ rd.onload=function(e){
+  var wb;try{wb=XLSX.read(new Uint8Array(e.target.result),{type:'array',cellDates:true});}catch(err){alert('Não consegui abrir o Excel: '+(err.message||err));return;}
+  var ipHit=findSheetFor(wb,proc,'ip');var mcrHit=findSheetFor(wb,proc,'mcr');
+  var ipr=ipHit?parseIPaoa(ipHit.aoa):null;var mcrr=mcrHit?parseAoaMcr(mcrHit.aoa):null;
+  var ip=(ipr&&ipTem(ipr.ip))?ipr.ip:null;var missao=ipr?ipr.missao:'';
+  var mcr=(mcrr&&mcrr.rows&&mcrr.rows.length)?mcrr.rows:null;
+  if(!ip&&!mcr){alert('Não encontrei no Excel uma aba que combine com o processo "'+proc.nome+'" (código '+proc.codigo+').\n\nAbas no arquivo:\n'+wb.SheetNames.join(', '));return;}
+  escolherImportProc(ip,mcr,missao,ipHit,mcrHit);
+ };
+ rd.readAsArrayBuffer(file);
+}
+function escolherImportProc(ip,mcr,missao,ipHit,mcrHit){
+ function apply(op){aplicarNoProcesso((op==='ip'||op==='ambos')?ip:null,(op==='mcr'||op==='ambos')?mcr:null,missao,ipHit,mcrHit);}
+ if(ip&&!mcr){apply('ip');return;}
+ if(mcr&&!ip){apply('mcr');return;}
+ var nip=0;['recursos','dono','maoDeObra','origem','entradas','atividades','saidas','destino','metodos','medicao'].forEach(function(k){if(ip[k])nip+=ip[k].length;});
+ var box=document.getElementById('mbox');
+ box.innerHTML='<span class="mclose" onclick="closeScale()">✕</span><h3>Importar para “'+esc(P().nome)+'”</h3><div class="msub">Encontrei a aba de IP ('+esc(ipHit?ipHit.name:'')+') e a MCR ('+esc(mcrHit?mcrHit.name:'')+'). O que trazer para este processo?</div>'+
+  '<div style="display:flex;flex-direction:column;gap:10px;margin-top:4px">'+
+   '<button class="btn pri" style="justify-content:flex-start" onclick="_impPick(\'ambos\')">Tudo — IP + MCR ('+nip+' itens de IP · '+mcr.length+' riscos)</button>'+
+   '<button class="btn" style="justify-content:flex-start" onclick="_impPick(\'ip\')">Só a Interação de Processo ('+nip+' itens)</button>'+
+   '<button class="btn" style="justify-content:flex-start" onclick="_impPick(\'mcr\')">Só a Matriz de Risco ('+mcr.length+' riscos)</button>'+
+  '</div>';
+ window._impCb=apply;document.getElementById('mscrim').classList.add('on');
+}
+function aplicarNoProcesso(ip,mcr,missao,ipHit,mcrHit){
+ var p=P();var jaTem=((p.mcr&&p.mcr.length)||ipTem(p.ip));
+ if(jaTem&&!confirm('Isso vai substituir o IP/MCR atual de “'+p.nome+'” pelos dados da planilha. Continuar?'))return;
+ var partes=[];
+ if(ip){p.ip=ip;if(missao)p.missao=missao;partes.push('IP'+(ipHit?(' · '+ipHit.name):''));}
+ if(mcr){p.mcr=mcr;partes.push('MCR '+mcr.length+' riscos'+(mcrHit?(' · '+mcrHit.name):''));}
+ salvar();aba=ip?'ip':'mcr';render();flash('Importado para “'+p.nome+'”: '+partes.join(' + ')+' ✓');
 }
 function importExcel(ev){
  var file=ev.target.files&&ev.target.files[0];ev.target.value='';if(!file)return;
