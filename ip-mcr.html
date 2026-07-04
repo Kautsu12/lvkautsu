@@ -172,6 +172,11 @@
   .foot{max-width:1500px;margin:0 auto;padding:0 22px 30px;color:var(--mut);font-size:11px;text-align:center}
   @media(prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
   @media(max-width:960px){.wrap{grid-template-columns:1fr}.ip{grid-template-columns:1fr 1fr;grid-auto-rows:auto}.ip>div{grid-column:auto!important;grid-row:auto!important}.mcr-table{min-width:0}}
+  /* Dentro do sistema (iframe): o cabeçalho METIS já é do index — some com a barra da marca, mantém os botões. */
+  body.embedded .top{padding:5px 18px;box-shadow:none}
+  body.embedded .top .logo,body.embedded .top h1{display:none}
+  body.embedded .wrap{padding-top:12px}
+  body.embedded .aside{top:52px}
 </style>
 </head>
 <body>
@@ -509,6 +514,7 @@ function escolherImport(cb){var box=document.getElementById('mbox');
  window._impCb=cb;document.getElementById('mscrim').classList.add('on');}
 function _impPick(op){closeScale();var cb=window._impCb;window._impCb=null;if(cb)cb(op);}
 function exportar(){var b=new Blob([JSON.stringify(state,null,2)],{type:'application/json'});var a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='ip-mcr.json';a.click();}
+try{if(window.self!==window.top)document.body.classList.add('embedded');}catch(e){document.body.classList.add('embedded');}
 carregar();render();
 </script>
 </body>
