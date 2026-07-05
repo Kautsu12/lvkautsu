@@ -329,7 +329,7 @@ function mapaHTML(){var m=state.mapa||(state.mapa=seedMapa());var nCli=m.itens.f
  var mapNames=m.itens.map(function(it){return (it.nome||'').trim().toLowerCase();});
  var orphans=state.processos.filter(function(p){return mapNames.indexOf((p.nome||'').trim().toLowerCase())<0;});
  var outros='';
- if(orphans.length){outros='<div class="conn">▼</div><div class="tier"><div class="tl">Outros processos cadastrados</div><div class="mgrid support">'+orphans.map(function(p){return '<div class="mcard a" data-openid="'+p.id+'" draggable="true"><span class="mv" data-mvo="'+p.id+'" title="Colocar num nível do mapa">⇅</span><div class="cd">MCR-'+esc(p.codigo||'--')+'</div><div class="nm">'+esc(p.nome)+'</div></div>';}).join('')+'</div></div>';}
+ if(orphans.length){outros='<div class="conn">▼</div><div class="tier"><div class="tl">Outros processos cadastrados</div><div class="mgrid support">'+orphans.map(function(p){return '<div class="mcard a" data-openid="'+p.id+'" draggable="true"><span class="mv" data-mvo="'+p.id+'" title="Colocar num nível do mapa">⇅</span><span class="x" data-delp="'+p.id+'" title="Excluir processo">✕</span><div class="cd">MCR-'+esc(p.codigo||'--')+'</div><div class="nm">'+esc(p.nome)+'</div></div>';}).join('')+'</div></div>';}
  var swE='linear-gradient(155deg,var(--mid),#1d2c40)',swC='linear-gradient(155deg,var(--petrol),var(--petrol-d))',swA='linear-gradient(155deg,#3f7f96,var(--petrol-d))';
  return '<div class="macro">'+
   '<div class="macro-h"><h2 contenteditable="true" data-mh="titulo">'+esc(m.titulo)+'</h2><div class="un" contenteditable="true" data-mh="unidades">'+esc(m.unidades)+'</div></div>'+
@@ -353,8 +353,9 @@ function mapaHTML(){var m=state.mapa||(state.mapa=seedMapa());var nCli=m.itens.f
 var dragCard=null;
 function bindMapa(){
  document.querySelectorAll('[data-mi]').forEach(function(el){el.onclick=function(ev){var tg=ev.target;if(tg.getAttribute('data-mrm')!=null||tg.getAttribute('data-mv')!=null)return;var it=state.mapa.itens[+this.getAttribute('data-mi')];abrirProcesso(it.nome,it.codigo);};});
- document.querySelectorAll('[data-openid]').forEach(function(el){el.onclick=function(ev){if(ev.target.getAttribute('data-mvo')!=null)return;abrirId(this.getAttribute('data-openid'));};});
- document.querySelectorAll('[data-mrm]').forEach(function(el){el.onclick=function(ev){ev.stopPropagation();var i=+this.getAttribute('data-mrm');if(!confirm('Remover "'+state.mapa.itens[i].nome+'" do mapa?'))return;state.mapa.itens.splice(i,1);salvar();renderMain();};});
+ document.querySelectorAll('[data-openid]').forEach(function(el){el.onclick=function(ev){var t=ev.target;if(t.getAttribute('data-mvo')!=null||t.getAttribute('data-delp')!=null)return;abrirId(this.getAttribute('data-openid'));};});
+ document.querySelectorAll('[data-mrm]').forEach(function(el){el.onclick=function(ev){ev.stopPropagation();var i=+this.getAttribute('data-mrm');if(!confirm('Remover "'+state.mapa.itens[i].nome+'" do mapa? (o processo em si não é apagado)'))return;state.mapa.itens.splice(i,1);salvar();renderMain();};});
+ document.querySelectorAll('[data-delp]').forEach(function(el){el.onclick=function(ev){ev.stopPropagation();removeProc(this.getAttribute('data-delp'));};});
  document.querySelectorAll('[data-mv]').forEach(function(el){el.onclick=function(ev){ev.stopPropagation();moverItem(+this.getAttribute('data-mv'));};});
  document.querySelectorAll('[data-mvo]').forEach(function(el){el.onclick=function(ev){ev.stopPropagation();moverOrphan(this.getAttribute('data-mvo'));};});
  document.querySelectorAll('[data-mh]').forEach(function(el){el.addEventListener('blur',function(){var v=this.textContent.trim();state.mapa[this.getAttribute('data-mh')]=(v==='—')?'':v;salvar();});});
