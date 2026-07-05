@@ -189,6 +189,9 @@
   .tiers{display:flex;flex-direction:column;gap:8px;min-width:0}
   .tier{background:#f5f8fb;border:1px solid var(--line);border-radius:13px;padding:14px 16px}
   .tier .tl{font-family:var(--disp);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--mut);text-align:center;margin-bottom:13px;font-weight:700}
+  .tier.dragover{outline:2px dashed var(--petrol);outline-offset:-3px;background:#eaf3fa}
+  .mcard.dragging{opacity:.45}
+  .mcard[draggable="true"]{cursor:grab}.mcard[draggable="true"]:active{cursor:grabbing}
   .conn{display:flex;justify-content:center;color:#c2d0dd;font-size:14px;line-height:1;height:6px}
   .cbus{position:relative;display:flex;justify-content:space-around;height:24px;padding:0 46px;margin:1px 0}
   .cbus::before{content:'';position:absolute;left:9%;right:9%;top:50%;height:2px;background:#c4d2df;transform:translateY(-50%)}
@@ -204,6 +207,8 @@
   .mcard .nm{font-weight:700;font-size:12.5px;margin-top:3px;line-height:1.22}
   .mcard .x{position:absolute;top:5px;right:8px;opacity:0;font-size:11px;cursor:pointer;color:rgba(255,255,255,.85)}
   .mcard:hover .x{opacity:.8}
+  .mcard .mv{position:absolute;top:4px;left:8px;opacity:0;font-size:13px;cursor:pointer;color:rgba(255,255,255,.9);font-weight:700}
+  .mcard:hover .mv{opacity:.85}.mcard .mv:hover{opacity:1;transform:scale(1.15)}
   .mcard.e{background:linear-gradient(155deg,var(--mid),#1d2c40)}
   .mcard.c{background:linear-gradient(155deg,var(--petrol),var(--petrol-d));flex:1 0 152px;margin-left:-13px;padding-left:30px;border-radius:6px;clip-path:polygon(0 0,calc(100% - 18px) 0,100% 50%,calc(100% - 18px) 100%,0 100%,18px 50%)}
   .mgrid.chain .mcard.c:first-child{margin-left:0;padding-left:16px;clip-path:polygon(0 0,calc(100% - 18px) 0,100% 50%,calc(100% - 18px) 100%,0 100%)}
@@ -320,21 +325,21 @@ function abrirId(id){ativo=id;view='proc';aba='ip';render();}
 function busArr(dir,n){var a='';var c=Math.min(Math.max(n,1),9);for(var i=0;i<c;i++)a+='<span>'+(dir==='down'?'▼':'▲')+'</span>';return '<div class="cbus '+dir+'">'+a+'</div>';}
 function mapaHTML(){var m=state.mapa||(state.mapa=seedMapa());var nCli=m.itens.filter(function(it){return it.cat==='cliente';}).length;
  var estrat='',cli='',apoio='';
- m.itens.forEach(function(it,i){var cls=it.cat==='estrategico'?'e':(it.cat==='cliente'?'c':'a');var card='<div class="mcard '+cls+'" data-mi="'+i+'"><span class="x" data-mrm="'+i+'">✕</span>'+(it.codigo?'<div class="cd">'+esc(it.codigo)+'</div>':'')+'<div class="nm">'+esc(it.nome)+'</div></div>';if(it.cat==='estrategico')estrat+=card;else if(it.cat==='cliente')cli+=card;else apoio+=card;});
+ m.itens.forEach(function(it,i){var cls=it.cat==='estrategico'?'e':(it.cat==='cliente'?'c':'a');var card='<div class="mcard '+cls+'" data-mi="'+i+'" draggable="true"><span class="mv" data-mv="'+i+'" title="Mover de nível">⇅</span><span class="x" data-mrm="'+i+'">✕</span>'+(it.codigo?'<div class="cd">'+esc(it.codigo)+'</div>':'')+'<div class="nm">'+esc(it.nome)+'</div></div>';if(it.cat==='estrategico')estrat+=card;else if(it.cat==='cliente')cli+=card;else apoio+=card;});
  var mapNames=m.itens.map(function(it){return (it.nome||'').trim().toLowerCase();});
  var orphans=state.processos.filter(function(p){return mapNames.indexOf((p.nome||'').trim().toLowerCase())<0;});
  var outros='';
- if(orphans.length){outros='<div class="conn">▼</div><div class="tier"><div class="tl">Outros processos cadastrados</div><div class="mgrid support">'+orphans.map(function(p){return '<div class="mcard a" data-openid="'+p.id+'"><div class="cd">MCR-'+esc(p.codigo||'--')+'</div><div class="nm">'+esc(p.nome)+'</div></div>';}).join('')+'</div></div>';}
+ if(orphans.length){outros='<div class="conn">▼</div><div class="tier"><div class="tl">Outros processos cadastrados</div><div class="mgrid support">'+orphans.map(function(p){return '<div class="mcard a" data-openid="'+p.id+'" draggable="true"><span class="mv" data-mvo="'+p.id+'" title="Colocar num nível do mapa">⇅</span><div class="cd">MCR-'+esc(p.codigo||'--')+'</div><div class="nm">'+esc(p.nome)+'</div></div>';}).join('')+'</div></div>';}
  var swE='linear-gradient(155deg,var(--mid),#1d2c40)',swC='linear-gradient(155deg,var(--petrol),var(--petrol-d))',swA='linear-gradient(155deg,#3f7f96,var(--petrol-d))';
  return '<div class="macro">'+
   '<div class="macro-h"><h2 contenteditable="true" data-mh="titulo">'+esc(m.titulo)+'</h2><div class="un" contenteditable="true" data-mh="unidades">'+esc(m.unidades)+'</div></div>'+
   '<div class="rails"><div class="rail"><span>Requisitos de clientes / partes interessadas</span></div>'+
    '<div class="tiers">'+
-    '<div class="tier"><div class="tl">Processos Estratégicos</div><div class="mgrid strat">'+estrat+'</div><div style="text-align:center"><button class="addm" data-add="estrategico">＋ estratégico</button></div></div>'+
+    '<div class="tier" data-tier="estrategico"><div class="tl">Processos Estratégicos</div><div class="mgrid strat">'+estrat+'</div><div style="text-align:center"><button class="addm" data-add="estrategico">＋ estratégico</button></div></div>'+
     busArr('down',nCli)+
-    '<div class="tier"><div class="tl">Processos Voltados ao Cliente</div><div class="chainwrap"><div class="mgrid chain">'+cli+'</div></div><div style="text-align:center"><button class="addm" data-add="cliente">＋ processo</button></div></div>'+
+    '<div class="tier" data-tier="cliente"><div class="tl">Processos Voltados ao Cliente</div><div class="chainwrap"><div class="mgrid chain">'+cli+'</div></div><div style="text-align:center"><button class="addm" data-add="cliente">＋ processo</button></div></div>'+
     busArr('up',nCli)+
-    '<div class="tier"><div class="tl">Processos de Apoio e Gestão</div><div class="mgrid support">'+apoio+'</div><div style="text-align:center"><button class="addm" data-add="apoio">＋ apoio</button></div></div>'+
+    '<div class="tier" data-tier="apoio"><div class="tl">Processos de Apoio e Gestão</div><div class="mgrid support">'+apoio+'</div><div style="text-align:center"><button class="addm" data-add="apoio">＋ apoio</button></div></div>'+
     outros+
    '</div>'+
    '<div class="rail out"><span>Satisfação de clientes / partes interessadas</span></div>'+
@@ -345,13 +350,30 @@ function mapaHTML(){var m=state.mapa||(state.mapa=seedMapa());var nCli=m.itens.f
    '<span><b>Revisão:</b> <span contenteditable="true" data-mh="rev">'+esc(m.rev||'—')+'</span></span><span><b>Data revisão:</b> <span contenteditable="true" data-mh="dataRev">'+esc(m.dataRev||'—')+'</span></span></div></div>'+
   '<div class="maphint">Clique num processo para abrir sua Interação de Processo e Matriz de Risco.</div></div>';
 }
+var dragCard=null;
 function bindMapa(){
- document.querySelectorAll('[data-mi]').forEach(function(el){el.onclick=function(ev){if(ev.target.getAttribute('data-mrm')!=null)return;var it=state.mapa.itens[+this.getAttribute('data-mi')];abrirProcesso(it.nome,it.codigo);};});
- document.querySelectorAll('[data-openid]').forEach(function(el){el.onclick=function(){abrirId(this.getAttribute('data-openid'));};});
+ document.querySelectorAll('[data-mi]').forEach(function(el){el.onclick=function(ev){var tg=ev.target;if(tg.getAttribute('data-mrm')!=null||tg.getAttribute('data-mv')!=null)return;var it=state.mapa.itens[+this.getAttribute('data-mi')];abrirProcesso(it.nome,it.codigo);};});
+ document.querySelectorAll('[data-openid]').forEach(function(el){el.onclick=function(ev){if(ev.target.getAttribute('data-mvo')!=null)return;abrirId(this.getAttribute('data-openid'));};});
  document.querySelectorAll('[data-mrm]').forEach(function(el){el.onclick=function(ev){ev.stopPropagation();var i=+this.getAttribute('data-mrm');if(!confirm('Remover "'+state.mapa.itens[i].nome+'" do mapa?'))return;state.mapa.itens.splice(i,1);salvar();renderMain();};});
+ document.querySelectorAll('[data-mv]').forEach(function(el){el.onclick=function(ev){ev.stopPropagation();moverItem(+this.getAttribute('data-mv'));};});
+ document.querySelectorAll('[data-mvo]').forEach(function(el){el.onclick=function(ev){ev.stopPropagation();moverOrphan(this.getAttribute('data-mvo'));};});
  document.querySelectorAll('[data-mh]').forEach(function(el){el.addEventListener('blur',function(){var v=this.textContent.trim();state.mapa[this.getAttribute('data-mh')]=(v==='—')?'':v;salvar();});});
  document.querySelectorAll('[data-add]').forEach(function(el){el.onclick=function(){var cat=this.getAttribute('data-add');var nm=prompt('Nome do processo:');if(!nm)return;var cod=prompt('Código (ex.: IP-015):','')||'';state.mapa.itens.push({codigo:cod.trim(),nome:nm.trim(),cat:cat});salvar();renderMain();};});
+ document.querySelectorAll('.mcard[draggable="true"]').forEach(function(el){
+  el.addEventListener('dragstart',function(e){var mi=this.getAttribute('data-mi');dragCard=(mi!=null)?{type:'mi',ref:+mi}:{type:'orphan',ref:this.getAttribute('data-openid')};try{e.dataTransfer.effectAllowed='move';e.dataTransfer.setData('text/plain','1');}catch(_){}this.classList.add('dragging');});
+  el.addEventListener('dragend',function(){this.classList.remove('dragging');document.querySelectorAll('.tier.dragover').forEach(function(t){t.classList.remove('dragover');});});
+ });
+ document.querySelectorAll('[data-tier]').forEach(function(z){
+  z.addEventListener('dragover',function(e){if(!dragCard)return;e.preventDefault();this.classList.add('dragover');});
+  z.addEventListener('dragleave',function(e){if(e.target===this)this.classList.remove('dragover');});
+  z.addEventListener('drop',function(e){e.preventDefault();this.classList.remove('dragover');soltarCard(this.getAttribute('data-tier'));});
+ });
 }
+function soltarCard(tier){if(!dragCard)return;if(dragCard.type==='mi'){if(state.mapa.itens[dragCard.ref])state.mapa.itens[dragCard.ref].cat=tier;}else{var p=state.processos.find(function(x){return x.id===dragCard.ref;});if(p){var ex=state.mapa.itens.find(function(it){return norm(it.nome)===norm(p.nome);});if(ex)ex.cat=tier;else state.mapa.itens.push({codigo:p.codigo||'',nome:p.nome,cat:tier});}}dragCard=null;salvar();renderMain();}
+function pickTier(titulo,cb){var box=document.getElementById('mbox');box.innerHTML='<span class="mclose" onclick="closeScale()">✕</span><h3>'+esc(titulo)+'</h3><div class="msub">Escolha o nível no mapa:</div><div style="display:flex;flex-direction:column;gap:10px;margin-top:6px"><button class="btn" style="justify-content:flex-start" onclick="_tierPick(\'estrategico\')">Processos Estratégicos</button><button class="btn" style="justify-content:flex-start" onclick="_tierPick(\'cliente\')">Processos Voltados ao Cliente</button><button class="btn" style="justify-content:flex-start" onclick="_tierPick(\'apoio\')">Processos de Apoio e Gestão</button></div>';window._tierCb=cb;document.getElementById('mscrim').classList.add('on');}
+function _tierPick(t){closeScale();var cb=window._tierCb;window._tierCb=null;if(cb)cb(t);}
+function moverItem(i){var it=state.mapa.itens[i];if(!it)return;pickTier('Mover “'+esc(it.nome)+'”',function(t){it.cat=t;salvar();renderMain();});}
+function moverOrphan(pid){var p=state.processos.find(function(x){return x.id===pid;});if(!p)return;pickTier('Colocar “'+esc(p.nome)+'” no mapa',function(t){var ex=state.mapa.itens.find(function(it){return norm(it.nome)===norm(p.nome);});if(ex)ex.cat=t;else state.mapa.itens.push({codigo:p.codigo||'',nome:p.nome,cat:t});salvar();renderMain();});}
 function renderMain(){
  if(view==='mapa'){document.getElementById('main').innerHTML=mapaHTML();bindMapa();return;}
  var p=P();if(!p){view='mapa';document.getElementById('main').innerHTML=mapaHTML();bindMapa();return;}
