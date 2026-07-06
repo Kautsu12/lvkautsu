@@ -157,6 +157,7 @@
   <h1>Mapa de Processos</h1>
   <div class="sp"></div>
   <span class="chip ok" id="sync" role="status">Carregando…</span>
+  <button class="btn" onclick="abrirImportIPMCR()">Importar do IP &amp; MCR</button>
   <button class="btn" onclick="abrirCargos()">Cargos</button>
   <button class="btn" onclick="exportarJSON()">Exportar</button>
   <button class="btn pri" onclick="abrirNovoProc()">Novo processo</button>
@@ -555,6 +556,60 @@ function criarCargo(){
   if(!nome){toast('Dê um nome ao cargo');return;}
   state.cargos.push({id:uid('c'),nome:nome,area:document.getElementById('f_carea').value.trim()});
   salvar();abrirCargos();toast('Cargo adicionado');
+}
+/* ═══ Fase 2.1 — Importar processos reais do módulo IP & MCR (localStorage ip_mcr_v2) ═══ */
+function lerIPMCR(){
+  try{ return JSON.parse(localStorage.getItem('ip_mcr_v2')||'null'); }catch(e){ return null; }
+}
+function abrirImportIPMCR(){
+  var base=lerIPMCR();
+  if(!base||(!base.mapa&&!(base.processos||[]).length)){
+    modal('<h3>Importar do IP &amp; MCR</h3><div class="msub">Nenhum dado do IP &amp; MCR foi encontrado neste navegador.</div>'
+      +'<div class="resumo">O importador lê a base do módulo IP &amp; MCR gravada neste computador (chave <b>ip_mcr_v2</b>). Abra o IP &amp; MCR uma vez neste navegador e tente de novo.</div>'
+      +'<div class="mact"><button class="btn" onclick="fecharModal()">Fechar</button></div>');
+    return;
+  }
+  var itens=(base.mapa&&base.mapa.itens)||[];
+  var nProc=(base.processos||[]).length;
+  var temSeed=state.processos.some(function(p){return ['p1','p2','p3','p4','p5','p6'].indexOf(p.id)>=0&&!p.versoes.length;});
+  modal('<h3>Importar do IP &amp; MCR</h3><div class="msub">Traz os seus processos reais para a cadeia de valor — cada um nasce como rascunho v1</div>'
+    +'<div class="resumo"><b>Encontrado neste navegador:</b><br>'+itens.length+' item(ns) no Mapa geral · '+nProc+' processo(s) com IP/MCR<br>'
+    +'<b>Camadas:</b> estratégicos → Gestão · voltados ao cliente → Cadeia primária · apoio → Apoio e Gestão</div>'
+    +(temSeed?'<div class="field"><label><input type="checkbox" id="f_rmseed" checked> Remover os processos de exemplo (IP-001–IP-006 do seed, sem versão aprovada)</label></div>':'')
+    +'<div class="mact"><button class="btn" onclick="fecharModal()">Cancelar</button><button class="btn pri" onclick="importarIPMCR()">Importar processos</button></div>'
+    +'<div class="hint" style="margin-top:9px">Nada é apagado no IP &amp; MCR — a importação só copia. Processos já existentes com o mesmo nome não são duplicados.</div>');
+}
+function importarIPMCR(){
+  var base=lerIPMCR(); if(!base){fecharModal();return;}
+  var rm=document.getElementById('f_rmseed');
+  if(rm&&rm.checked){
+    state.processos=state.processos.filter(function(p){return !(['p1','p2','p3','p4','p5','p6'].indexOf(p.id)>=0&&!p.versoes.length);});
+  }
+  if(!state.macros.some(function(m){return m.id==='m_apoio';})){
+    state.macros.push({id:'m_apoio',sigla:'APO',nome:'Apoio e Gestão',desc:'processos de apoio do SGI',tipo:'apoio',ordem:9});
+  }
+  function macroDeCat(cat){ if(cat==='e')return 'm_vcm'; if(cat==='c')return 'm_o2c'; return 'm_apoio'; }
+  function norm(s){return String(s||'').trim().toLowerCase();}
+  function missaoDe(nome){
+    var pr=(base.processos||[]).find(function(x){return norm(x.nome)===norm(nome);});
+    return pr?(pr.missao||''):'';
+  }
+  var itens=(base.mapa&&base.mapa.itens)||[];
+  var fonte=itens.length?itens.map(function(it){return {codigo:it.codigo||'',nome:it.nome||'',cat:it.cat||'a'};})
+    :(base.processos||[]).map(function(pr){return {codigo:pr.codigo?('IP-'+pr.codigo):'',nome:pr.nome||'',cat:'c'};});
+  var ordens={}; var add=0, pulados=0;
+  fonte.forEach(function(f){
+    if(!f.nome){return;}
+    if(state.processos.some(function(p){return norm(p.nome)===norm(f.nome);})){pulados++;return;}
+    var mid=macroDeCat(f.cat);
+    ordens[mid]=(ordens[mid]||procsDo(mid).length)+1;
+    var p=aplicaWF({id:uid('p'),macroId:mid,codigo:f.codigo,nome:f.nome,missao:missaoDe(f.nome),
+      donoCargoId:'',ordem:ordens[mid],atividades:[]});
+    p.vMotivo='importado do IP & MCR';
+    state.processos.push(p); add++;
+  });
+  salvar();fecharModal();view='cadeia';render();
+  toast(add+' processo(s) importado(s)'+(pulados?' · '+pulados+' já existiam':''));
 }
 function exportarJSON(){
   var blob=new Blob([JSON.stringify(state,null,2)],{type:'application/json'});
