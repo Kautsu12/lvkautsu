@@ -157,6 +157,7 @@
   <h1>Mapa de Processos</h1>
   <div class="sp"></div>
   <span class="chip ok" id="sync" role="status">Carregando…</span>
+  <button class="btn" onclick="abrirModo()">Modo do mapa</button>
   <button class="btn" onclick="abrirImportIPMCR()">Importar do IP &amp; MCR</button>
   <button class="btn" onclick="abrirCargos()">Cargos</button>
   <button class="btn" onclick="exportarJSON()">Exportar</button>
@@ -184,25 +185,36 @@ var state=null, view='cadeia', ativo=null;
 var dirty=false, offline=false, saveTimer=null;
 
 function novoWF(motivo){return {vNum:1,vStatus:'rascunho',vMotivo:motivo||'criação do processo',vCriadoEm:hoje(),vComent:'',versoes:[]};}
+/* ═══ Modos de trabalho: 'simples' (Estratégicos/Cliente/Apoio — padrão) ou 'e2e' (VCM/O2C/H2R/P2P/R2R) ═══ */
+var MODOS={
+  simples:[
+    {id:'m_estr',sigla:'EST',nome:'Estratégicos',desc:'direção · planejamento · análise crítica',tipo:'gestao',ordem:1},
+    {id:'m_cli',sigla:'CLI',nome:'Voltados ao Cliente',desc:'do pedido à entrega',tipo:'primario',ordem:2},
+    {id:'m_apoio',sigla:'APO',nome:'Apoio e Gestão',desc:'processos de apoio do SGI',tipo:'apoio',ordem:3}
+  ],
+  e2e:[
+    {id:'m_vcm',sigla:'VCM',nome:'Value Chain Management',desc:'qualidade · melhoria contínua · riscos · TI',tipo:'gestao',ordem:1},
+    {id:'m_o2c',sigla:'O2C',nome:'Order to Cash',desc:'do pedido ao recebimento',tipo:'primario',ordem:2},
+    {id:'m_h2r',sigla:'H2R',nome:'Hire to Retire',desc:'RH · treinamento · DP',tipo:'apoio',ordem:3},
+    {id:'m_p2p',sigla:'P2P',nome:'Procure to Pay',desc:'compras · contas a pagar',tipo:'apoio',ordem:4},
+    {id:'m_r2r',sigla:'R2R',nome:'Record to Report',desc:'financeiro · FP&A · compliance',tipo:'apoio',ordem:5}
+  ]
+};
+function ensureMacros(s){
+  (MODOS[s.modo]||MODOS.simples).forEach(function(md){
+    if(!s.macros.some(function(m){return m.id===md.id;})) s.macros.push(JSON.parse(JSON.stringify(md)));
+  });
+}
+function macroVisivel(m){
+  var doModo=(MODOS[state.modo]||MODOS.simples).some(function(x){return x.id===m.id;});
+  return doModo||procsDo(m.id).length>0;
+}
 function seed(){
-  function proc(id,cod,nome,dono,ord){var p={id:id,macroId:'m_o2c',codigo:cod,nome:nome,missao:'',donoCargoId:dono,ordem:ord,atividades:[]};return aplicaWF(p);}
-  return {schema:SCHEMA, updatedAt:Date.now(),
+  var s={schema:SCHEMA, updatedAt:Date.now(), modo:'simples',
     cargos:[{id:'c_coord',nome:'Coordenador de produção',area:'Produção'},{id:'c_qual',nome:'Inspetor de qualidade',area:'Qualidade'}],
-    macros:[
-      {id:'m_vcm',sigla:'VCM',nome:'Value Chain Management',desc:'qualidade · melhoria contínua · riscos · TI',tipo:'gestao',ordem:1},
-      {id:'m_o2c',sigla:'O2C',nome:'Order to Cash',desc:'do pedido ao recebimento',tipo:'primario',ordem:2},
-      {id:'m_h2r',sigla:'H2R',nome:'Hire to Retire',desc:'RH · treinamento · DP',tipo:'apoio',ordem:3},
-      {id:'m_p2p',sigla:'P2P',nome:'Procure to Pay',desc:'compras · contas a pagar',tipo:'apoio',ordem:4},
-      {id:'m_r2r',sigla:'R2R',nome:'Record to Report',desc:'financeiro · FP&A · compliance',tipo:'apoio',ordem:5}
-    ],
-    processos:[
-      proc('p1','IP-001','Marketing e venda','',1),
-      proc('p2','IP-002','PCP','',2),
-      proc('p3','IP-003','Produção','c_coord',3),
-      proc('p4','IP-004','Qualidade','c_qual',4),
-      proc('p5','IP-005','Entrega','',5),
-      proc('p6','IP-006','Contas a receber','',6)
-    ]};
+    macros:[], processos:[]};
+  ensureMacros(s);
+  return s;
 }
 function aplicaWF(p){var w=novoWF();for(var k in w){if(p[k]===undefined)p[k]=w[k];}return p;}
 function migrar(s){
@@ -210,7 +222,9 @@ function migrar(s){
   if(s.schema===1){ (s.processos||[]).forEach(aplicaWF); s.schema=2; }
   if(s.schema!==SCHEMA) return null;
   s.cargos=s.cargos||[]; s.macros=s.macros||[]; s.processos=s.processos||[];
+  s.modo=s.modo||'simples';
   s.processos.forEach(aplicaWF);
+  ensureMacros(s);
   return s;
 }
 
@@ -338,9 +352,9 @@ function stepHTML(p,i,total){
 /* ═══ Vista 1 — Cadeia de valor ═══ */
 function viewCadeia(){
   var h='<div class="pagehead"><h2>Cadeia de valor</h2><p>Raitz Galvanização · clique numa etapa para abrir o processo · contorno tracejado = versão não aprovada</p></div>';
-  var gest=state.macros.filter(function(m){return m.tipo==='gestao';});
-  var prim=state.macros.filter(function(m){return m.tipo==='primario';});
-  var apoio=state.macros.filter(function(m){return m.tipo==='apoio';});
+  var gest=state.macros.filter(function(m){return m.tipo==='gestao'&&macroVisivel(m);});
+  var prim=state.macros.filter(function(m){return m.tipo==='primario'&&macroVisivel(m);});
+  var apoio=state.macros.filter(function(m){return m.tipo==='apoio'&&macroVisivel(m);});
   gest.forEach(function(m){
     var ps=procsDo(m.id);
     h+='<div class="band"><div class="band-lbl">GESTÃO</div>'
@@ -494,7 +508,7 @@ document.getElementById('scrim').addEventListener('click',function(e){if(e.targe
 document.addEventListener('keydown',function(e){if(e.key==='Escape')fecharModal();});
 
 function abrirNovoProc(macroId){
-  var opts=state.macros.slice().sort(function(a,b){return a.ordem-b.ordem;}).map(function(m){
+  var opts=state.macros.filter(macroVisivel).sort(function(a,b){return a.ordem-b.ordem;}).map(function(m){
     return '<option value="'+esc(m.id)+'"'+(m.id===macroId?' selected':'')+'>'+esc(m.sigla)+' · '+esc(m.nome)+'</option>';}).join('');
   modal('<h3>Novo processo</h3><div class="msub">O processo nasce como rascunho v1 — vale após a primeira aprovação</div>'
     +'<div class="field"><label>MACROPROCESSO</label><select class="inp" id="f_macro">'+opts+'</select></div>'
@@ -517,10 +531,32 @@ function criarProc(){
 }
 function removerProc(){
   var p=procAtivo();if(!p)return;
-  if(p.versoes.length){toast('Processo com versões aprovadas não pode ser excluído');return;}
   if(!confirm('Excluir o processo "'+p.nome+'" e suas atividades?'))return;
+  if(p.versoes.length&&!confirm('ATENÇÃO: "'+p.nome+'" tem '+p.versoes.length+' versão(ões) aprovada(s). Excluir apaga também os snapshots — evidência de auditoria. Confirmar mesmo assim?'))return;
   state.processos=state.processos.filter(function(x){return x.id!==p.id;});
   salvar();view='cadeia';ativo=null;render();toast('Processo excluído');
+}
+function excluirTodos(){
+  var n=state.processos.length;
+  if(!n){toast('O mapa já está vazio');return;}
+  if(!confirm('Excluir TODOS os '+n+' processos do mapa, incluindo versões e snapshots?'))return;
+  if(!confirm('Última confirmação: esta ação não tem volta. Excluir tudo?'))return;
+  state.processos=[];salvar();fecharModal();view='cadeia';ativo=null;render();toast(n+' processos excluídos — mapa zerado');
+}
+function abrirModo(){
+  var m=state.modo||'simples';
+  modal('<h3>Modo do mapa</h3><div class="msub">Define as camadas do cadastro e da cadeia — trocar não apaga nenhum processo</div>'
+    +'<div class="field" style="border:1px solid '+(m==='simples'?'#1FA59E':'#dde3ea')+';border-radius:10px;padding:10px 12px;cursor:pointer" onclick="setModo(\'simples\')"><label style="cursor:pointer"><input type="radio" name="modo" '+(m==='simples'?'checked':'')+'> <b>Simples (recomendado)</b></label><div class="hint" style="margin-top:4px">Estratégicos · Voltados ao Cliente · Apoio e Gestão — o desenho clássico do seu mapa, com IP &amp; MCR por processo</div></div>'
+    +'<div class="field" style="border:1px solid '+(m==='e2e'?'#1FA59E':'#dde3ea')+';border-radius:10px;padding:10px 12px;cursor:pointer" onclick="setModo(\'e2e\')"><label style="cursor:pointer"><input type="radio" name="modo" '+(m==='e2e'?'checked':'')+'> <b>Cadeia ponta a ponta</b></label><div class="hint" style="margin-top:4px">VCM · O2C · H2R · P2P · R2R — macroprocessos end-to-end da especificação</div></div>'
+    +'<div style="border-top:1px solid #dde3ea;margin-top:14px;padding-top:12px"><div class="hint" style="color:var(--err);font-weight:600;margin-bottom:6px">ZONA DE PERIGO</div>'
+    +'<button class="btn devolve" onclick="excluirTodos()">Excluir todos os processos</button>'
+    +'<div class="hint" style="margin-top:5px">Apaga todos os processos, versões e snapshots. Pede confirmação dupla.</div></div>'
+    +'<div class="mact"><button class="btn" onclick="fecharModal()">Fechar</button></div>');
+}
+function setModo(m){
+  if(!MODOS[m])return;
+  state.modo=m;ensureMacros(state);salvar();abrirModo();render();
+  toast('Modo alterado: '+(m==='simples'?'Simples':'Cadeia ponta a ponta'));
 }
 function abrirNovaAtiv(){
   var p=procAtivo();if(!p||!editavel(p))return;
@@ -585,10 +621,14 @@ function importarIPMCR(){
   if(rm&&rm.checked){
     state.processos=state.processos.filter(function(p){return !(['p1','p2','p3','p4','p5','p6'].indexOf(p.id)>=0&&!p.versoes.length);});
   }
+  ensureMacros(state);
   if(!state.macros.some(function(m){return m.id==='m_apoio';})){
     state.macros.push({id:'m_apoio',sigla:'APO',nome:'Apoio e Gestão',desc:'processos de apoio do SGI',tipo:'apoio',ordem:9});
   }
-  function macroDeCat(cat){ if(cat==='e')return 'm_vcm'; if(cat==='c')return 'm_o2c'; return 'm_apoio'; }
+  function macroDeCat(cat){
+    if(state.modo==='e2e'){ if(cat==='e')return 'm_vcm'; if(cat==='c')return 'm_o2c'; return 'm_apoio'; }
+    if(cat==='e')return 'm_estr'; if(cat==='c')return 'm_cli'; return 'm_apoio';
+  }
   function norm(s){return String(s||'').trim().toLowerCase();}
   function missaoDe(nome){
     var pr=(base.processos||[]).find(function(x){return norm(x.nome)===norm(nome);});
