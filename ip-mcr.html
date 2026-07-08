@@ -815,5 +815,42 @@ window.addEventListener('load', function(){
   }catch(e){}
 });
 </script>
+<script>
+/* LIMPEZA-PRIMEIRO-MAPA: remove a secao "Outros processos cadastrados" + botao "Limpar tudo" */
+(function(){
+  var LS='ip_mcr_v2';
+  function addBtn(){
+    var top=document.querySelector('.top');
+    if(!top || document.getElementById('btn-limpar-tudo')) return;
+    var b=document.createElement('button');
+    b.id='btn-limpar-tudo'; b.className='btn'; b.textContent='Limpar tudo';
+    b.onclick=function(){
+      if(!confirm('Apagar TODAS as informacoes deste mapa de processos? Esta acao nao tem volta.')) return;
+      if(!confirm('Ultima confirmacao: limpar tudo mesmo?')) return;
+      try{ localStorage.removeItem(LS); }catch(e){}
+      location.reload();
+    };
+    top.appendChild(b);
+  }
+  function hideOutros(){
+    document.querySelectorAll('.tier').forEach(function(t){
+      var tl=t.querySelector('.tl');
+      if(tl && /outros processos/i.test(tl.textContent||'')){
+        var prev=t.previousElementSibling;
+        if(prev && prev.classList && prev.classList.contains('conn')) prev.remove();
+        t.remove();
+      }
+    });
+  }
+  function apply(){ addBtn(); hideOutros(); }
+  window.addEventListener('load', function(){
+    apply();
+    try{
+      new MutationObserver(function(){ apply(); })
+        .observe(document.body,{childList:true,subtree:true});
+    }catch(e){}
+  });
+})();
+</script>
 </body>
 </html>
