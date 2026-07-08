@@ -796,5 +796,24 @@ function exportar(){var b=new Blob([JSON.stringify(state,null,2)],{type:'applica
 try{if(window.self!==window.top)document.body.classList.add('embedded');}catch(e){document.body.classList.add('embedded');}
 carregar();render();
 </script>
+<script>
+/* FASE3-HOTFIX-DEEPLINK-IPMCR: abre o processo vindo do Mapa de Processos (?proc=CODIGO&nome=...&aba=ip|mcr) */
+window.addEventListener('load', function(){
+  try{
+    var q = new URLSearchParams(location.search);
+    var proc = q.get('proc'), nome = q.get('nome');
+    var abaReq = q.get('aba')==='mcr' ? 'mcr' : 'ip';
+    if(!proc && !nome) return;
+    if(typeof state==='undefined' || !state || !state.processos || typeof abrirId!=='function') return;
+    var norm=function(s){return String(s||'').trim().toLowerCase();};
+    var alvo = (proc && state.processos.filter(function(p){return norm(p.codigo)===norm(proc);})[0])
+            || (nome && state.processos.filter(function(p){return norm(p.nome)===norm(nome);})[0])
+            || null;
+    if(!alvo) return;
+    abrirId(alvo.id);
+    try{ aba = abaReq; if(typeof render==='function') render(); }catch(e){}
+  }catch(e){}
+});
+</script>
 </body>
 </html>

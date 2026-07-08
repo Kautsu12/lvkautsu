@@ -411,14 +411,14 @@ function viewProc(){
   h+=bannersHTML(p);
   h+='<div class="phead"><div class="r1"><span class="badge">'+esc(p.codigo||'IP')+'</span>'
     +'<h3 contenteditable="'+ed+'" id="pnome" spellcheck="false">'+esc(p.nome)+'</h3><span class="sp"></span>'
-    +'<button class="btn" onclick="abrirIPMCR()">Abrir IP &amp; MCR</button>'
+    +'<button class="btn" onclick="abrirIPMCR()">Abrir IP &amp; MCR ↗</button>'
     +(ed?'<button class="btn" onclick="removerProc()" aria-label="Excluir processo">Excluir</button>':'')+'</div>'
     +'<div class="meta"><span><b>Dono:</b> <select class="inp" id="pdono" '+(ed?'':'disabled')+' style="width:auto;display:inline-block;padding:4px 8px;font-size:12px">'+selCargos(p.donoCargoId)+'</select></span>'
     +'<span style="flex:1;min-width:220px"><b>Missão:</b> <span contenteditable="'+ed+'" id="pmis" spellcheck="false">'+esc(p.missao||(ed?'Qual resultado este processo entrega?':'—'))+'</span></span></div>'
     +'<div class="tabs" role="tablist">'
     +'<button class="tab on" role="tab" aria-selected="true">Atividades <span style="color:var(--slate);font-weight:500">'+p.atividades.length+'</span></button>'
-    +'<button class="tab" role="tab" aria-selected="false" onclick="abrirIPMCR()">Interação IP</button>'
-    +'<button class="tab" role="tab" aria-selected="false" onclick="abrirIPMCR()">Riscos MCR</button>'
+    +'<button class="tab" role="tab" aria-selected="false" onclick="abrirIPMCR(\'ip\')">Interação IP ↗</button>'
+    +'<button class="tab" role="tab" aria-selected="false" onclick="abrirIPMCR(\'mcr\')">Riscos MCR ↗</button>'
     +'</div></div>';
   if(p.atividades.length){
     h+='<div class="tbl"><div class="thead"><span>Nº</span><span>ATIVIDADE</span><span>TIPO</span><span>RESPONSÁVEL · CARGO</span><span></span></div>';
@@ -462,9 +462,13 @@ function selCargos(cur){
   state.cargos.forEach(function(c){h+='<option value="'+esc(c.id)+'"'+(c.id===cur?' selected':'')+'>'+esc(c.nome)+'</option>';});
   return h;
 }
-function abrirIPMCR(){
+function abrirIPMCR(aba){
   var p=procAtivo(); if(!p)return;
-  try{ window.top.location.href='ip-mcr.html'; }catch(e){ window.location.href='ip-mcr.html'; }
+  // Abre o IP & MCR DAQUELE processo numa NOVA ABA — sem trocar o mapa atual.
+  var q='ip-mcr.html?proc='+encodeURIComponent(p.codigo||p.nome||'');
+  if(p.nome) q+='&nome='+encodeURIComponent(p.nome);
+  if(aba==='mcr'||aba==='ip') q+='&aba='+aba;
+  window.open(q,'_blank','noopener');
 }
 
 /* ═══ Render + eventos ═══ */
