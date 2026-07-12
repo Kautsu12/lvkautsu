@@ -194,7 +194,13 @@ function logHist(acao,revisa){var e=E();e.historico=e.historico||[];if(revisa)e.
 function findItem(e,norma,codigo){var n=(e.normas||[]).find(function(x){return x.nome===norma;});if(!n)return null;return (n.itens||[]).find(function(x){return String(x.codigo)===String(codigo);})||null;}
 function procNomeById(e,id){var p=(e.processos||[]).find(function(x){return x.id===id;});return p?p.nome:'—';}
 function parseCel(k){var a=String(k).split('||');var np=a[0].split('|');return {norma:np[0],codigo:np[1],proc:a[1],key:k};}
-function migrarEsc(){(state.escopos||[]).forEach(function(e){if(!e.historico)e.historico=[];if(!e.ind)e.ind={};if(!e.grade)e.grade={};if(!e.rev)e.rev='01';(e.normas||[]).forEach(function(n){(n.itens||[]).forEach(function(it){if(!it.pool)it.pool=[];if(!it.docs)it.docs=[];});});});}
+function migrarEsc(){(state.escopos||[]).forEach(function(e){if(!e.historico)e.historico=[];if(!e.ind)e.ind={};if(!e.grade)e.grade={};if(!e.rev)e.rev='01';if(!e.cel)e.cel={};
+ Object.keys(e.ind).forEach(function(k){if(!e.cel[k])e.cel[k]={perguntas:[],docs:[],como:''};if((!e.cel[k].perguntas||!e.cel[k].perguntas.length)&&e.ind[k]&&e.ind[k].length)e.cel[k].perguntas=e.ind[k].slice();});
+ (e.normas||[]).forEach(function(n){(n.itens||[]).forEach(function(it){if(!it.pool)it.pool=[];if(!it.docs)it.docs=[];});});});}
+function norm2(s){return String(s==null?'':s).toLowerCase().replace(/\s+/g,' ').trim();}
+function mapaProcData(nome){try{var r=localStorage.getItem(MAPA_LS);if(!r)return null;var s=JSON.parse(r);var alvo=norm2(nome);var p=(s.processos||[]).find(function(x){return norm2(x.nome)===alvo;});if(!p)return null;return {nome:p.nome,codigo:p.codigo||'',missao:p.missao||'',ip:p.ip||{},mcr:p.mcr||[]};}catch(e){return null;}}
+function reqInScope(e,procId){return reqList(e).filter(function(r){var key=r.norma+'|'+r.codigo+'||'+procId;return (e.grade&&e.grade[key])!=='NA';});}
+function celData(){var e=E();e.cel=e.cel||{};e.cel[celKey]=e.cel[celKey]||{perguntas:[],docs:[],como:''};return e.cel[celKey];}
 /* ── Escopos ── */
 function addEscopo(){var emp=prompt('Nome da empresa:');if(!emp)return;var nm=prompt('Nome do escopo (ex.: Serviço de galvanização):','')||'Escopo';var e={id:uid('e'),empresa:emp.trim(),nome:nm.trim(),rev:'01',data:'',normas:[],processos:[],grade:{},ind:{},historico:[]};state.escopos.push(e);ativo=e.id;normaSel=null;aba='normas';salvar();render();}
 function removeEscopo(id){if(state.escopos.length<=1){alert('Deixe ao menos um escopo.');return;}var e=state.escopos.find(function(x){return x.id===id;});if(!confirm('Remover o escopo "'+e.empresa+'"?'))return;state.escopos=state.escopos.filter(function(x){return x.id!==id;});if(ativo===id)ativo=state.escopos[0].id;salvar();render();}
@@ -244,15 +250,37 @@ function renderProcessos(e){
  var rows=(e.processos||[]).map(function(p,i){var s=statusProc(p.nome);return '<tr><td><span class="setor">SETOR</span> <span contenteditable="true" data-pn="'+i+'">'+esc(p.nome)+'</span></td>'+
    '<td><span class="tag '+(s.temIP?'on':'off')+'">'+(s.temIP?'IP definido':'IP pendente')+'</span></td>'+
    '<td><span class="tag '+(s.temMCR?'on':'off')+'">'+(s.temMCR?'MCR definida':'MCR pendente')+'</span></td>'+
-   '<td style="text-align:right"><span class="btn gh sm" data-prm="'+i+'" style="color:var(--mut)">✕</span></td></tr>';}).join('')||'<tr><td colspan="4" class="empty">Sem processos. Adicione ou importe do Mapa de Processos.</td></tr>';
+   '<td style="text-align:right;white-space:nowrap"><button class="btn gh sm" data-gerar="'+i+'" title="Gerar perguntas deste processo com IA" style="color:var(--petrol)">✨ Gerar</button> <span class="btn gh sm" data-prm="'+i+'" style="color:var(--mut)">✕</span></td></tr>';}).join('')||'<tr><td colspan="4" class="empty">Sem processos. Adicione ou importe do Mapa de Processos.</td></tr>';
  return '<div class="panel '+(aba==='processos'?'on':'')+'">'+
-  '<div style="display:flex;justify-content:space-between;align-items:center;gap:10px;margin:2px 0 12px;flex-wrap:wrap"><div style="font-family:var(--disp);font-weight:600;color:var(--mid)">Processos do escopo — cada processo é um setor da auditoria</div><div style="display:flex;gap:8px"><button class="btn sm" onclick="importarDoMapa()">↧ Importar do Mapa de Processos</button><button class="btn pri sm" onclick="addProc()">＋ Processo</button></div></div>'+
+  '<div style="display:flex;justify-content:space-between;align-items:center;gap:10px;margin:2px 0 12px;flex-wrap:wrap"><div style="font-family:var(--disp);font-weight:600;color:var(--mid)">Processos do escopo — cada processo é um setor da auditoria</div><div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn sm" onclick="gerarTodos()">✨ Gerar perguntas (todos)</button><button class="btn sm" onclick="importarDoMapa()">↧ Importar do Mapa</button><button class="btn pri sm" onclick="addProc()">＋ Processo</button></div></div>'+
   '<div class="box"><table><thead><tr><th>Processo (setor)</th><th>Interação de Processo</th><th>Matriz de Risco</th><th></th></tr></thead><tbody>'+rows+'</tbody></table></div>'+
-  '<p class="note">O IP e a MCR de cada processo são editados no módulo <b>Mapa de Processos</b>. Os status acima são lidos de lá automaticamente (pelo nome do processo).</p></div>';
+  '<p class="note">O botão <b>✨ Gerar</b> usa a IA para criar as perguntas + documentos + como verificar de cada requisito deste processo, a partir do IP e da MCR dele (lidos do Mapa de Processos). As perguntas ficam editáveis nas células da grade (aba Resumo).</p></div>';
 }
 function addProc(){var nm=prompt('Nome do processo (setor):');if(!nm)return;var e=E();e.processos=e.processos||[];e.processos.push({id:uid('p'),nome:nm.trim()});salvar();render();}
 function importarDoMapa(){var e=E();var list=mapaProcs();if(!list.length){alert('Não encontrei processos no Mapa de Processos. Abra o módulo Mapa de Processos e cadastre-os primeiro.');return;}var existentes=(e.processos||[]).map(function(p){return (p.nome||'').trim().toLowerCase();});var add=0;list.forEach(function(p){if(existentes.indexOf((p.nome||'').trim().toLowerCase())<0){e.processos.push({id:uid('p'),nome:p.nome});add++;}});salvar();render();flash(add?('Importados '+add+' processo(s) ✓'):'Nenhum processo novo para importar');}
 function removeProc(i){var e=E();if(!confirm('Remover este processo do escopo?'))return;e.processos.splice(i,1);salvar();render();}
+function gerarPerguntasProcesso(i,silent,cb){
+ var e=E();var p=e.processos[i];if(!p){if(cb)cb();return;}
+ var pd=mapaProcData(p.nome);
+ if(!pd){if(!silent)alert('Cadastre o IP e a MCR de "'+p.nome+'" no Mapa de Processos antes de gerar (o nome precisa bater).');if(cb)cb();return;}
+ var reqs=reqInScope(e,p.id);
+ if(!reqs.length){if(!silent)alert('Marque os requisitos (itens de norma) aplicáveis antes de gerar.');if(cb)cb();return;}
+ e.cel=e.cel||{};
+ if(!silent){var jaTem=reqs.some(function(r){var k=r.norma+'|'+r.codigo+'||'+p.id;return e.cel[k]&&e.cel[k].perguntas&&e.cel[k].perguntas.length;});if(jaTem&&!confirm('Já existem perguntas para "'+p.nome+'". Gerar de novo vai substituí-las. Continuar?')){if(cb)cb();return;}}
+ flash('Gerando perguntas de "'+p.nome+'"…');
+ fetch('/api/gerar-perguntas',{method:'POST',headers:{'Content-Type':'application/json'},credentials:'same-origin',body:JSON.stringify({processo:{nome:p.nome,codigo:pd.codigo,missao:pd.missao,ip:pd.ip,mcr:pd.mcr},requisitos:reqs.map(function(r){return {norma:r.norma,codigo:r.codigo,titulo:r.titulo};})})})
+  .then(function(r){return r.json();})
+  .then(function(res){
+    if(!res||!res.ok)throw new Error((res&&res.error)||'falha na IA');
+    var arr=res.requisitos||[];var n=0;
+    arr.forEach(function(rq){var match=reqs.find(function(r){return String(r.codigo)===String(rq.codigo)&&(!rq.norma||norm2(r.norma)===norm2(rq.norma));})||reqs.find(function(r){return String(r.codigo)===String(rq.codigo);});if(!match)return;var k=match.norma+'|'+match.codigo+'||'+p.id;e.cel[k]={perguntas:(rq.perguntas||[]).map(String),docs:(rq.documentos||[]).map(String),como:String(rq.comoVerificar||'')};n++;});
+    logHist('Perguntas geradas por IA para "'+p.nome+'" ('+n+' requisitos)',false);
+    salvar();renderMain();flash('“'+p.nome+'”: '+n+' requisitos gerados ✓');
+    if(cb)cb();
+  })
+  .catch(function(err){flash('');if(!silent)alert('Não consegui gerar para "'+p.nome+'": '+(err.message||err)+'\n\nVerifique o GEMINI_API_KEY no servidor.');if(cb)cb(err);});
+}
+function gerarTodos(){var e=E();var procs=e.processos||[];if(!procs.length)return;if(!confirm('Gerar perguntas para os '+procs.length+' processos? Vai substituir o que já existir. (Roda um por vez, pode levar um tempo.)'))return;var i=0;function next(){if(i>=procs.length){flash('Geração em lote concluída ✓');return;}gerarPerguntasProcesso(i,true,function(){i++;setTimeout(next,700);});}next();}
 /* ── Resumo ── */
 function renderResumo(e){
  var reqs=reqList(e);var procs=e.processos||[];
@@ -260,8 +288,8 @@ function renderResumo(e){
  var grade='';
  if(reqs.length&&procs.length){
   var head='<tr><th class="req">Requisito</th>'+procs.map(function(p){return '<th>'+esc(p.nome)+'</th>';}).join('')+'</tr>';
-  var body=reqs.map(function(r){var rk=r.norma+'|'+r.codigo;var it=findItem(e,r.norma,r.codigo);var hasReqQ=it&&((it.pool&&it.pool.length)||(it.docs&&it.docs.length));return '<tr><td class="rq" title="'+esc(r.titulo)+'">'+esc(r.codigo)+'</td>'+procs.map(function(p){var key=rk+'||'+p.id;var val=(e.grade&&e.grade[key])||'X';var cls=val==='NA'?'cellna':'cellx';var ind=(e.ind&&e.ind[key]&&e.ind[key].length);var dot=(val==='X'&&(hasReqQ||ind))?'<span class="qd"></span>':'';return '<td class="'+cls+'" data-cell="'+esc(key)+'" title="Clique: aplicabilidade, perguntas e documentos">'+val+dot+'</td>';}).join('')+'</tr>';}).join('');
-  grade='<div class="gridwrap"><table class="grid"><thead>'+head+'</thead><tbody>'+body+'</tbody></table></div><p class="note">Clique numa célula para definir a <b>aplicabilidade</b> (X ↔ NA), as <b>perguntas</b> (POOL comuns + individuais) e os <b>documentos sugeridos</b>. O ponto turquesa indica que já há perguntas/documentos. Esta é a grade que o Programa de Auditoria vai usar.</p>';
+  var body=reqs.map(function(r){var rk=r.norma+'|'+r.codigo;return '<tr><td class="rq" title="'+esc(r.titulo)+'">'+esc(r.codigo)+'</td>'+procs.map(function(p){var key=rk+'||'+p.id;var val=(e.grade&&e.grade[key])||'X';var cls=val==='NA'?'cellna':'cellx';var cd=e.cel&&e.cel[key];var tem=cd&&((cd.perguntas&&cd.perguntas.length)||(cd.docs&&cd.docs.length)||(cd.como&&cd.como.trim()));var dot=(val==='X'&&tem)?'<span class="qd"></span>':'';return '<td class="'+cls+'" data-cell="'+esc(key)+'" title="Clique: aplicabilidade, perguntas, documentos e como verificar">'+val+dot+'</td>';}).join('')+'</tr>';}).join('');
+  grade='<div class="gridwrap"><table class="grid"><thead>'+head+'</thead><tbody>'+body+'</tbody></table></div><p class="note">Clique numa célula para definir a <b>aplicabilidade</b> (X ↔ NA) e ver/editar as <b>perguntas</b>, os <b>documentos</b> e o <b>como verificar</b> gerados. O ponto turquesa indica que a célula já tem conteúdo. Gere as perguntas em massa na aba <b>Processos</b> (botão ✨).</p>';
  } else grade='<div class="empty">Marque requisitos e cadastre processos para ver a grade.</div>';
  return '<div class="panel '+(aba==='resumo'?'on':'')+'">'+
   '<div style="font-family:var(--disp);font-weight:600;color:var(--mid);margin-bottom:4px">O que o Escopo entrega ao Programa de Auditoria</div>'+
@@ -280,25 +308,32 @@ function renderRevisao(e){
 }
 /* ── Painel da célula: aplicabilidade + perguntas + documentos (item 3) ── */
 var celKey=null;
-function arrOf(tipo){var e=E();var c=parseCel(celKey);var it=findItem(e,c.norma,c.codigo);if(!it)return [];if(tipo==='docs'){it.docs=it.docs||[];return it.docs;}if(tipo==='pool'){it.pool=it.pool||[];return it.pool;}e.ind=e.ind||{};e.ind[celKey]=e.ind[celKey]||[];return e.ind[celKey];}
-function openCelula(k){celKey=k;var e=E();var c=parseCel(k);var it=findItem(e,c.norma,c.codigo);if(!it){return;}it.pool=it.pool||[];it.docs=it.docs||[];e.ind=e.ind||{};e.ind[k]=e.ind[k]||[];
+function arrOf(tipo){var c=celData();if(tipo==='docs'){c.docs=c.docs||[];return c.docs;}c.perguntas=c.perguntas||[];return c.perguntas;}
+function openCelula(k){celKey=k;var e=E();var c=parseCel(k);var it=findItem(e,c.norma,c.codigo);if(!it){return;}var cel=celData();
  var estado=(e.grade&&e.grade[k])||'X';
  function lst(arr,tipo,vazio){return (arr.length?arr.map(function(v,i){return '<div class="ln"><span class="lt" contenteditable="true" data-le="'+tipo+'" data-i="'+i+'">'+esc(v)+'</span><span class="lx" data-lrm="'+tipo+'|'+i+'">✕</span></div>';}).join(''):'<div class="lnempty">'+vazio+'</div>');}
  var body=(estado==='X'?(
-   '<div class="dsec"><div class="st2">Documentos sugeridos <small>· do requisito</small></div><div class="lns">'+lst(it.docs,'docs','Nenhum documento ainda.')+'</div><span class="addln" data-ladd="docs">＋ documento</span></div>'+
-   '<div class="dsec"><div class="st2">Perguntas — POOL <small>· comuns a todos os processos</small></div><div class="lns">'+lst(it.pool,'pool','Nenhuma pergunta comum ainda.')+'</div><span class="addln" data-ladd="pool">＋ pergunta comum</span></div>'+
-   '<div class="dsec"><div class="st2">Perguntas individuais <small>· só deste processo</small></div><div class="lns">'+lst(e.ind[k],'ind','Nenhuma pergunta individual ainda.')+'</div><span class="addln" data-ladd="ind">＋ pergunta do processo</span></div>'
+   '<div style="margin:2px 0 14px"><button class="btn sm pri" onclick="gerarCel()">✨ Gerar/atualizar com IA</button></div>'+
+   '<div class="dsec"><div class="st2">Perguntas <small>· deste processo</small></div><div class="lns">'+lst(cel.perguntas||[],'perguntas','Nenhuma pergunta ainda. Gere com IA ou adicione.')+'</div><span class="addln" data-ladd="perguntas">＋ pergunta</span></div>'+
+   '<div class="dsec"><div class="st2">Documentos sugeridos</div><div class="lns">'+lst(cel.docs||[],'docs','Nenhum documento ainda.')+'</div><span class="addln" data-ladd="docs">＋ documento</span></div>'+
+   '<div class="dsec"><div class="st2">Como verificar</div><textarea id="celcomo" rows="3" placeholder="Como o auditor busca a evidência…" style="width:100%;border:1px solid var(--line);border-radius:9px;padding:9px 11px;font-family:inherit;font-size:13px;color:var(--ink);resize:vertical;outline:none">'+esc(cel.como||'')+'</textarea></div>'
   ):'<div class="note" style="padding:6px 0 0">Marque como <b>aplicável (X)</b> para definir as perguntas e os documentos deste requisito neste processo.</div>');
  var dr=document.getElementById('drawer');
  dr.innerHTML='<div class="dhead"><div class="dt"><div class="dsub">'+esc(c.codigo)+' &nbsp;·&nbsp; '+esc(procNomeById(e,c.proc))+'</div><h3>'+esc(it.titulo||'Requisito')+'</h3></div><span class="dclose" onclick="closeCelula()">✕</span></div>'+
   '<div class="dbody"><div class="dsec"><div class="st2">Aplicabilidade</div><div class="toggle2"><button class="tg'+(estado==='X'?' on':'')+'" onclick="setCel(\'X\')">X — aplicável</button><button class="tg'+(estado==='NA'?' onna':'')+'" onclick="setCel(\'NA\')">NA — não aplicável</button></div></div>'+body+'</div>';
  document.getElementById('scrim').classList.add('on');dr.classList.add('on');bindCelula();
 }
+function gerarCel(){var e=E();var c=parseCel(celKey);var p=(e.processos||[]).find(function(x){return x.id===c.proc;});if(!p)return;var pd=mapaProcData(p.nome);if(!pd){alert('Cadastre o IP/MCR de "'+p.nome+'" no Mapa de Processos primeiro.');return;}var it=findItem(e,c.norma,c.codigo);flash('Gerando com IA…');
+ fetch('/api/gerar-perguntas',{method:'POST',headers:{'Content-Type':'application/json'},credentials:'same-origin',body:JSON.stringify({processo:{nome:p.nome,codigo:pd.codigo,missao:pd.missao,ip:pd.ip,mcr:pd.mcr},requisitos:[{norma:c.norma,codigo:c.codigo,titulo:it?it.titulo:''}]})})
+  .then(function(r){return r.json();}).then(function(res){if(!res||!res.ok)throw new Error((res&&res.error)||'falha na IA');var rq=(res.requisitos||[])[0];if(!rq){flash('');alert('A IA não retornou nada para este requisito.');return;}e.cel=e.cel||{};e.cel[celKey]={perguntas:(rq.perguntas||[]).map(String),docs:(rq.documentos||[]).map(String),como:String(rq.comoVerificar||'')};logHist('Perguntas geradas por IA em '+c.codigo,false);salvar();openCelula(celKey);flash('Gerado ✓');})
+  .catch(function(err){flash('');alert('Não consegui gerar: '+(err.message||err)+'\n\nVerifique o GEMINI_API_KEY no servidor.');});
+}
 function setCel(v){var e=E();e.grade=e.grade||{};var cur=(e.grade[celKey]||'X');if(cur!==v){e.grade[celKey]=v;var c=parseCel(celKey);logHist('Aplicabilidade '+c.codigo+' × '+procNomeById(e,c.proc)+' → '+v,true);}openCelula(celKey);renderList();}
 function bindCelula(){
  document.querySelectorAll('#drawer [data-le]').forEach(function(el){el.addEventListener('blur',function(){var arr=arrOf(this.getAttribute('data-le'));arr[+this.getAttribute('data-i')]=this.textContent.trim();logHist('Editou item de '+parseCel(celKey).codigo+' (perguntas/documentos)',false);});});
  document.querySelectorAll('#drawer [data-lrm]').forEach(function(el){el.onclick=function(){var s=this.getAttribute('data-lrm').split('|');arrOf(s[0]).splice(+s[1],1);logHist('Removeu '+s[0]+' de '+parseCel(celKey).codigo,false);openCelula(celKey);};});
  document.querySelectorAll('#drawer [data-ladd]').forEach(function(el){el.onclick=function(){var t=this.getAttribute('data-ladd');var v=prompt(t==='docs'?'Documento sugerido:':'Texto da pergunta:');if(!v)return;arrOf(t).push(v.trim());logHist('Adicionou '+(t==='docs'?'documento':'pergunta')+' em '+parseCel(celKey).codigo,false);openCelula(celKey);};});
+ var como=document.getElementById('celcomo');if(como)como.addEventListener('blur',function(){celData().como=this.value.trim();logHist('Editou "como verificar" de '+parseCel(celKey).codigo,false);});
 }
 function closeCelula(){celKey=null;var s=document.getElementById('scrim');if(s)s.classList.remove('on');var d=document.getElementById('drawer');if(d)d.classList.remove('on');renderMain();}
 document.addEventListener('keydown',function(ev){if(ev.key==='Escape')closeCelula();});
@@ -313,6 +348,7 @@ function bind(){var e=E();
  document.querySelectorAll('[data-irm]').forEach(function(el){el.onclick=function(ev){ev.stopPropagation();var norma=e.normas.find(function(n){return n.id===normaSel;});if(!norma)return;var it=norma.itens[+this.getAttribute('data-irm')];norma.itens.splice(+this.getAttribute('data-irm'),1);logHist('Requisito '+((it&&it.codigo)||'')+' excluído de '+norma.nome,true);renderMain();renderList();};});
  document.querySelectorAll('[data-pn]').forEach(function(el){el.addEventListener('blur',function(){e.processos[+this.getAttribute('data-pn')].nome=this.textContent.trim();salvar();renderMain();renderList();});});
  document.querySelectorAll('[data-prm]').forEach(function(el){el.onclick=function(){removeProc(+this.getAttribute('data-prm'));};});
+ document.querySelectorAll('[data-gerar]').forEach(function(el){el.onclick=function(){gerarPerguntasProcesso(+this.getAttribute('data-gerar'));};});
  document.querySelectorAll('[data-cell]').forEach(function(el){el.onclick=function(){openCelula(this.getAttribute('data-cell'));};});
 }
 try{if(window.self!==window.top)document.body.classList.add('embedded');}catch(e){document.body.classList.add('embedded');}
