@@ -3060,6 +3060,12 @@ async function vencRunCheckNow(){
 <script>
 /* HISTÓRICO DE REVISÕES — fonte única (rodapé + Sobre). A cada alteração: nova entrada no topo + sobe a versão. */
 const REVISOES=[
+  {v:'2.56', data:'12/07/2026', autor:'Ayrton Ribeiro', itens:[
+    'INFRA: consolidacao para caber no limite de 12 funcoes serverless do plano Hobby da Vercel (deploy da v2.55 falhou por exceder o limite).',
+    'api/condlo.js movido para lib/condlo_api.js, servido por /api/terc (rewrite /api/condlo -> /api/terc?condlo_api=1 no vercel.json) — a URL /api/condlo continua a mesma.',
+    'api/load.js consolidado dentro de api/save.js (rewrite /api/load -> /api/save?op=load) — a URL /api/load continua a mesma; regras de acesso identicas.',
+    'Nenhuma mudanca de comportamento para o usuario; apenas organizacao interna das funcoes.'
+  ]},
   {v:'2.55', data:'12/07/2026', autor:'Ayrton Ribeiro', itens:[
     'NOVO MODULO — Condicionantes da LO (menu Gestao de documentos internos > Condicionantes LO): cadastro de licencas (validade + marco de renovacao 120 dias) e condicionantes com frequencia (unica/mensal/trimestral/semestral/anual/continua).',
     'Condicionantes: importacao em lote (colar da planilha), painel com anel de cumprimento, KPIs clicaveis, regua de 90 dias, calendario anual de obrigacoes e dossie imprimivel para fiscalizacao/renovacao.',

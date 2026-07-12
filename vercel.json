@@ -1,5 +1,9 @@
 {
   "version": 2,
+  "rewrites": [
+    { "source": "/api/condlo", "destination": "/api/terc?condlo_api=1" },
+    { "source": "/api/load", "destination": "/api/save?op=load" }
+  ],
   "crons": [
     {
       "path": "/api/backup",

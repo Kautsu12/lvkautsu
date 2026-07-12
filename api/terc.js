@@ -220,6 +220,10 @@ function cobrancaHtml(b, base){
 }
 
 module.exports = async function handler(req, res) {
+  // Condicionantes da LO — consolidado aqui pelo limite de 12 funcoes do plano Hobby.
+  // /api/condlo e' reescrito para /api/terc?condlo_api=1 no vercel.json.
+  if (req.query && req.query.condlo_api) return require('../lib/condlo_api')(req, res);
+
   res.setHeader('Access-Control-Allow-Origin', req.headers.origin || '*');
   res.setHeader('Access-Control-Allow-Credentials', 'true');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
