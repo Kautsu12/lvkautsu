@@ -206,7 +206,15 @@
 <div class="modal" id="m-imp"><div class="mc">
   <div class="mh"><b>Importar condicionantes em lote</b><button onclick="mClose('m-imp')">×</button></div>
   <div class="mb">
-    <div class="hint" style="line-height:1.7">Cole uma linha por condicionante, campos separados por <strong>;</strong> (ou tab, direto da planilha):<br>
+    <div style="border:1px solid #bae6fd;background:#f0f9ff;border-radius:8px;padding:12px">
+      <div style="font-size:12px;font-weight:700;color:var(--navy);margin-bottom:6px">🤖 Extrair automaticamente do PDF da licença</div>
+      <div class="hint" style="margin-bottom:8px">Anexe o PDF da LO (máx. 3 MB) — a IA lê o documento, identifica as condicionantes e preenche o campo abaixo para você conferir antes de importar.</div>
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+        <input type="file" id="imp-pdf" accept="application/pdf" style="font-size:12px;flex:1;min-width:180px">
+        <button class="btn btn-blue" id="imp-ex-btn" onclick="impExtract()">🤖 Extrair do PDF</button>
+      </div>
+    </div>
+    <div class="hint" style="line-height:1.7">Ou cole uma linha por condicionante, campos separados por <strong>;</strong> (ou tab, direto da planilha):<br>
     <code>nº ; descrição ; frequência ; próximo prazo (AAAA-MM-DD ou DD/MM/AAAA) ; responsável ; e-mail</code><br>
     Frequências aceitas: única, mensal, trimestral, semestral, anual, contínua. Só nº e descrição são obrigatórios.</div>
     <textarea id="imp-txt" style="min-height:160px" placeholder="01; Apresentar relatório de efluentes; semestral; 30/09/2026; Rafael Nunes; rafael@empresa.com
@@ -555,6 +563,35 @@ function impOpen(){
   if(!curLic()){ alert('Cadastre a licença primeiro (botão 🏭 Licença).'); return; }
   document.getElementById('imp-msg').textContent='';
   mOpen('m-imp');
+}
+async function impExtract(){
+  var msg=document.getElementById('imp-msg'), btn=document.getElementById('imp-ex-btn');
+  var f=document.getElementById('imp-pdf');
+  if(!f.files.length){ msg.style.color='#b91c1c'; msg.textContent='Escolha o PDF da licença primeiro.'; return; }
+  var file=f.files[0];
+  if(file.size>3.2*1024*1024){ msg.style.color='#b91c1c'; msg.textContent='PDF acima de 3 MB — reduza o arquivo ou use a importação por texto.'; return; }
+  btn.disabled=true; msg.style.color='#64748b'; msg.textContent='🤖 Lendo o PDF com IA… isso pode levar até 1 minuto.';
+  try{
+    var b64=await new Promise(function(ok,err){
+      var r=new FileReader();
+      r.onload=function(){ ok(String(r.result).split(',')[1]||''); };
+      r.onerror=function(){ err(new Error('Falha ao ler o arquivo.')); };
+      r.readAsDataURL(file);
+    });
+    var r=await fetch('/api/condlo?extract=1',{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify({pdf:b64})});
+    var d=await r.json();
+    if(!r.ok||!d.ok) throw new Error(d.error||('Erro '+r.status));
+    var conds=d.condicionantes||[];
+    if(!conds.length) throw new Error('A IA não encontrou condicionantes neste PDF. Confira o arquivo ou use a importação por texto.');
+    document.getElementById('imp-txt').value=conds.map(function(c){
+      return [c.num||'', c.descricao||'', c.frequencia||'unica', c.prazo||'', '', ''].join('; ');
+    }).join('\n');
+    var li=d.licenca||{};
+    var liTxt=[li.numero,li.orgao,li.validade?('validade '+fmtBR(li.validade)):''].filter(Boolean).join(' · ');
+    msg.style.color='#15803d';
+    msg.textContent='✅ '+conds.length+' condicionante(s) extraída(s)'+(liTxt?' — '+liTxt:'')+'. CONFIRA as linhas (frequência, prazos, responsáveis) e clique em Importar.';
+  }catch(e){ msg.style.color='#b91c1c'; msg.textContent=e.message; }
+  btn.disabled=false;
 }
 async function impRun(){
   var msg=document.getElementById('imp-msg');

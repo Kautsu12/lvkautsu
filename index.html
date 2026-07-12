@@ -3060,6 +3060,10 @@ async function vencRunCheckNow(){
 <script>
 /* HISTÓRICO DE REVISÕES — fonte única (rodapé + Sobre). A cada alteração: nova entrada no topo + sobe a versão. */
 const REVISOES=[
+  {v:'2.57', data:'12/07/2026', autor:'Ayrton Ribeiro', itens:[
+    'Condicionantes da LO: extracao automatica por IA — anexe o PDF da licenca no modal Importar em lote e o Gemini identifica os dados da licenca e todas as condicionantes (numero, descricao, frequencia, prazo), preenchendo o campo para conferencia antes de importar.',
+    'Rota nova consolidada: POST /api/condlo?extract=1 (mesma GEMINI_API_KEY do gerador de perguntas de auditoria; PDF ate ~3 MB).'
+  ]},
   {v:'2.56', data:'12/07/2026', autor:'Ayrton Ribeiro', itens:[
     'INFRA: consolidacao para caber no limite de 12 funcoes serverless do plano Hobby da Vercel (deploy da v2.55 falhou por exceder o limite).',
     'api/condlo.js movido para lib/condlo_api.js, servido por /api/terc (rewrite /api/condlo -> /api/terc?condlo_api=1 no vercel.json) — a URL /api/condlo continua a mesma.',
