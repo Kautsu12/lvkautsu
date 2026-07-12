@@ -1,0 +1,692 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Condicionantes da LO — Central SGI</title>
+<style>
+  :root{--navy:#0d2137;--muted:#64748b;--line:#e2e8f0;--red:#b91c1c;--amber:#c2410c;--green:#15803d;--blue:#1565c0}
+  *{box-sizing:border-box}
+  body{margin:0;font-family:'Segoe UI',system-ui,sans-serif;background:#f1f5f9;color:#0f172a}
+  .top{position:sticky;top:0;background:#fff;border-bottom:1px solid var(--line);padding:12px 22px;display:flex;align-items:center;gap:14px;z-index:100;flex-wrap:wrap}
+  .top h1{font-size:16px;color:var(--navy);margin:0;font-weight:800}
+  .top .logo{font-size:13px;font-weight:800;color:var(--navy);letter-spacing:1px}
+  .top .acts{margin-left:auto;display:flex;gap:8px;flex-wrap:wrap}
+  /* Regra do cabeçalho (PADRAO-MODULOS): embutido no index, esconde a marca */
+  body.embedded .top{position:static;background:transparent;border-bottom:none;box-shadow:none;padding:8px 18px 0}
+  body.embedded .top .logo,body.embedded .top h1{display:none}
+  body.embedded .wrap{padding-top:4px}
+  .wrap{max-width:1180px;margin:0 auto;padding:18px 16px 70px}
+  .btn{padding:8px 14px;border:0;border-radius:6px;font-size:12px;cursor:pointer;font-weight:600}
+  .btn-green{background:var(--green);color:#fff}.btn-blue{background:var(--blue);color:#fff}
+  .btn-navy{background:var(--navy);color:#fff}.btn-ghost{background:#fff;color:var(--muted);border:1px solid var(--line)}
+  .card{background:#fff;border:1px solid var(--line);border-radius:10px;box-shadow:0 1px 2px rgba(0,0,0,.04)}
+  .card-body{padding:14px}
+  .muted{color:var(--muted)}
+  select,input,textarea{font-family:inherit}
+
+  /* cabeçalho da LO */
+  .lo-head{display:flex;flex-wrap:wrap;gap:18px;align-items:center}
+  .lo-bar{position:relative;height:12px;background:#e2e8f0;border-radius:99px}
+  .lo-fill{height:100%;border-radius:99px;background:linear-gradient(90deg,#15803d,#65a30d)}
+  .lo-mark{position:absolute;top:-5px;bottom:-5px;width:3px;background:var(--amber);border-radius:2px}
+
+  /* anel + kpis */
+  .panel{display:grid;grid-template-columns:200px 1fr;gap:12px;margin-top:14px}
+  @media (max-width:760px){.panel{grid-template-columns:1fr}}
+  .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px}
+  .kpi{background:#fff;border:1px solid var(--line);border-radius:10px;padding:12px 14px;border-left:4px solid transparent;cursor:pointer;transition:transform .1s}
+  .kpi:hover{transform:translateY(-1px)}
+  .kpi.active{outline:2px solid var(--blue);outline-offset:2px}
+  .kpi .v{font-size:22px;font-weight:800;color:var(--navy)}
+  .kpi .l{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.3px;margin-top:2px}
+
+  /* régua */
+  .tl{position:relative;height:86px;margin:24px 8px 0}
+  .tl-line{position:absolute;top:42px;left:0;right:0;height:4px;background:#e2e8f0;border-radius:99px}
+  .tl-today{position:absolute;top:30px;width:2px;height:28px;background:var(--navy)}
+  .tl-dot{position:absolute;top:37px;width:14px;height:14px;border-radius:99px;border:3px solid #fff;box-shadow:0 1px 3px rgba(0,0,0,.3);cursor:pointer}
+  .tl-dot .tip{display:none;position:absolute;bottom:20px;left:50%;transform:translateX(-50%);background:var(--navy);color:#fff;font-size:10.5px;padding:6px 9px;border-radius:6px;white-space:nowrap;z-index:5}
+  .tl-dot:hover .tip{display:block}
+  .tl-months{display:flex;justify-content:space-between;font-size:10px;color:#94a3b8;margin:0 8px}
+
+  /* calendário */
+  .cal{width:100%;border-collapse:collapse;font-size:11.5px}
+  .cal th,.cal td{border:1px solid #f1f5f9;padding:7px 8px;text-align:center}
+  .cal th{background:#f8fafc;font-size:10px;color:var(--muted);text-transform:uppercase}
+  .cal td:first-child,.cal th:first-child{text-align:left;font-weight:600;max-width:300px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .cal .dot{display:inline-block;width:10px;height:10px;border-radius:99px}
+  .cal td.atual{background:#eff6ff}
+
+  /* cards de condicionante */
+  .cond{background:#fff;border:1px solid var(--line);border-left:5px solid transparent;border-radius:10px;padding:13px 16px;margin-top:10px}
+  .cond .num{font-size:10px;font-weight:800;color:#94a3b8;letter-spacing:.5px}
+  .cond .desc{font-weight:700;font-size:13.5px;color:var(--navy);margin-top:2px}
+  .cond .meta{display:flex;gap:14px;flex-wrap:wrap;font-size:11.5px;color:var(--muted);margin-top:8px;align-items:center}
+  .badge{padding:3px 8px;border-radius:99px;font-size:10px;font-weight:700}
+  .b-freq{background:#f1f5f9;color:var(--muted)}
+  .rowbtn{border:0;padding:5px 9px;border-radius:5px;cursor:pointer;font-size:11px;font-weight:600;margin-left:4px}
+  .sec-h{font-size:14px;font-weight:800;color:var(--navy);margin:22px 0 8px}
+  .empty{padding:30px;text-align:center;color:#94a3b8;font-size:13px}
+
+  /* modal */
+  .modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:9000;align-items:center;justify-content:center;padding:16px}
+  .modal>.mc{background:#fff;border-radius:10px;width:min(600px,100%);max-height:92vh;overflow:auto}
+  .mh{padding:13px 18px;background:var(--navy);color:#fff;display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;z-index:2}
+  .mh b{font-size:14px}
+  .mh button{background:none;border:0;color:#fff;font-size:18px;cursor:pointer}
+  .mb{padding:18px;display:flex;flex-direction:column;gap:12px}
+  .mb label{font-size:11.5px;color:var(--muted);display:block}
+  .mb input,.mb select,.mb textarea{width:100%;padding:8px 10px;border:1px solid #cbd5e1;border-radius:6px;margin-top:4px;font-size:13px}
+  .mb textarea{resize:vertical;min-height:56px}
+  .bad{border-color:#b91c1c !important;background:#fef2f2 !important}
+  .row2{display:flex;gap:10px}.row2>label{flex:1}
+  .hint{font-size:10.5px;color:#94a3b8}
+</style>
+</head>
+<body>
+<div class="top">
+  <span class="logo">◈ METIS</span>
+  <h1>Condicionantes da Licença de Operação</h1>
+  <div class="acts">
+    <select id="sel-lic" onchange="render()" style="padding:7px 10px;border:1px solid var(--line);border-radius:6px;font-size:12px"></select>
+    <button class="btn btn-ghost" id="b-lic" onclick="licOpen()">🏭 Licença</button>
+    <button class="btn btn-ghost" id="b-imp" onclick="impOpen()">📥 Importar em lote</button>
+    <button class="btn btn-ghost" onclick="dossie()">📦 Dossiê</button>
+    <button class="btn btn-blue" id="b-check" onclick="checkNow()">▶ Verificar agora</button>
+    <button class="btn btn-green" id="b-new" onclick="condOpen()">＋ Condicionante</button>
+  </div>
+</div>
+
+<div class="wrap">
+  <!-- cabeçalho da LO -->
+  <div class="card"><div class="card-body lo-head" id="lo-head">
+    <div class="muted" style="font-size:13px">Carregando…</div>
+  </div></div>
+
+  <!-- anel + KPIs -->
+  <div class="panel">
+    <div class="card" style="display:flex;flex-direction:column;align-items:center;justify-content:center;padding:14px">
+      <svg width="120" height="120" viewBox="0 0 120 120">
+        <circle cx="60" cy="60" r="48" fill="none" stroke="#e2e8f0" stroke-width="13"/>
+        <circle id="ring" cx="60" cy="60" r="48" fill="none" stroke="#15803d" stroke-width="13" stroke-linecap="round" transform="rotate(-90 60 60)"/>
+        <text id="ring-txt" x="60" y="58" text-anchor="middle" font-size="21" font-weight="800" fill="#0d2137">—</text>
+        <text x="60" y="76" text-anchor="middle" font-size="9.5" fill="#64748b">em dia</text>
+      </svg>
+      <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;margin-top:6px">Cumprimento da LO</div>
+    </div>
+    <div class="kpis" id="kpis"></div>
+  </div>
+
+  <!-- régua 90 dias -->
+  <div class="sec-h">Próximos 90 dias</div>
+  <div class="card"><div class="card-body" style="padding-bottom:4px">
+    <div class="tl" id="tl"><div class="tl-line"></div></div>
+    <div class="tl-months" id="tl-months"></div>
+  </div></div>
+
+  <!-- calendário anual -->
+  <div class="sec-h">Calendário anual de obrigações <span class="hint" style="font-weight:400">· recorrentes × meses · mês atual destacado</span></div>
+  <div class="card"><div class="card-body" style="padding:0;overflow-x:auto"><table class="cal" id="cal"></table></div></div>
+
+  <!-- lista -->
+  <div class="sec-h">Condicionantes</div>
+  <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+    <select id="f-status" onchange="render()" style="padding:7px 10px;border:1px solid var(--line);border-radius:6px;font-size:12px">
+      <option value="">Status (todos)</option><option value="vencida">Vencida</option><option value="atencao">Atenção (≤30d)</option><option value="emdia">Em dia</option><option value="atendida">Atendida</option>
+    </select>
+    <select id="f-freq" onchange="render()" style="padding:7px 10px;border:1px solid var(--line);border-radius:6px;font-size:12px">
+      <option value="">Frequência (todas)</option><option value="unica">Única</option><option value="mensal">Mensal</option><option value="trimestral">Trimestral</option><option value="semestral">Semestral</option><option value="anual">Anual</option><option value="continua">Contínua</option>
+    </select>
+    <input type="text" id="f-busca" oninput="render()" placeholder="🔍 Buscar (ignora acentos)..." style="padding:7px 10px;border:1px solid var(--line);border-radius:6px;font-size:12px;flex:1;min-width:160px">
+    <span id="f-info" class="hint"></span>
+  </div>
+  <div id="cond-list"></div>
+</div>
+
+<!-- MODAL LICENÇA -->
+<div class="modal" id="m-lic"><div class="mc">
+  <div class="mh"><b id="m-lic-t">Licença de Operação</b><button onclick="mClose('m-lic')">×</button></div>
+  <div class="mb">
+    <div class="row2">
+      <label>Nº da licença *<input id="l-numero" type="text" placeholder="ex: LO 482/2023"></label>
+      <label>Órgão emissor<input id="l-orgao" type="text" placeholder="ex: IAT, IBAMA, IMA"></label>
+    </div>
+    <div class="row2">
+      <label>Unidade *<select id="l-unidade"><option>RESENDE</option><option>JOINVILLE</option><option>CURITIBA</option></select></label>
+      <label>Nº do processo<input id="l-processo" type="text"></label>
+    </div>
+    <label>Atividade licenciada<input id="l-atividade" type="text" placeholder="ex: Galvanização de peças metálicas"></label>
+    <div class="row2">
+      <label>Emissão<input id="l-emissao" type="date"></label>
+      <label>Validade *<input id="l-validade" type="date"></label>
+    </div>
+    <label>Link do PDF da licença (Drive etc.)<input id="l-arquivo" type="url" placeholder="https://..."></label>
+    <div style="border:1px solid var(--line);border-radius:8px;padding:10px 12px;background:#f8fafc">
+      <div style="font-size:11px;font-weight:700;color:var(--navy);margin-bottom:6px">Renovação protocolada? (desliga os alertas dos 120 dias)</div>
+      <div class="row2">
+        <label>Data do pedido<input id="l-ren-data" type="date"></label>
+        <label>Protocolo<input id="l-ren-prot" type="text" placeholder="nº do protocolo"></label>
+      </div>
+    </div>
+    <div id="l-msg" class="hint" style="min-height:14px"></div>
+    <div style="display:flex;gap:8px">
+      <button class="btn btn-navy" style="flex:1;padding:11px" onclick="licSave()">Salvar licença</button>
+      <button class="btn btn-ghost" id="l-del" style="display:none" onclick="licDelete()">🗑 Excluir</button>
+    </div>
+  </div>
+</div></div>
+
+<!-- MODAL CONDICIONANTE -->
+<div class="modal" id="m-cond"><div class="mc">
+  <div class="mh"><b id="m-cond-t">Nova condicionante</b><button onclick="mClose('m-cond')">×</button></div>
+  <div class="mb">
+    <div class="row2">
+      <label style="flex:0 0 110px">Nº<input id="c-num" type="text" placeholder="ex: 05"></label>
+      <label>Descrição *<input id="c-desc" type="text" placeholder="ex: Executar monitoramento semestral de água subterrânea"></label>
+    </div>
+    <div class="row2">
+      <label>Frequência *<select id="c-freq"><option value="unica">Única</option><option value="mensal">Mensal</option><option value="trimestral">Trimestral</option><option value="semestral">Semestral</option><option value="anual">Anual</option><option value="continua">Contínua</option></select></label>
+      <label>Próximo prazo<input id="c-prazo" type="date"><span class="hint">contínua pode ficar sem prazo</span></label>
+    </div>
+    <div class="row2">
+      <label>Responsável<input id="c-resp" type="text"></label>
+      <label>E-mail do responsável (recebe os avisos)<input id="c-email" type="email" placeholder="responsavel@empresa.com"></label>
+    </div>
+    <label>Pasta padrão de evidências (Drive/SharePoint)<input id="c-pasta" type="url" placeholder="https://drive.google.com/..."></label>
+    <div id="c-msg" class="hint" style="min-height:14px"></div>
+    <div style="display:flex;gap:8px">
+      <button class="btn btn-navy" style="flex:1;padding:11px" onclick="condSave()">Salvar condicionante</button>
+      <button class="btn btn-ghost" id="c-del" style="display:none" onclick="condDelete()">🗑 Excluir</button>
+    </div>
+  </div>
+</div></div>
+
+<!-- MODAL IMPORTAR -->
+<div class="modal" id="m-imp"><div class="mc">
+  <div class="mh"><b>Importar condicionantes em lote</b><button onclick="mClose('m-imp')">×</button></div>
+  <div class="mb">
+    <div class="hint" style="line-height:1.7">Cole uma linha por condicionante, campos separados por <strong>;</strong> (ou tab, direto da planilha):<br>
+    <code>nº ; descrição ; frequência ; próximo prazo (AAAA-MM-DD ou DD/MM/AAAA) ; responsável ; e-mail</code><br>
+    Frequências aceitas: única, mensal, trimestral, semestral, anual, contínua. Só nº e descrição são obrigatórios.</div>
+    <textarea id="imp-txt" style="min-height:160px" placeholder="01; Apresentar relatório de efluentes; semestral; 30/09/2026; Rafael Nunes; rafael@empresa.com
+02; Monitoramento de emissões atmosféricas; anual; 2027-06-15; Rafael Nunes; rafael@empresa.com"></textarea>
+    <div id="imp-msg" class="hint" style="min-height:14px"></div>
+    <button class="btn btn-navy" style="padding:11px" onclick="impRun()">Importar para a licença selecionada</button>
+  </div>
+</div></div>
+
+<!-- MODAL REGISTRAR CUMPRIMENTO (painel) -->
+<div class="modal" id="m-cum"><div class="mc">
+  <div class="mh"><b>✓ Registrar cumprimento</b><button onclick="mClose('m-cum')">×</button></div>
+  <div class="mb">
+    <div id="cum-info" class="hint" style="background:#f8fafc;border:1px solid var(--line);border-radius:8px;padding:10px 12px;font-size:12px;color:#334155"></div>
+    <div class="row2">
+      <label>Data do cumprimento *<input id="cum-data" type="date"></label>
+      <label>Protocolo / recibo *<input id="cum-prot" type="text"></label>
+    </div>
+    <label>Evidência * <span class="hint">— para ANEXAR arquivo, use o link de cumprimento (botão 🔗 no card) ou o e-mail do aviso</span>
+      <select id="cum-ev"><option value="link">Link do arquivo/pasta</option><option value="pasta">Está na pasta padrão da condicionante</option></select>
+    </label>
+    <label id="cum-link-wrap">Link<input id="cum-link" type="url" placeholder="https://..."></label>
+    <label>Observação<textarea id="cum-obs"></textarea></label>
+    <div id="cum-msg" class="hint" style="min-height:14px"></div>
+    <button class="btn btn-green" style="padding:11px" onclick="cumSave()">Salvar registro</button>
+  </div>
+</div></div>
+
+<!-- MODAL HISTÓRICO -->
+<div class="modal" id="m-hist"><div class="mc">
+  <div class="mh"><b>Histórico de cumprimentos</b><button onclick="mClose('m-hist')">×</button></div>
+  <div class="mb" id="hist-body"></div>
+</div></div>
+
+<script>
+try{ if(window.self!==window.top) document.body.classList.add('embedded'); }
+catch(e){ document.body.classList.add('embedded'); }
+
+var LICS=[], CONDS=[], ME={canEdit:false}, quick='', licEditId=null, condEditId=null, cumId=null;
+var FREQ_LBL={unica:'Única',mensal:'Mensal',trimestral:'Trimestral',semestral:'Semestral',anual:'Anual',continua:'Contínua'};
+
+function esc(s){ return String(s||'').replace(/[<>&"]/g,function(c){return {'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;'}[c];}); }
+function norm(s){ try{ return String(s||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,''); }catch(e){ return String(s||'').toLowerCase(); } }
+function dias(d){ if(!d) return null; var t=new Date(d+'T00:00:00'); if(isNaN(t)) return null; var h=new Date(); h.setHours(0,0,0,0); return Math.floor((t-h)/864e5); }
+function fmtBR(d){ var m=String(d||'').match(/^(\d{4})-(\d{2})-(\d{2})/); return m? m[3]+'/'+m[2]+'/'+m[1] : '—'; }
+function toISO(s){
+  s=String(s||'').trim();
+  if(/^\d{4}-\d{2}-\d{2}$/.test(s)) return s;
+  var m=s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+  if(m) return m[3]+'-'+('0'+m[2]).slice(-2)+'-'+('0'+m[1]).slice(-2);
+  return '';
+}
+function genId(p){ return p+'_'+Date.now().toString(36)+'_'+Math.random().toString(36).slice(2,6); }
+function curLic(){ var id=document.getElementById('sel-lic').value; return LICS.find(function(l){return l.id===id;})||null; }
+function statusOf(c){
+  if(c.atendida) return 'atendida';
+  var x=dias(c.proximoPrazo);
+  if(x===null) return 'emdia'; // contínua sem prazo
+  if(x<0) return 'vencida';
+  if(x<=30) return 'atencao';
+  return 'emdia';
+}
+var ST={vencida:['Vencida','#b91c1c'],atencao:['Atenção','#c2410c'],emdia:['Em dia','#1565c0'],atendida:['Atendida','#15803d']};
+
+async function load(){
+  try{
+    var r=await fetch('/api/condlo',{credentials:'include'});
+    var d=await r.json();
+    if(!r.ok||!d.ok) throw new Error(d.error||('Erro '+r.status));
+    LICS=d.licencas||[]; CONDS=d.conds||[]; ME=d.me||{canEdit:false};
+    if(!ME.canEdit){ ['b-lic','b-imp','b-new','b-check'].forEach(function(i){var e=document.getElementById(i); if(e) e.style.display='none';}); }
+    fillLicSel(); render();
+  }catch(e){
+    document.getElementById('lo-head').innerHTML='<div style="color:#b91c1c;font-size:13px">'+esc(e.message)+'</div>';
+  }
+}
+function fillLicSel(){
+  var sel=document.getElementById('sel-lic'), cur=sel.value;
+  sel.innerHTML=LICS.map(function(l){return '<option value="'+l.id+'">'+esc(l.numero||'(sem nº)')+' · '+esc(l.unidade||'')+'</option>';}).join('');
+  if(cur && LICS.find(function(l){return l.id===cur;})) sel.value=cur;
+}
+async function persist(extra){
+  var body={licencas:LICS,conds:CONDS};
+  if(extra) Object.assign(body,extra);
+  var r=await fetch('/api/condlo',{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+  var d=await r.json();
+  if(!r.ok||!d.ok) throw new Error(d.error||('Erro '+r.status));
+  // recarrega estado canônico (tokens/históricos gerados no servidor)
+  var r2=await fetch('/api/condlo',{credentials:'include'});
+  var d2=await r2.json();
+  if(r2.ok&&d2.ok){ LICS=d2.licencas||[]; CONDS=d2.conds||[]; }
+}
+
+// ── render geral ──
+function render(){
+  fillLicSel();
+  var lic=curLic();
+  renderLoHead(lic);
+  var conds=CONDS.filter(function(c){ return lic ? c.licencaId===lic.id : true; });
+  renderKpis(conds); renderTl(conds); renderCal(conds); renderList(conds);
+}
+function renderLoHead(lic){
+  var el=document.getElementById('lo-head');
+  if(!lic){
+    el.innerHTML='<div class="muted" style="font-size:13px">Nenhuma licença cadastrada ainda.'+(ME.canEdit?' Clique em <strong>🏭 Licença</strong> para começar — ou <strong>📥 Importar em lote</strong> depois de criar a licença.':'')+'</div>';
+    return;
+  }
+  var dv=dias(lic.validade);
+  var total=(dias(lic.validade)||0)-(dias(lic.emissao)||0);
+  var pct=total>0? Math.min(100,Math.max(0,(-(dias(lic.emissao)||0))/total*100)) : 0;
+  var markPct=total>0? Math.min(100,Math.max(0,(total-120)/total*100)) : 92;
+  var cor=dv===null?'#64748b':(dv<=120?'#b91c1c':(dv<=365?'#c2410c':'#15803d'));
+  var ren=lic.renovacaoPedida&&lic.renovacaoPedida.data;
+  el.innerHTML=''
+    +'<div style="min-width:250px"><div style="font-size:16px;font-weight:800;color:var(--navy)">'+esc(lic.numero||'—')+(lic.orgao?' — '+esc(lic.orgao):'')+'</div>'
+    +'<div class="hint" style="font-size:11.5px;line-height:1.7;margin-top:3px">'+esc(lic.atividade||'')+'<br>Emissão: '+fmtBR(lic.emissao)+' · Validade: '+fmtBR(lic.validade)+(lic.processo?' · Proc. '+esc(lic.processo):'')+'</div></div>'
+    +'<div style="flex:1;min-width:240px"><div style="font-size:11px;font-weight:700;color:var(--muted)">VALIDADE — <span style="color:'+cor+'">'+(dv===null?'sem data':(dv<0?'VENCIDA há '+Math.abs(dv)+' dias':'restam '+dv+' dias'))+'</span>'
+    +(ren?' · <span style="color:var(--green)">renovação protocolada em '+fmtBR(lic.renovacaoPedida.data)+'</span>':'')+'</div>'
+    +'<div class="lo-bar" style="margin-top:6px"><div class="lo-fill" style="width:'+pct+'%"></div><div class="lo-mark" style="left:'+markPct+'%" title="pedir renovação: 120 dias antes"></div></div>'
+    +'<div style="display:flex;justify-content:space-between;font-size:10px;color:#94a3b8;margin-top:5px"><span>'+fmtBR(lic.emissao)+'</span><span>marco: renovação 120d antes</span><span>'+fmtBR(lic.validade)+'</span></div></div>'
+    +(lic.arquivo?'<a href="'+esc(lic.arquivo)+'" target="_blank" class="btn btn-blue" style="text-decoration:none">📄 Ver licença</a>':'');
+}
+function renderKpis(conds){
+  var n={vencida:0,atencao:0,emdia:0,atendida:0};
+  conds.forEach(function(c){ n[statusOf(c)]++; });
+  var tot=conds.length, ok=n.emdia+n.atendida;
+  var C=2*Math.PI*48, frac=tot?ok/tot:0;
+  var ring=document.getElementById('ring');
+  ring.setAttribute('stroke-dasharray',(C*frac)+' '+C);
+  ring.setAttribute('stroke', n.vencida? '#c2410c':'#15803d');
+  document.getElementById('ring-txt').textContent=tot? (ok+'/'+tot):'—';
+  var K=[['vencida','Vencidas','#b91c1c'],['atencao','Atenção (≤30d)','#c2410c'],['emdia','Em dia','#1565c0'],['atendida','Atendidas','#15803d']];
+  document.getElementById('kpis').innerHTML=K.map(function(k){
+    return '<div class="kpi'+(quick===k[0]?' active':'')+'" style="border-left-color:'+k[2]+'" onclick="kpiClick(\''+k[0]+'\')" title="Clique para filtrar"><div class="v">'+n[k[0]]+'</div><div class="l">'+k[1]+'</div></div>';
+  }).join('');
+}
+function kpiClick(k){ quick=(quick===k)?'':k; render(); }
+function renderTl(conds){
+  var tl=document.getElementById('tl');
+  tl.innerHTML='<div class="tl-line"></div><div class="tl-today" style="left:0%"></div>';
+  var venc=0;
+  conds.forEach(function(c){
+    if(c.atendida) return;
+    var d=dias(c.proximoPrazo);
+    if(d===null) return;
+    if(d<0){ venc++; return; }
+    if(d>90) return;
+    var st=statusOf(c), cor=ST[st][1];
+    var dot=document.createElement('div');
+    dot.className='tl-dot'; dot.style.left='calc('+(d/90*100)+'% - 7px)'; dot.style.background=cor;
+    dot.innerHTML='<div class="tip">'+esc((c.num?c.num+' · ':'')+String(c.descricao||'').slice(0,45))+'<br>'+fmtBR(c.proximoPrazo)+' ('+d+'d)'+(c.responsavel?' · '+esc(c.responsavel):'')+'</div>';
+    tl.appendChild(dot);
+  });
+  if(venc){
+    var dot=document.createElement('div');
+    dot.className='tl-dot'; dot.style.left='-4px'; dot.style.top='35px'; dot.style.width='18px'; dot.style.height='18px'; dot.style.background='#b91c1c';
+    dot.innerHTML='<div class="tip">'+venc+' condicionante(s) VENCIDA(s)</div>';
+    tl.appendChild(dot);
+  }
+  var ms=[0,30,60,90].map(function(n){ var d=new Date(); d.setDate(d.getDate()+n); return d.toLocaleDateString('pt-BR',{day:'2-digit',month:'short'}); });
+  document.getElementById('tl-months').innerHTML=ms.map(function(m){return '<span>'+m+'</span>';}).join('');
+}
+function mesesFuturos(c){
+  // meses (1-12) do ano corrente em que a condicionante recorrente tem ocorrência
+  var freq=String(c.frequencia||'').toLowerCase();
+  var add={mensal:1,trimestral:3,semestral:6,anual:12}[freq];
+  if(!add||!c.proximoPrazo) return [];
+  var out=[]; var d=new Date(c.proximoPrazo+'T00:00:00');
+  if(isNaN(d)) return [];
+  var ano=new Date().getFullYear();
+  // recua para pegar ocorrências do começo do ano
+  var g=new Date(d);
+  while(g.getFullYear()>=ano){ if(g.getFullYear()===ano) out.unshift(g.getMonth()+1); g=new Date(g); g.setMonth(g.getMonth()-add); if(out.length>24) break; }
+  var f=new Date(d); f.setMonth(f.getMonth()+add);
+  while(f.getFullYear()===ano){ out.push(f.getMonth()+1); f=new Date(f); f.setMonth(f.getMonth()+add); if(out.length>24) break; }
+  return Array.from(new Set(out)).sort(function(a,b){return a-b;});
+}
+function renderCal(conds){
+  var MES=['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+  var atual=new Date().getMonth()+1;
+  var rec=conds.filter(function(c){ return !c.atendida && ['mensal','trimestral','semestral','anual'].indexOf(String(c.frequencia||'').toLowerCase())!==-1 && c.proximoPrazo; });
+  var head='<thead><tr><th>Condicionante</th>'+MES.map(function(m,i){return '<th class="'+((i+1)===atual?'atual':'')+'">'+m+'</th>';}).join('')+'</tr></thead>';
+  var body=rec.map(function(c){
+    var ms=mesesFuturos(c), cor=ST[statusOf(c)][1];
+    var cells=MES.map(function(_,i){
+      var cls=(i+1)===atual?' class="atual"':'';
+      return '<td'+cls+'>'+(ms.indexOf(i+1)!==-1?'<span class="dot" style="background:'+cor+'" title="'+esc((c.num||'')+' · '+FREQ_LBL[c.frequencia])+'"></span>':'')+'</td>';
+    }).join('');
+    return '<tr><td title="'+esc(c.descricao)+'">'+esc((c.num?c.num+' · ':'')+String(c.descricao||'').slice(0,55))+'</td>'+cells+'</tr>';
+  }).join('');
+  if(!rec.length) body='<tr><td colspan="13" style="padding:22px;text-align:center;color:#94a3b8">Nenhuma condicionante recorrente com prazo</td></tr>';
+  document.getElementById('cal').innerHTML=head+'<tbody>'+body+'</tbody>';
+}
+function renderList(conds){
+  var fS=document.getElementById('f-status').value, fF=document.getElementById('f-freq').value, fBraw=document.getElementById('f-busca').value, fB=norm(fBraw);
+  var rows=conds.filter(function(c){
+    var st=statusOf(c);
+    if(quick && st!==quick) return false;
+    if(fS && st!==fS) return false;
+    if(fF && String(c.frequencia||'').toLowerCase()!==fF) return false;
+    if(fB && !norm((c.num||'')+' '+c.descricao+' '+(c.responsavel||'')+' '+(c.responsavelEmail||'')).includes(fB)) return false;
+    return true;
+  }).sort(function(a,b){
+    var o={vencida:0,atencao:1,emdia:2,atendida:3};
+    var d=o[statusOf(a)]-o[statusOf(b)];
+    if(d) return d;
+    var da=dias(a.proximoPrazo), db=dias(b.proximoPrazo);
+    if(da===null) return 1; if(db===null) return -1; return da-db;
+  });
+  document.getElementById('f-info').textContent=rows.length+' de '+conds.length+' condicionantes';
+  var list=document.getElementById('cond-list');
+  if(!conds.length){ list.innerHTML='<div class="card empty" style="margin-top:10px">📭 Nenhuma condicionante nesta licença.'+(ME.canEdit?' Use <strong>＋ Condicionante</strong> ou <strong>📥 Importar em lote</strong>.':'')+'</div>'; return; }
+  if(!rows.length){ list.innerHTML='<div class="card empty" style="margin-top:10px">🔍 Nada com os filtros atuais.</div>'; return; }
+  list.innerHTML=rows.map(function(c){
+    var st=statusOf(c), cor=ST[st][1], d=dias(c.proximoPrazo);
+    var prazo=c.atendida?'cumprida':(c.proximoPrazo? fmtBR(c.proximoPrazo)+' <strong style="color:'+cor+'">('+(d<0?Math.abs(d)+'d vencida':d+'d')+')</strong>':'contínua');
+    var ult=(c.historico&&c.historico[0])?('Último: '+fmtBR(c.historico[0].data)+' · '+esc(c.historico[0].protocolo)):'Sem registro ainda';
+    return '<div class="cond" style="border-left-color:'+cor+'">'
+      +'<div style="display:flex;gap:10px;justify-content:space-between;flex-wrap:wrap;align-items:flex-start">'
+      +'<div style="flex:1;min-width:220px"><div class="num">CONDICIONANTE '+esc(c.num||'—')+'</div><div class="desc">'+esc(c.descricao)+'</div></div>'
+      +'<div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">'
+      +'<span class="badge b-freq">'+esc(FREQ_LBL[String(c.frequencia||'').toLowerCase()]||c.frequencia||'—')+'</span>'
+      +'<span class="badge" style="background:'+cor+'22;color:'+cor+'">'+ST[st][0]+'</span></div></div>'
+      +'<div class="meta">'
+      +'<span>📅 '+prazo+'</span>'
+      +(c.responsavel?'<span>👤 <strong>'+esc(c.responsavel)+'</strong></span>':'')
+      +'<span title="'+esc(ult)+'">🧾 '+ult+'</span>'
+      +'<span style="margin-left:auto;white-space:nowrap">'
+      +(c.historico&&c.historico.length?'<button class="rowbtn" style="background:#f1f5f9;color:#334155" onclick="histOpen(\''+c.id+'\')">📜 Histórico</button>':'')
+      +(c.pastaPadrao?'<a class="rowbtn" style="background:#e0f2fe;color:#075985;text-decoration:none;display:inline-block" target="_blank" href="'+esc(c.pastaPadrao)+'">📂</a>':'')
+      +(ME.canEdit&&!c.atendida?'<button class="rowbtn" style="background:#dcfce7;color:var(--green)" onclick="cumOpen(\''+c.id+'\')">✓ Registrar</button>':'')
+      +(ME.canEdit?'<button class="rowbtn" style="background:#e0f2fe;color:#075985" onclick="copyLink(\''+c.id+'\')" title="Copiar link público de cumprimento (permite anexar arquivo)">🔗</button>':'')
+      +(ME.canEdit?'<button class="rowbtn" style="background:#dbeafe;color:#1e40af" onclick="condOpen(\''+c.id+'\')">✏️</button>':'')
+      +'</span></div></div>';
+  }).join('');
+}
+
+// ── licença ──
+function licOpen(){
+  var lic=curLic(); licEditId=lic?lic.id:null;
+  document.getElementById('m-lic-t').textContent=lic?'Editar licença':'Nova licença';
+  document.getElementById('l-del').style.display=lic?'':'none';
+  ['l-numero','l-orgao','l-processo','l-atividade','l-emissao','l-validade','l-arquivo','l-ren-data','l-ren-prot'].forEach(function(i){document.getElementById(i).value='';});
+  document.getElementById('l-unidade').value='RESENDE';
+  if(lic){
+    document.getElementById('l-numero').value=lic.numero||'';
+    document.getElementById('l-orgao').value=lic.orgao||'';
+    document.getElementById('l-unidade').value=lic.unidade||'RESENDE';
+    document.getElementById('l-processo').value=lic.processo||'';
+    document.getElementById('l-atividade').value=lic.atividade||'';
+    document.getElementById('l-emissao').value=lic.emissao||'';
+    document.getElementById('l-validade').value=lic.validade||'';
+    document.getElementById('l-arquivo').value=lic.arquivo||'';
+    if(lic.renovacaoPedida){ document.getElementById('l-ren-data').value=lic.renovacaoPedida.data||''; document.getElementById('l-ren-prot').value=lic.renovacaoPedida.protocolo||''; }
+  }
+  document.getElementById('l-msg').textContent='';
+  mOpen('m-lic');
+}
+async function licSave(){
+  var msg=document.getElementById('l-msg');
+  var numero=document.getElementById('l-numero').value.trim();
+  var validade=document.getElementById('l-validade').value;
+  if(!numero){ msg.style.color='#b91c1c'; msg.textContent='Informe o nº da licença.'; return; }
+  if(!validade){ msg.style.color='#b91c1c'; msg.textContent='Informe a validade.'; return; }
+  var renD=document.getElementById('l-ren-data').value;
+  var rec={
+    id: licEditId||genId('lic'), numero:numero,
+    orgao:document.getElementById('l-orgao').value.trim(),
+    unidade:document.getElementById('l-unidade').value,
+    processo:document.getElementById('l-processo').value.trim(),
+    atividade:document.getElementById('l-atividade').value.trim(),
+    emissao:document.getElementById('l-emissao').value, validade:validade,
+    arquivo:document.getElementById('l-arquivo').value.trim(),
+    renovacaoPedida: renD? {data:renD, protocolo:document.getElementById('l-ren-prot').value.trim()} : null
+  };
+  if(licEditId){ var i=LICS.findIndex(function(l){return l.id===licEditId;}); if(i>=0) LICS[i]=Object.assign({},LICS[i],rec); }
+  else LICS.push(rec);
+  msg.style.color='#64748b'; msg.textContent='Salvando…';
+  try{ await persist(); mClose('m-lic'); document.getElementById('sel-lic').value=rec.id; render(); }
+  catch(e){ msg.style.color='#b91c1c'; msg.textContent=e.message; }
+}
+async function licDelete(){
+  if(!licEditId) return;
+  var n=CONDS.filter(function(c){return c.licencaId===licEditId;}).length;
+  if(!confirm('Excluir esta licença'+(n?' e suas '+n+' condicionante(s)':'')+'?')) return;
+  LICS=LICS.filter(function(l){return l.id!==licEditId;});
+  CONDS=CONDS.filter(function(c){return c.licencaId!==licEditId;});
+  try{ await persist(); mClose('m-lic'); render(); }catch(e){ alert('Erro: '+e.message); }
+}
+
+// ── condicionante ──
+function condOpen(id){
+  var lic=curLic();
+  if(!lic){ alert('Cadastre a licença primeiro (botão 🏭 Licença).'); return; }
+  condEditId=id||null;
+  var c=id? CONDS.find(function(x){return x.id===id;}) : null;
+  document.getElementById('m-cond-t').textContent=c?'Editar condicionante':'Nova condicionante';
+  document.getElementById('c-del').style.display=c?'':'none';
+  ['c-num','c-desc','c-prazo','c-resp','c-email','c-pasta'].forEach(function(i){var e=document.getElementById(i); e.value=''; e.classList.remove('bad');});
+  document.getElementById('c-freq').value='unica';
+  if(c){
+    document.getElementById('c-num').value=c.num||'';
+    document.getElementById('c-desc').value=c.descricao||'';
+    document.getElementById('c-freq').value=String(c.frequencia||'unica').toLowerCase();
+    document.getElementById('c-prazo').value=c.proximoPrazo||'';
+    document.getElementById('c-resp').value=c.responsavel||'';
+    document.getElementById('c-email').value=c.responsavelEmail||'';
+    document.getElementById('c-pasta').value=c.pastaPadrao||'';
+  }
+  document.getElementById('c-msg').textContent='';
+  mOpen('m-cond');
+}
+async function condSave(){
+  var msg=document.getElementById('c-msg');
+  var desc=document.getElementById('c-desc'), email=document.getElementById('c-email');
+  [desc,email].forEach(function(e){e.classList.remove('bad');});
+  if(!desc.value.trim()){ desc.classList.add('bad'); msg.style.color='#b91c1c'; msg.textContent='Descreva a condicionante.'; return; }
+  if(email.value.trim() && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email.value.trim())){ email.classList.add('bad'); msg.style.color='#b91c1c'; msg.textContent='E-mail inválido.'; return; }
+  var lic=curLic();
+  var rec={
+    id: condEditId||genId('cond'), licencaId: lic.id,
+    num:document.getElementById('c-num').value.trim(),
+    descricao:desc.value.trim(),
+    frequencia:document.getElementById('c-freq').value,
+    proximoPrazo:document.getElementById('c-prazo').value||null,
+    responsavel:document.getElementById('c-resp').value.trim(),
+    responsavelEmail:email.value.trim().toLowerCase(),
+    pastaPadrao:document.getElementById('c-pasta').value.trim(),
+    atendida:false
+  };
+  if(condEditId){ var i=CONDS.findIndex(function(x){return x.id===condEditId;}); if(i>=0) rec=Object.assign({},CONDS[i],rec); CONDS[i]=rec; }
+  else CONDS.push(rec);
+  msg.style.color='#64748b'; msg.textContent='Salvando…';
+  try{ await persist(); mClose('m-cond'); render(); }
+  catch(e){ msg.style.color='#b91c1c'; msg.textContent=e.message; }
+}
+async function condDelete(){
+  if(!condEditId) return;
+  if(!confirm('Excluir esta condicionante e seu histórico?')) return;
+  CONDS=CONDS.filter(function(c){return c.id!==condEditId;});
+  try{ await persist(); mClose('m-cond'); render(); }catch(e){ alert('Erro: '+e.message); }
+}
+
+// ── importar em lote ──
+function impOpen(){
+  if(!curLic()){ alert('Cadastre a licença primeiro (botão 🏭 Licença).'); return; }
+  document.getElementById('imp-msg').textContent='';
+  mOpen('m-imp');
+}
+async function impRun(){
+  var msg=document.getElementById('imp-msg');
+  var lic=curLic(); if(!lic) return;
+  var lines=document.getElementById('imp-txt').value.split('\n').map(function(s){return s.trim();}).filter(Boolean);
+  if(!lines.length){ msg.style.color='#b91c1c'; msg.textContent='Cole ao menos uma linha.'; return; }
+  var FR={'unica':'unica','única':'unica','mensal':'mensal','trimestral':'trimestral','semestral':'semestral','anual':'anual','continua':'continua','contínua':'continua'};
+  var novos=[], erros=[];
+  lines.forEach(function(ln,i){
+    var p=ln.indexOf('\t')!==-1? ln.split('\t') : ln.split(';');
+    p=p.map(function(s){return s.trim();});
+    var num=p[0]||'', descr=p[1]||'';
+    if(!descr){ erros.push('linha '+(i+1)+': sem descrição'); return; }
+    var freq=FR[norm(p[2]||'unica')]||'unica';
+    var prazo=toISO(p[3]||'');
+    novos.push({ id:genId('cond'), licencaId:lic.id, num:num, descricao:descr, frequencia:freq, proximoPrazo:prazo||null, responsavel:p[4]||'', responsavelEmail:(p[5]||'').toLowerCase(), pastaPadrao:'', atendida:false });
+  });
+  if(erros.length){ msg.style.color='#b91c1c'; msg.textContent=erros.join(' · '); return; }
+  CONDS=CONDS.concat(novos);
+  msg.style.color='#64748b'; msg.textContent='Importando '+novos.length+' condicionante(s)…';
+  try{ await persist(); mClose('m-imp'); document.getElementById('imp-txt').value=''; render(); }
+  catch(e){ msg.style.color='#b91c1c'; msg.textContent=e.message; }
+}
+
+// ── registrar cumprimento (painel) ──
+function cumOpen(id){
+  var c=CONDS.find(function(x){return x.id===id;}); if(!c) return;
+  cumId=id;
+  document.getElementById('cum-info').innerHTML='<strong>'+esc((c.num?c.num+' — ':'')+c.descricao)+'</strong><br>'+esc(FREQ_LBL[String(c.frequencia||'').toLowerCase()]||'')+(c.proximoPrazo?' · prazo '+fmtBR(c.proximoPrazo):'');
+  document.getElementById('cum-data').value=new Date().toISOString().slice(0,10);
+  document.getElementById('cum-prot').value=''; document.getElementById('cum-link').value=''; document.getElementById('cum-obs').value='';
+  var sel=document.getElementById('cum-ev');
+  sel.innerHTML='<option value="link">Link do arquivo/pasta</option>'+(c.pastaPadrao?'<option value="pasta">Está na pasta padrão da condicionante</option>':'');
+  sel.onchange=function(){ document.getElementById('cum-link-wrap').style.display=(sel.value==='link')?'':'none'; };
+  sel.onchange();
+  document.getElementById('cum-msg').textContent='';
+  mOpen('m-cum');
+}
+async function cumSave(){
+  var msg=document.getElementById('cum-msg');
+  var data=document.getElementById('cum-data').value, prot=document.getElementById('cum-prot').value.trim();
+  var ev=document.getElementById('cum-ev').value, link=document.getElementById('cum-link').value.trim();
+  if(!data||!prot){ msg.style.color='#b91c1c'; msg.textContent='Data e protocolo são obrigatórios.'; return; }
+  if(ev==='link'&&!/^https?:\/\//i.test(link)){ msg.style.color='#b91c1c'; msg.textContent='Cole um link válido (https://...).'; return; }
+  msg.style.color='#64748b'; msg.textContent='Salvando…';
+  try{
+    await persist({cumprimento:{condId:cumId,data:data,protocolo:prot,evTipo:ev,evLink:link,obs:document.getElementById('cum-obs').value.trim()}});
+    mClose('m-cum'); render();
+  }catch(e){ msg.style.color='#b91c1c'; msg.textContent=e.message; }
+}
+
+// ── histórico ──
+function histOpen(id){
+  var c=CONDS.find(function(x){return x.id===id;}); if(!c) return;
+  var h=(c.historico||[]);
+  document.getElementById('hist-body').innerHTML=
+    '<div class="hint" style="font-size:12px"><strong>'+esc((c.num?c.num+' — ':'')+c.descricao)+'</strong></div>'
+    +(h.length? h.map(function(r){
+      var evi='';
+      if(r.evidencia){
+        if(r.evidencia.tipo==='anexo') evi='<a href="#" onclick="openEv(\''+encodeURIComponent(r.evidencia.valor)+'\');return false;" style="color:var(--blue)">📎 '+esc(r.evidencia.nome||'arquivo')+'</a>';
+        else evi='<a href="'+esc(r.evidencia.valor)+'" target="_blank" style="color:var(--blue)">'+(r.evidencia.tipo==='pasta'?'📂 pasta padrão':'🔗 link')+'</a>';
+      }
+      return '<div style="border:1px solid var(--line);border-radius:8px;padding:10px 12px;font-size:12px;line-height:1.7">'
+        +'<strong>'+fmtBR(r.data)+'</strong> · Protocolo: <strong>'+esc(r.protocolo)+'</strong><br>'
+        +'Evidência: '+(evi||'—')+(r.obs?'<br>Obs: '+esc(r.obs):'')
+        +'<div class="hint">registrado em '+String(r.em||'').slice(0,10)+' por '+esc(r.por||'—')+'</div></div>';
+    }).join('') : '<div class="empty">Sem registros ainda.</div>');
+  mOpen('m-hist');
+}
+async function openEv(pathEnc){
+  try{ var r=await fetch('/api/condlo?file='+pathEnc,{credentials:'include'}); var d=await r.json(); if(d.url) window.open(d.url,'_blank'); else alert('Não foi possível abrir: '+(d.error||r.status)); }
+  catch(e){ alert('Erro: '+e.message); }
+}
+
+// ── link público / verificar / dossiê ──
+async function copyLink(id){
+  // recarrega para garantir token atual
+  try{
+    var r=await fetch('/api/condlo',{credentials:'include'}); var d=await r.json();
+    if(r.ok&&d.ok){ CONDS=d.conds||[]; }
+    var c=CONDS.find(function(x){return x.id===id;});
+    if(!c||!c.token){ alert('Token indisponível.'); return; }
+    var url=location.origin+'/cumprir.html?id='+encodeURIComponent(id)+'&token='+c.token;
+    await navigator.clipboard.writeText(url);
+    alert('Link de cumprimento copiado!\nQuem receber pode registrar (inclusive anexando arquivo) sem login.\nO link é renovado após cada uso.');
+  }catch(e){ alert('Erro ao copiar: '+e.message); }
+}
+async function checkNow(){
+  if(!confirm('Disparar a verificação agora? Enviará e-mails conforme os prazos.')) return;
+  try{
+    var r=await fetch('/api/condlo?check=1',{method:'POST',credentials:'include'});
+    var d=await r.json();
+    if(r.ok&&d.ok){ var env=(d.results||[]).filter(function(x){return String(x.status).indexOf('enviad')!==-1;}).length; alert('Verificação concluída.\nCondicionantes: '+d.condicionantes+'\nE-mails enviados: '+env); }
+    else alert('Erro: '+(d.error||r.status));
+  }catch(e){ alert('Erro: '+e.message); }
+}
+function dossie(){
+  var lic=curLic(); if(!lic){ alert('Nenhuma licença selecionada.'); return; }
+  var conds=CONDS.filter(function(c){return c.licencaId===lic.id;});
+  var w=window.open('','_blank');
+  var rows=conds.map(function(c){
+    var st=statusOf(c);
+    var h=(c.historico||[]).map(function(r){
+      var ev=r.evidencia? (r.evidencia.tipo==='anexo'? (r.evidencia.nome||'arquivo anexado') : r.evidencia.valor) : '—';
+      return fmtBR(r.data)+' — protocolo '+esc(r.protocolo)+' — evidência: '+esc(ev)+(r.obs?' — '+esc(r.obs):'');
+    }).join('<br>');
+    return '<tr><td>'+esc(c.num||'—')+'</td><td>'+esc(c.descricao)+'</td><td>'+esc(FREQ_LBL[String(c.frequencia||'').toLowerCase()]||'')+'</td>'
+      +'<td>'+(c.atendida?'Atendida':(c.proximoPrazo?fmtBR(c.proximoPrazo):'Contínua'))+'</td>'
+      +'<td>'+ST[st][0]+'</td><td>'+esc(c.responsavel||'—')+'</td><td style="font-size:10px">'+(h||'—')+'</td></tr>';
+  }).join('');
+  w.document.write('<html><head><title>Dossiê — '+esc(lic.numero||'')+'</title><style>'
+    +'body{font-family:Arial,sans-serif;color:#0f172a;padding:24px}h1{font-size:18px;color:#0d2137}h2{font-size:13px;color:#64748b;font-weight:400}'
+    +'table{width:100%;border-collapse:collapse;font-size:11px;margin-top:14px}th,td{border:1px solid #cbd5e1;padding:6px 8px;text-align:left;vertical-align:top}'
+    +'th{background:#f1f5f9;font-size:10px;text-transform:uppercase;color:#475569}@media print{button{display:none}}</style></head><body>'
+    +'<button onclick="window.print()" style="float:right;padding:8px 14px;cursor:pointer">🖨 Imprimir / PDF</button>'
+    +'<h1>Dossiê de condicionantes — '+esc(lic.numero||'')+(lic.orgao?' ('+esc(lic.orgao)+')':'')+'</h1>'
+    +'<h2>'+esc(lic.atividade||'')+' · Unidade '+esc(lic.unidade||'')+' · Emissão '+fmtBR(lic.emissao)+' · Validade '+fmtBR(lic.validade)
+    +(lic.processo?' · Processo '+esc(lic.processo):'')+'<br>Gerado em '+new Date().toLocaleString('pt-BR')+' pelo Central SGI</h2>'
+    +'<table><thead><tr><th>Nº</th><th>Condicionante</th><th>Frequência</th><th>Próximo prazo</th><th>Status</th><th>Responsável</th><th>Histórico de cumprimentos</th></tr></thead>'
+    +'<tbody>'+rows+'</tbody></table></body></html>');
+  w.document.close();
+}
+
+// ── modais ──
+function mOpen(id){ document.getElementById(id).style.display='flex'; }
+function mClose(id){ document.getElementById(id).style.display='none'; }
+['m-lic','m-cond','m-imp','m-cum','m-hist'].forEach(function(id){
+  document.getElementById(id).addEventListener('click',function(e){ if(e.target===this) mClose(id); });
+});
+
+load();
+</script>
+</body>
+</html>

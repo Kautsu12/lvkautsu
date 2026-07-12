@@ -7,7 +7,7 @@
     },
     {
       "path": "/api/portal-cron",
-      "schedule": "0 8 * * *"
+      "schedule": "30 10 * * *"
     }
   ],
   "headers": [

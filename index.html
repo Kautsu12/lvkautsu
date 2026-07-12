@@ -535,6 +535,12 @@ body.dark #user-menu-header { background: #0f172a; }
         <span class="nav-label">Vencimentos</span>
       </div>
 
+      <!-- Condicionantes da LO -->
+      <div class="nav-item-sub" onclick="navigate('condicionantes', this)">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+        <span class="nav-label">Condicionantes LO</span>
+      </div>
+
     </div>
 
     <!-- Mapa de Processos (IP & MCR) -->
@@ -865,17 +871,50 @@ body.dark #user-menu-header { background: #0f172a; }
       </div>
     </div>
 
+    <!-- ══ PAGE: CONDICIONANTES DA LO (iframe) ══ -->
+    <div class="page" id="page-condicionantes" style="margin:0;height:calc(100vh - var(--header-h));overflow:hidden;">
+      <iframe id="condicionantes-frame" style="width:100%;height:100%;border:none;display:block;" allowfullscreen></iframe>
+    </div>
+
     <!-- ══ PAGE: VENCIMENTOS DE DOCUMENTOS ══ -->
     <div class="page" id="page-vencimentos">
+      <style>
+        #venc-table th.venc-th{cursor:pointer;user-select:none;white-space:nowrap}
+        #venc-table th.venc-th:hover{color:#0d2137}
+        #venc-table th.venc-th .arr{font-size:9px;margin-left:4px;color:#1565c0}
+        #venc-table tbody tr:hover{background:#f8fafc}
+        #page-vencimentos .kpi-card[data-quick]{cursor:pointer;transition:transform .1s}
+        #page-vencimentos .kpi-card[data-quick]:hover{transform:translateY(-1px)}
+        .venc-chip{display:inline-flex;align-items:center;gap:6px;background:#e0f2fe;color:#075985;border-radius:99px;padding:3px 10px;font-size:11px;font-weight:600}
+        .venc-chip button{background:none;border:0;color:#075985;cursor:pointer;font-size:13px;padding:0;line-height:1}
+        .venc-clear{background:none;border:0;color:#1565c0;cursor:pointer;font-size:11.5px;font-weight:600;text-decoration:underline}
+        .venc-modal-sec{border:1px solid #e2e8f0;border-radius:8px;padding:12px}
+        .venc-sec-title{font-size:11px;font-weight:700;color:#0d2137;text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px}
+        .venc-modal-sec label{display:block;font-size:11.5px;color:#64748b;margin-bottom:10px}
+        .venc-modal-sec label:last-child{margin-bottom:0}
+        .venc-bad{border-color:#b91c1c !important;background:#fef2f2 !important}
+        .venc-view-btn{padding:7px 14px;border:1px solid #e2e8f0;border-radius:6px;font-size:12px;cursor:pointer;background:#fff;color:#64748b;font-weight:600}
+        .venc-view-btn.active{background:#0d2137;color:#fff;border-color:#0d2137}
+        #venc-mtx td,#venc-mtx th{border:1px solid #f1f5f9}
+        .venc-mtx-cell{cursor:pointer;text-align:center;font-weight:700;font-size:12px}
+        .venc-mtx-cell:hover{outline:2px solid #1565c0;outline-offset:-2px}
+        .venc-mtx-dot{display:inline-block;width:9px;height:9px;border-radius:99px;margin-right:5px;vertical-align:middle}
+        .venc-mtx-empty{text-align:center;color:#cbd5e1;font-weight:700}
+        #venc-cards{display:none}
+        @media (max-width:760px){
+          #venc-table-wrap{display:none}
+          #venc-cards{display:flex;flex-direction:column;gap:10px;margin-top:16px}
+        }
+      </style>
       <div class="page-title">📑 Controle de Vencimento de Documentos</div>
       <div class="page-sub">Cadastro de documentos com aviso automático por e-mail</div>
 
-      <!-- KPIs -->
+      <!-- KPIs (clicáveis = filtro rápido) -->
       <div class="kpi-grid" style="margin-top:16px">
-        <div class="kpi-card red"><div class="kpi-row"><div><div class="kpi-val" id="venc-k-vencidos">—</div><div class="kpi-label">Vencidos</div></div></div></div>
-        <div class="kpi-card amber"><div class="kpi-row"><div><div class="kpi-val" id="venc-k-7d">—</div><div class="kpi-label">Vencem em 7 dias</div></div></div></div>
-        <div class="kpi-card blue"><div class="kpi-row"><div><div class="kpi-val" id="venc-k-30d">—</div><div class="kpi-label">Vencem em 30 dias</div></div></div></div>
-        <div class="kpi-card green"><div class="kpi-row"><div><div class="kpi-val" id="venc-k-ativos">—</div><div class="kpi-label">Total ativos</div></div></div></div>
+        <div class="kpi-card red" id="venc-kpi-vencidos" data-quick="vencidos" onclick="vencKpiClick('vencidos')" title="Clique para filtrar os vencidos"><div class="kpi-row"><div><div class="kpi-val" id="venc-k-vencidos">—</div><div class="kpi-label">Vencidos</div></div></div></div>
+        <div class="kpi-card amber" id="venc-kpi-d7" data-quick="d7" onclick="vencKpiClick('d7')" title="Clique para filtrar os que vencem em até 7 dias"><div class="kpi-row"><div><div class="kpi-val" id="venc-k-7d">—</div><div class="kpi-label">Vencem em 7 dias</div></div></div></div>
+        <div class="kpi-card blue" id="venc-kpi-d30" data-quick="d30" onclick="vencKpiClick('d30')" title="Clique para filtrar os que vencem em até 30 dias"><div class="kpi-row"><div><div class="kpi-val" id="venc-k-30d">—</div><div class="kpi-label">Vencem em 30 dias</div></div></div></div>
+        <div class="kpi-card green" id="venc-kpi-ativos" data-quick="ativos" onclick="vencKpiClick('ativos')" title="Clique para filtrar os ativos"><div class="kpi-row"><div><div class="kpi-val" id="venc-k-ativos">—</div><div class="kpi-label">Total ativos</div></div></div></div>
       </div>
 
       <!-- Filtros + ações -->
@@ -896,26 +935,43 @@ body.dark #user-menu-header { background: #0f172a; }
             <option value="renovado">Renovado</option>
             <option value="inativo">Inativo</option>
           </select>
-          <input type="text" id="venc-flt-busca" oninput="renderVencimentos()" placeholder="🔍 Buscar..." style="padding:6px 10px;border:1px solid #e2e8f0;border-radius:6px;font-size:12px;flex:1;min-width:180px">
+          <input type="text" id="venc-flt-busca" oninput="renderVencimentos()" placeholder="🔍 Buscar (ignora acentos)..." style="padding:6px 10px;border:1px solid #e2e8f0;border-radius:6px;font-size:12px;flex:1;min-width:180px">
           <button onclick="vencRunCheckNow()" style="padding:7px 14px;background:#1565c0;color:#fff;border:0;border-radius:6px;font-size:12px;cursor:pointer">▶ Verificar agora</button>
           <button onclick="vencOpenNew()" style="padding:7px 14px;background:#15803d;color:#fff;border:0;border-radius:6px;font-size:12.5px;font-weight:600;cursor:pointer">＋ Novo documento</button>
+          <div id="venc-flt-info" style="flex-basis:100%;display:none;align-items:center;gap:8px;flex-wrap:wrap;font-size:11.5px;color:#64748b;padding-top:6px;border-top:1px dashed #e2e8f0;margin-top:4px"></div>
         </div>
       </div>
 
-      <!-- Tabela -->
-      <div class="card" style="margin-top:16px">
+      <!-- Alternador de visão -->
+      <div style="display:flex;gap:8px;margin-top:16px">
+        <button class="venc-view-btn active" id="venc-vb-lista" onclick="vencSetView('lista')">📋 Lista</button>
+        <button class="venc-view-btn" id="venc-vb-matriz" onclick="vencSetView('matriz')">🗂️ Matriz por unidade</button>
+      </div>
+
+      <!-- Matriz: tipos × unidades -->
+      <div class="card" style="margin-top:12px;display:none" id="venc-mtx-wrap">
+        <div class="card-body" style="padding:0;overflow-x:auto">
+          <table style="width:100%;border-collapse:collapse;font-size:11.5px" id="venc-mtx"></table>
+        </div>
+        <div style="padding:10px 14px;font-size:11px;color:#64748b;border-top:1px solid #e2e8f0">
+          Célula = nº de documentos ativos e o pior prazo do tipo naquela unidade · <strong style="color:#b91c1c">vermelho</strong> vencido/≤7d · <strong style="color:#c2410c">laranja</strong> ≤30d · <strong style="color:#15803d">verde</strong> ok · <strong>—</strong> = tipo sem documento na unidade (possível pendência). Clique na célula para ver a lista filtrada.
+        </div>
+      </div>
+
+      <!-- Tabela (desktop) -->
+      <div class="card" style="margin-top:12px" id="venc-table-wrap">
         <div class="card-body" style="padding:0;overflow-x:auto">
           <table style="width:100%;border-collapse:collapse;font-size:12.5px" id="venc-table">
             <thead>
               <tr style="background:#f8fafc">
-                <th style="text-align:left;padding:10px 12px;font-size:10.5px;color:#64748b;text-transform:uppercase">Documento</th>
-                <th style="text-align:left;padding:10px 12px;font-size:10.5px;color:#64748b;text-transform:uppercase">Unidade</th>
-                <th style="text-align:left;padding:10px 12px;font-size:10.5px;color:#64748b;text-transform:uppercase">Tipo</th>
-                <th style="text-align:left;padding:10px 12px;font-size:10.5px;color:#64748b;text-transform:uppercase">Responsável</th>
-                <th style="text-align:left;padding:10px 12px;font-size:10.5px;color:#64748b;text-transform:uppercase">Cargo</th>
-                <th style="text-align:left;padding:10px 12px;font-size:10.5px;color:#64748b;text-transform:uppercase">Vencimento</th>
-                <th style="text-align:center;padding:10px 12px;font-size:10.5px;color:#64748b;text-transform:uppercase">Dias</th>
-                <th style="text-align:left;padding:10px 12px;font-size:10.5px;color:#64748b;text-transform:uppercase">Status</th>
+                <th class="venc-th" data-col="nome" onclick="vencSortBy('nome')" style="text-align:left;padding:10px 12px;font-size:10.5px;color:#64748b;text-transform:uppercase">Documento<span class="arr"></span></th>
+                <th class="venc-th" data-col="unidade" onclick="vencSortBy('unidade')" style="text-align:left;padding:10px 12px;font-size:10.5px;color:#64748b;text-transform:uppercase">Unidade<span class="arr"></span></th>
+                <th class="venc-th" data-col="tipo" onclick="vencSortBy('tipo')" style="text-align:left;padding:10px 12px;font-size:10.5px;color:#64748b;text-transform:uppercase">Tipo<span class="arr"></span></th>
+                <th class="venc-th" data-col="responsavel" onclick="vencSortBy('responsavel')" style="text-align:left;padding:10px 12px;font-size:10.5px;color:#64748b;text-transform:uppercase">Responsável<span class="arr"></span></th>
+                <th class="venc-th" data-col="cargo" onclick="vencSortBy('cargo')" style="text-align:left;padding:10px 12px;font-size:10.5px;color:#64748b;text-transform:uppercase">Cargo<span class="arr"></span></th>
+                <th class="venc-th" data-col="dias" onclick="vencSortBy('dias')" style="text-align:left;padding:10px 12px;font-size:10.5px;color:#64748b;text-transform:uppercase">Vencimento<span class="arr"></span></th>
+                <th class="venc-th" data-col="dias" onclick="vencSortBy('dias')" style="text-align:center;padding:10px 12px;font-size:10.5px;color:#64748b;text-transform:uppercase">Dias<span class="arr"></span></th>
+                <th class="venc-th" data-col="status" onclick="vencSortBy('status')" style="text-align:left;padding:10px 12px;font-size:10.5px;color:#64748b;text-transform:uppercase">Status<span class="arr"></span></th>
                 <th style="text-align:right;padding:10px 12px;font-size:10.5px;color:#64748b;text-transform:uppercase">Ações</th>
               </tr>
             </thead>
@@ -924,6 +980,9 @@ body.dark #user-menu-header { background: #0f172a; }
         </div>
       </div>
 
+      <!-- Cartões (mobile) -->
+      <div id="venc-cards"></div>
+
       <!-- Modal Novo/Editar -->
       <div id="venc-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:9000;align-items:center;justify-content:center;padding:20px">
         <div style="background:#fff;border-radius:10px;width:min(560px,100%);max-height:90vh;overflow:auto">
@@ -931,27 +990,36 @@ body.dark #user-menu-header { background: #0f172a; }
             <div id="venc-modal-title" style="font-weight:700">Novo documento</div>
             <button onclick="vencCloseModal()" style="background:none;border:0;color:#fff;font-size:18px;cursor:pointer">×</button>
           </div>
-          <div style="padding:18px;display:flex;flex-direction:column;gap:10px">
-            <label style="font-size:11.5px;color:#64748b">Unidade<select id="venc-unidade" style="width:100%;padding:8px 10px;border:1px solid #cbd5e1;border-radius:6px;margin-top:4px;font-size:13px"></select></label>
-            <label style="font-size:11.5px;color:#64748b">Nome<input id="venc-nome" type="text" style="width:100%;padding:8px 10px;border:1px solid #cbd5e1;border-radius:6px;margin-top:4px;font-size:13px"></label>
-            <label style="font-size:11.5px;color:#64748b">Tipo<input id="venc-tipo" type="text" placeholder="ex: NR-06 EPI, ASO, Alvará, ISO 9001…" list="venc-tipos" style="width:100%;padding:8px 10px;border:1px solid #cbd5e1;border-radius:6px;margin-top:4px;font-size:13px">
-              <datalist id="venc-tipos"><option value="NR-06 EPI"><option value="NR-35 Trabalho em Altura"><option value="ASO"><option value="CRC/CRMV"><option value="Alvará Sanitário"><option value="Alvará Bombeiros"><option value="Certificado ISO 9001"><option value="Certificado ISO 14001"><option value="Certificado ISO 45001"><option value="Treinamento"><option value="Licença Ambiental"></datalist>
-            </label>
-            <label style="font-size:11.5px;color:#64748b">Responsável<input id="venc-resp" type="text" list="venc-resp-list" oninput="vencRespAutoEmail()" placeholder="nome do responsável" style="width:100%;padding:8px 10px;border:1px solid #cbd5e1;border-radius:6px;margin-top:4px;font-size:13px"><datalist id="venc-resp-list"></datalist></label>
-            <label style="font-size:11.5px;color:#64748b">E-mail do responsável (recebe os avisos)<input id="venc-resp-email" type="email" placeholder="responsavel@empresa.com" style="width:100%;padding:8px 10px;border:1px solid #cbd5e1;border-radius:6px;margin-top:4px;font-size:13px"></label>
-            <label style="font-size:11.5px;color:#64748b">Cargo (define o acesso junto com a unidade)<input id="venc-cargo" type="text" list="venc-cargo-list" placeholder="puxado do responsável (editável)" style="width:100%;padding:8px 10px;border:1px solid #cbd5e1;border-radius:6px;margin-top:4px;font-size:13px"><datalist id="venc-cargo-list"></datalist></label>
-            <div style="display:flex;gap:10px">
-              <label style="font-size:11.5px;color:#64748b;flex:1">Data de vencimento<input id="venc-data" type="date" style="width:100%;padding:8px 10px;border:1px solid #cbd5e1;border-radius:6px;margin-top:4px;font-size:13px"></label>
-              <label style="font-size:11.5px;color:#64748b;flex:1">Status<select id="venc-status" style="width:100%;padding:8px 10px;border:1px solid #cbd5e1;border-radius:6px;margin-top:4px;font-size:13px"><option value="ativo">Ativo</option><option value="renovado">Renovado</option><option value="inativo">Inativo</option></select></label>
+          <div style="padding:18px;display:flex;flex-direction:column;gap:14px">
+            <div class="venc-modal-sec">
+              <div class="venc-sec-title">📄 Documento</div>
+              <label>Unidade<select id="venc-unidade" style="width:100%;padding:8px 10px;border:1px solid #cbd5e1;border-radius:6px;margin-top:4px;font-size:13px"></select></label>
+              <label>Nome<input id="venc-nome" type="text" placeholder="ex: PGR — Unidade Resende" style="width:100%;padding:8px 10px;border:1px solid #cbd5e1;border-radius:6px;margin-top:4px;font-size:13px"></label>
+              <label>Tipo<input id="venc-tipo" type="text" placeholder="ex: PGR, PCMSO, ASO, Alvará, ISO 9001…" list="venc-tipos" style="width:100%;padding:8px 10px;border:1px solid #cbd5e1;border-radius:6px;margin-top:4px;font-size:13px">
+                <datalist id="venc-tipos"><option value="PGR"><option value="PCMSO"><option value="NR-06 EPI"><option value="NR-35 Trabalho em Altura"><option value="ASO"><option value="CRC/CRMV"><option value="Alvará Sanitário"><option value="Alvará Bombeiros"><option value="Certificado ISO 9001"><option value="Certificado ISO 14001"><option value="Certificado ISO 45001"><option value="Treinamento"><option value="Licença Ambiental"></datalist>
+              </label>
             </div>
-            <label style="font-size:11.5px;color:#64748b">Avisar com (dias antes) — separe por vírgula<input id="venc-lead" type="text" value="30, 15, 7, 1" style="width:100%;padding:8px 10px;border:1px solid #cbd5e1;border-radius:6px;margin-top:4px;font-size:13px"></label>
+            <div class="venc-modal-sec">
+              <div class="venc-sec-title">👤 Responsável</div>
+              <label>Nome<input id="venc-resp" type="text" list="venc-resp-list" oninput="vencRespAutoEmail()" placeholder="nome do responsável" style="width:100%;padding:8px 10px;border:1px solid #cbd5e1;border-radius:6px;margin-top:4px;font-size:13px"><datalist id="venc-resp-list"></datalist></label>
+              <label>E-mail (recebe os avisos)<input id="venc-resp-email" type="email" placeholder="responsavel@empresa.com" style="width:100%;padding:8px 10px;border:1px solid #cbd5e1;border-radius:6px;margin-top:4px;font-size:13px"></label>
+              <label>Cargo (define o acesso junto com a unidade)<input id="venc-cargo" type="text" list="venc-cargo-list" placeholder="puxado do responsável (editável)" style="width:100%;padding:8px 10px;border:1px solid #cbd5e1;border-radius:6px;margin-top:4px;font-size:13px"><datalist id="venc-cargo-list"></datalist></label>
+            </div>
+            <div class="venc-modal-sec">
+              <div class="venc-sec-title">⏰ Vencimento &amp; alertas</div>
+              <div style="display:flex;gap:10px">
+                <label style="flex:1">Data de vencimento<input id="venc-data" type="date" style="width:100%;padding:8px 10px;border:1px solid #cbd5e1;border-radius:6px;margin-top:4px;font-size:13px"></label>
+                <label style="flex:1">Status<select id="venc-status" style="width:100%;padding:8px 10px;border:1px solid #cbd5e1;border-radius:6px;margin-top:4px;font-size:13px"><option value="ativo">Ativo</option><option value="renovado">Renovado</option><option value="inativo">Inativo</option></select></label>
+              </div>
+              <label>Avisar com (dias antes) — separe por vírgula<input id="venc-lead" type="text" value="30, 15, 7, 1" style="width:100%;padding:8px 10px;border:1px solid #cbd5e1;border-radius:6px;margin-top:4px;font-size:13px"></label>
+            </div>
             <input id="venc-emails" type="hidden">
-            <div style="border:1px solid #e2e8f0;border-radius:8px;padding:12px;background:#f8fafc">
-              <div style="font-size:11.5px;font-weight:700;color:#0d2137;margin-bottom:8px">📎 Documento — anexe um arquivo OU informe um link</div>
-              <label style="font-size:11.5px;color:#64748b;display:block">Anexar arquivo(s)<input id="venc-file" type="file" multiple style="width:100%;padding:7px 0;font-size:12.5px;margin-top:4px"></label>
+            <div class="venc-modal-sec" style="background:#f8fafc">
+              <div class="venc-sec-title">📎 Anexo — arquivo OU link</div>
+              <label>Anexar arquivo(s)<input id="venc-file" type="file" multiple style="width:100%;padding:7px 0;font-size:12.5px;margin-top:4px;border:0"></label>
               <div id="venc-file-hint" style="font-size:10.5px;color:#94a3b8;margin:2px 0 8px">Vários arquivos = um documento por arquivo (o nome vem do arquivo; ajuste tipo/responsável depois). Só vale ao criar.</div>
               <div id="venc-file-cur" style="font-size:11px;color:#15803d;margin-bottom:6px"></div>
-              <label style="font-size:11.5px;color:#64748b;display:block">📂 OU link da pasta/documento<input id="venc-pasta" type="url" placeholder="https://drive.google.com/..." style="width:100%;padding:8px 10px;border:1px solid #cbd5e1;border-radius:6px;margin-top:4px;font-size:13px"></label>
+              <label>📂 OU link da pasta/documento<input id="venc-pasta" type="url" placeholder="https://drive.google.com/..." style="width:100%;padding:8px 10px;border:1px solid #cbd5e1;border-radius:6px;margin-top:4px;font-size:13px"></label>
               <input id="venc-anexo" type="hidden">
             </div>
             <div id="venc-msg" style="font-size:11.5px;color:#64748b;min-height:16px"></div>
@@ -1134,7 +1202,7 @@ function buildRadar() {
 }
 
 // ── NAVIGATION ─────────────────────────────────────────────────────
-const pages = { home:'Dashboard', auditoria:'Auditoria Interna', mte:'Auditorias MTE', relatorios:'Relatórios', vencimentos:'Documentos · Vencimentos', escopo:'Escopo · Auditoria', mapa:'Mapa de Processos · IP & MCR', manual:'Manual', configuracoes:'Configurações' };
+const pages = { home:'Dashboard', auditoria:'Auditoria Interna', mte:'Auditorias MTE', relatorios:'Relatórios', vencimentos:'Documentos · Vencimentos', condicionantes:'Documentos · Condicionantes da LO', escopo:'Escopo · Auditoria', mapa:'Mapa de Processos · IP & MCR', manual:'Manual', configuracoes:'Configurações' };
 
 // Botões de ação por página — chamam funções do iframe injetado
 const PAGE_ACTIONS = {
@@ -1344,6 +1412,12 @@ function navigate(pageId, navEl) {
     var frame = document.getElementById('escopo-frame');
     if (frame && !frame.getAttribute('data-loaded')) {
       frame.src = 'escopo.html';
+      frame.setAttribute('data-loaded', '1');
+    }
+  } else if (pageId === 'condicionantes') {
+    var frame = document.getElementById('condicionantes-frame');
+    if (frame && !frame.getAttribute('data-loaded')) {
+      frame.src = 'condicionantes.html';
       frame.setAttribute('data-loaded', '1');
     }
   } else {
@@ -2642,59 +2716,160 @@ async function loadVencimentos() {
 
 function _diasUntil(d){ if(!d) return null; var t=new Date(d+'T00:00:00'); var h=new Date(); h.setHours(0,0,0,0); return Math.floor((t-h)/(24*60*60*1000)); }
 
+// ── helpers da tela (Fase 1) ──
+var _vencQuick=''; var _vencView='lista'; var _vencSortCol='dias'; var _vencSortDir=1;
+function _vencNorm(s){ try{ return String(s||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,''); }catch(e){ return String(s||'').toLowerCase(); } }
+function _vencFmtBR(d){ var m=String(d||'').match(/^(\d{4})-(\d{2})-(\d{2})/); return m ? (m[3]+'/'+m[2]+'/'+m[1]) : '—'; }
+function _vencEsc(s){ return String(s||'').replace(/[<>&"]/g, function(c){ return {'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;'}[c]; }); }
+function _vencFarol(d){
+  var dias=_diasUntil(d.dataVencimento);
+  if (d.status==='renovado'||d.status==='inativo'||dias===null) return {cor:'#cbd5e1',txt:'—',chip:'#94a3b8',dias:dias};
+  if (dias<0)  return {cor:'#b91c1c',txt:Math.abs(dias)+'d vencido',chip:'#b91c1c',dias:dias};
+  if (dias<=7) return {cor:'#b91c1c',txt:dias+'d',chip:'#b91c1c',dias:dias};
+  if (dias<=30)return {cor:'#c2410c',txt:dias+'d',chip:'#c2410c',dias:dias};
+  return {cor:'#15803d',txt:dias+'d',chip:'#15803d',dias:dias};
+}
+function vencKpiClick(k){ _vencQuick=(_vencQuick===k)?'':k; renderVencimentos(); }
+function vencSortBy(c){ if(_vencSortCol===c) _vencSortDir=-_vencSortDir; else {_vencSortCol=c;_vencSortDir=1;} renderVencimentos(); }
+function vencRmFlt(id){ var e=document.getElementById(id); if(e) e.value=''; renderVencimentos(); }
+function vencRmQuick(){ _vencQuick=''; renderVencimentos(); }
+function vencClearFilters(){
+  ['venc-flt-unidade','venc-flt-cargo','venc-flt-tipo','venc-flt-status','venc-flt-busca'].forEach(function(i){ var e=document.getElementById(i); if(e) e.value=''; });
+  _vencQuick=''; renderVencimentos();
+}
+function vencSetView(v){
+  _vencView=v;
+  var bl=document.getElementById('venc-vb-lista'), bm=document.getElementById('venc-vb-matriz');
+  if(bl) bl.classList.toggle('active',v==='lista');
+  if(bm) bm.classList.toggle('active',v==='matriz');
+  renderVencimentos();
+}
+function vencMtxGo(tipo,unidade){
+  var ft=document.getElementById('venc-flt-tipo'), fu=document.getElementById('venc-flt-unidade');
+  if(ft) ft.value=tipo; if(fu) fu.value=unidade;
+  vencSetView('lista');
+}
+function renderVencMatriz(){
+  var mw=document.getElementById('venc-mtx-wrap'), tw=document.getElementById('venc-table-wrap'), cd=document.getElementById('venc-cards');
+  var isM=(_vencView==='matriz');
+  if(mw) mw.style.display=isM?'':'none';
+  if(tw) tw.style.display=isM?'none':'';
+  if(cd) cd.style.display=isM?'none':'';
+  if(!isM||!mw) return;
+  var esc=_vencEsc;
+  var uns=_vencUnitsDisp();
+  var tipos=Array.from(new Set(_vencDocs.map(function(d){return d.tipo||'';}).filter(Boolean))).sort();
+  var head='<thead><tr style="background:#f8fafc"><th style="text-align:left;padding:9px 12px;font-size:10.5px;color:#64748b;text-transform:uppercase">Tipo de documento</th>'+uns.map(function(u){return '<th style="text-align:center;padding:9px 12px;font-size:10.5px;color:#64748b;text-transform:uppercase">'+esc(u)+'</th>';}).join('')+'</tr></thead>';
+  var body=tipos.map(function(t){
+    var cells=uns.map(function(u){
+      var ds=_vencDocs.filter(function(d){ return d.tipo===t && String(d.unidade||'').toUpperCase()===u && d.status!=='inativo'; });
+      if(!ds.length) return '<td class="venc-mtx-empty" style="padding:9px 12px" title="Nenhum documento deste tipo em '+esc(u)+'">—</td>';
+      var worst=Math.min.apply(null, ds.map(function(d){ var x=_diasUntil(d.dataVencimento); return x===null?9999:x; }));
+      var cor = (worst<=7) ? '#b91c1c' : (worst<=30 ? '#c2410c' : '#15803d');
+      var lbl = worst<0 ? 'vencido' : (worst===9999 ? 'sem data' : worst+'d');
+      return '<td class="venc-mtx-cell" style="padding:9px 12px" onclick="vencMtxGo(\''+esc(t).replace(/'/g,'&#39;')+'\',\''+esc(u)+'\')" title="'+ds.length+' doc(s) · pior prazo: '+lbl+'">'
+        +'<span class="venc-mtx-dot" style="background:'+cor+'"></span>'+ds.length+' <span style="font-weight:600;color:'+cor+';font-size:10.5px">('+lbl+')</span></td>';
+    }).join('');
+    return '<tr><td style="padding:9px 12px;font-weight:600;border-top:1px solid #f1f5f9">'+esc(t)+'</td>'+cells+'</tr>';
+  }).join('');
+  if(!tipos.length) body='<tr><td style="padding:30px;text-align:center;color:#94a3b8">Nenhum documento com tipo preenchido</td></tr>';
+  document.getElementById('venc-mtx').innerHTML=head+'<tbody>'+body+'</tbody>';
+}
+
 function renderVencimentos() {
   var tbody = document.getElementById('venc-tbody'); if (!tbody) return;
+  var esc = _vencEsc;
   var fT = document.getElementById('venc-flt-tipo').value;
   var fS = document.getElementById('venc-flt-status').value;
   var fU = document.getElementById('venc-flt-unidade') ? document.getElementById('venc-flt-unidade').value : '';
   var fC = document.getElementById('venc-flt-cargo') ? document.getElementById('venc-flt-cargo').value : '';
-  var fB = (document.getElementById('venc-flt-busca').value || '').toLowerCase();
+  var fBraw = (document.getElementById('venc-flt-busca').value || '');
+  var fB = _vencNorm(fBraw);
   var rows = _vencDocs.filter(function(d){
     if (fT && d.tipo !== fT) return false;
     if (fS && d.status !== fS) return false;
     if (fU && String(d.unidade||'').toUpperCase() !== fU) return false;
     if (fC && String(d.cargo||'') !== fC) return false;
-    if (fB) { var hay = (d.nome+' '+d.tipo+' '+(d.responsavel||'')+' '+(d.cargo||'')+' '+(d.unidade||'')+' '+(d.responsavelEmail||'')).toLowerCase(); if (!hay.includes(fB)) return false; }
+    if (fB) { var hay = _vencNorm(d.nome+' '+d.tipo+' '+(d.responsavel||'')+' '+(d.cargo||'')+' '+(d.unidade||'')+' '+(d.responsavelEmail||'')); if (!hay.includes(fB)) return false; }
+    var x=_diasUntil(d.dataVencimento);
+    if (_vencQuick==='vencidos' && !(d.status==='ativo' && x!==null && x<0)) return false;
+    if (_vencQuick==='d7'  && !(d.status==='ativo' && x!==null && x>=0 && x<=7)) return false;
+    if (_vencQuick==='d30' && !(d.status==='ativo' && x!==null && x>=0 && x<=30)) return false;
+    if (_vencQuick==='ativos' && d.status!=='ativo') return false;
     return true;
   }).sort(function(a,b){
-    var da = _diasUntil(a.dataVencimento); var db = _diasUntil(b.dataVencimento);
-    if (da === null) return 1; if (db === null) return -1;
-    return da - db;
+    if (_vencSortCol==='dias'){
+      var da = _diasUntil(a.dataVencimento); var db = _diasUntil(b.dataVencimento);
+      if (da === null) return 1; if (db === null) return -1;
+      return (da - db)*_vencSortDir;
+    }
+    return _vencNorm(a[_vencSortCol]).localeCompare(_vencNorm(b[_vencSortCol]))*_vencSortDir;
   });
 
   // KPIs
-  var vencidos = _vencDocs.filter(function(d){ return d.status==='ativo' && _diasUntil(d.dataVencimento) < 0; }).length;
-  var d7 = _vencDocs.filter(function(d){ var x=_diasUntil(d.dataVencimento); return d.status==='ativo' && x>=0 && x<=7; }).length;
-  var d30 = _vencDocs.filter(function(d){ var x=_diasUntil(d.dataVencimento); return d.status==='ativo' && x>=0 && x<=30; }).length;
+  var vencidos = _vencDocs.filter(function(d){ var x=_diasUntil(d.dataVencimento); return d.status==='ativo' && x!==null && x < 0; }).length;
+  var d7 = _vencDocs.filter(function(d){ var x=_diasUntil(d.dataVencimento); return d.status==='ativo' && x!==null && x>=0 && x<=7; }).length;
+  var d30 = _vencDocs.filter(function(d){ var x=_diasUntil(d.dataVencimento); return d.status==='ativo' && x!==null && x>=0 && x<=30; }).length;
   var ativos = _vencDocs.filter(function(d){ return d.status==='ativo'; }).length;
   document.getElementById('venc-k-vencidos').textContent = vencidos;
   document.getElementById('venc-k-7d').textContent = d7;
   document.getElementById('venc-k-30d').textContent = d30;
   document.getElementById('venc-k-ativos').textContent = ativos;
+  ['vencidos','d7','d30','ativos'].forEach(function(k){
+    var el=document.getElementById('venc-kpi-'+k);
+    if(el){ el.style.outline=(_vencQuick===k)?'2px solid #1565c0':''; el.style.outlineOffset='2px'; }
+  });
 
-  if (!rows.length) { tbody.innerHTML = '<tr><td colspan="9" style="padding:30px;text-align:center;color:#94a3b8">Nenhum documento cadastrado</td></tr>'; return; }
-  var esc = function(s){ return String(s||'').replace(/[<>&"]/g, function(c){ return {'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;'}[c]; }); };
+  // setas de ordenação
+  var ths=document.querySelectorAll('#venc-table th .arr');
+  for (var i=0;i<ths.length;i++){ var th=ths[i]; th.textContent=(th.parentNode.getAttribute('data-col')===_vencSortCol)?(_vencSortDir===1?' ▲':' ▼'):''; }
+
+  // chips + contador
+  var chips=[];
+  var QL={vencidos:'Vencidos',d7:'Vencem em 7 dias',d30:'Vencem em 30 dias',ativos:'Ativos'};
+  if(_vencQuick) chips.push('<span class="venc-chip">⚡ '+QL[_vencQuick]+'<button onclick="vencRmQuick()">×</button></span>');
+  if(fU) chips.push('<span class="venc-chip">Unidade: '+esc(fU)+'<button onclick="vencRmFlt(\'venc-flt-unidade\')">×</button></span>');
+  if(fC) chips.push('<span class="venc-chip">Cargo: '+esc(fC)+'<button onclick="vencRmFlt(\'venc-flt-cargo\')">×</button></span>');
+  if(fT) chips.push('<span class="venc-chip">Tipo: '+esc(fT)+'<button onclick="vencRmFlt(\'venc-flt-tipo\')">×</button></span>');
+  if(fS) chips.push('<span class="venc-chip">Status: '+esc(fS)+'<button onclick="vencRmFlt(\'venc-flt-status\')">×</button></span>');
+  if(fBraw) chips.push('<span class="venc-chip">Busca: “'+esc(fBraw)+'”<button onclick="vencRmFlt(\'venc-flt-busca\')">×</button></span>');
+  var info=document.getElementById('venc-flt-info');
+  if(info){
+    info.style.display='flex';
+    info.innerHTML='<strong>'+rows.length+'</strong>&nbsp;de&nbsp;<strong>'+_vencDocs.length+'</strong>&nbsp;documentos'
+      +(chips.length? '&nbsp;·&nbsp;'+chips.join(' ')+' <button class="venc-clear" onclick="vencClearFilters()">Limpar tudo</button>' : '');
+  }
+
+  renderVencMatriz();
+
+  var cards=document.getElementById('venc-cards');
+
+  // empty states distintos
+  if (!_vencDocs.length) {
+    tbody.innerHTML = '<tr><td colspan="9" style="padding:36px;text-align:center;color:#94a3b8"><div style="font-size:28px;margin-bottom:8px">📭</div>Nenhum documento cadastrado ainda.<br><br><button onclick="vencOpenNew()" style="padding:8px 16px;background:#15803d;color:#fff;border:0;border-radius:6px;font-size:12.5px;font-weight:600;cursor:pointer">＋ Cadastrar o primeiro</button></td></tr>';
+    if(cards) cards.innerHTML='';
+    return;
+  }
+  if (!rows.length) {
+    tbody.innerHTML = '<tr><td colspan="9" style="padding:36px;text-align:center;color:#94a3b8"><div style="font-size:28px;margin-bottom:8px">🔍</div>Nenhum documento encontrado com os filtros atuais.<br><br><button class="venc-clear" onclick="vencClearFilters()">Limpar filtros</button></td></tr>';
+    if(cards) cards.innerHTML='<div class="card"><div class="card-body" style="text-align:center;color:#94a3b8;font-size:13px">🔍 Nada encontrado. <button class="venc-clear" onclick="vencClearFilters()">Limpar filtros</button></div></div>';
+    return;
+  }
+
   tbody.innerHTML = rows.map(function(d){
-    var dias = _diasUntil(d.dataVencimento);
-    var diasStr, diasColor;
-    if (d.status === 'renovado' || d.status === 'inativo') { diasStr = '—'; diasColor = '#94a3b8'; }
-    else if (dias === null) { diasStr = '—'; diasColor = '#94a3b8'; }
-    else if (dias < 0) { diasStr = Math.abs(dias) + 'd vencido'; diasColor = '#b91c1c'; }
-    else if (dias <= 7) { diasStr = dias + 'd'; diasColor = '#b91c1c'; }
-    else if (dias <= 30) { diasStr = dias + 'd'; diasColor = '#c2410c'; }
-    else { diasStr = dias + 'd'; diasColor = '#15803d'; }
+    var f=_vencFarol(d);
     var statusBadge = '';
     if (d.status === 'ativo') statusBadge = '<span style="background:#dcfce7;color:#15803d;padding:3px 8px;border-radius:99px;font-size:10.5px;font-weight:700">Ativo</span>';
     else if (d.status === 'renovado') statusBadge = '<span style="background:#dbeafe;color:#1e40af;padding:3px 8px;border-radius:99px;font-size:10.5px;font-weight:700">Renovado</span>';
     else statusBadge = '<span style="background:#f1f5f9;color:#64748b;padding:3px 8px;border-radius:99px;font-size:10.5px;font-weight:700">Inativo</span>';
     return '<tr>' +
-      '<td style="padding:10px 12px"><div style="font-weight:600">' + esc(d.nome||'—') + '</div>' + (d.pasta ? '<a href="'+esc(d.pasta)+'" target="_blank" style="font-size:10.5px;color:#1565c0;margin-right:6px">📂 link</a>' : '') + (d.filePath ? '<a href="#" onclick="vencOpenFile(\''+encodeURIComponent(d.filePath)+'\');return false;" style="font-size:10.5px;color:#1565c0">📎 '+esc(d.fileName||'arquivo')+'</a>' : '') + '</td>' +
+      '<td style="padding:10px 12px;border-left:4px solid '+f.cor+'"><div style="font-weight:600">' + esc(d.nome||'—') + '</div>' + (d.pasta ? '<a href="'+esc(d.pasta)+'" target="_blank" style="font-size:10.5px;color:#1565c0;margin-right:6px">📂 link</a>' : '') + (d.filePath ? '<a href="#" onclick="vencOpenFile(\''+encodeURIComponent(d.filePath)+'\');return false;" style="font-size:10.5px;color:#1565c0">📎 '+esc(d.fileName||'arquivo')+'</a>' : '') + '</td>' +
       '<td style="padding:10px 12px">' + esc(d.unidade||'—') + '</td>' +
       '<td style="padding:10px 12px">' + esc(d.tipo||'—') + '</td>' +
       '<td style="padding:10px 12px">' + esc(d.responsavel||'—') + '</td>' +
       '<td style="padding:10px 12px">' + esc(d.cargo||'—') + '</td>' +
-      '<td style="padding:10px 12px">' + esc(d.dataVencimento||'—') + '</td>' +
-      '<td style="padding:10px 12px;text-align:center;font-weight:700;color:'+diasColor+'">' + diasStr + '</td>' +
+      '<td style="padding:10px 12px">' + _vencFmtBR(d.dataVencimento) + '</td>' +
+      '<td style="padding:10px 12px;text-align:center;font-weight:700;color:'+f.chip+'">' + f.txt + '</td>' +
       '<td style="padding:10px 12px">' + statusBadge + '</td>' +
       '<td style="padding:10px 12px;text-align:right;white-space:nowrap">' +
         '<button onclick="vencRenew(\''+d.id+'\')" style="background:#dcfce7;color:#15803d;border:0;padding:4px 8px;border-radius:5px;cursor:pointer;font-size:11px;margin-right:4px">↻ Renovar</button>' +
@@ -2702,6 +2877,22 @@ function renderVencimentos() {
         '<button onclick="vencDelete(\''+d.id+'\')" style="background:#fee2e2;color:#b91c1c;border:0;padding:4px 8px;border-radius:5px;cursor:pointer;font-size:11px">🗑</button>' +
       '</td>' +
     '</tr>';
+  }).join('');
+
+  // cartões (mobile)
+  if(cards) cards.innerHTML = rows.map(function(d){
+    var f=_vencFarol(d);
+    return '<div class="card" style="border-left:4px solid '+f.cor+'"><div class="card-body" style="padding:12px 14px">'
+      +'<div style="display:flex;justify-content:space-between;gap:8px;align-items:flex-start"><div style="font-weight:700;font-size:13.5px;color:#0d2137">'+esc(d.nome||'—')+'</div>'
+      +'<span style="font-size:10.5px;font-weight:700;color:'+f.chip+';white-space:nowrap">'+f.txt+'</span></div>'
+      +'<div style="font-size:11.5px;color:#64748b;margin-top:6px;line-height:1.6">'+esc(d.unidade||'—')+' · '+esc(d.tipo||'—')+'<br>👤 '+esc(d.responsavel||'—')+'<br>📅 '+_vencFmtBR(d.dataVencimento)+'</div>'
+      +'<div style="display:flex;justify-content:space-between;align-items:center;margin-top:10px">'
+      +'<div>'+(d.pasta?'<a href="'+esc(d.pasta)+'" target="_blank" style="font-size:11px;color:#1565c0;margin-right:8px">📂 link</a>':'')
+      +(d.filePath?'<a href="#" onclick="vencOpenFile(\''+encodeURIComponent(d.filePath)+'\');return false;" style="font-size:11px;color:#1565c0">📎 arquivo</a>':'')+'</div>'
+      +'<div><button onclick="vencRenew(\''+d.id+'\')" style="background:#dcfce7;color:#15803d;border:0;padding:4px 8px;border-radius:5px;cursor:pointer;font-size:11px;margin-right:4px">↻</button>'
+      +'<button onclick="vencEdit(\''+d.id+'\')" style="background:#dbeafe;color:#1e40af;border:0;padding:4px 8px;border-radius:5px;cursor:pointer;font-size:11px;margin-right:4px">✏️</button>'
+      +'<button onclick="vencDelete(\''+d.id+'\')" style="background:#fee2e2;color:#b91c1c;border:0;padding:4px 8px;border-radius:5px;cursor:pointer;font-size:11px">🗑</button></div>'
+      +'</div></div></div>';
   }).join('');
 }
 
@@ -2766,8 +2957,10 @@ async function vencOpenFile(pathEnc){
   try{ var r=await fetch('/api/terc?file='+pathEnc,{credentials:'include'}); var d=await r.json(); if(d.url) window.open(d.url,'_blank'); else alert('Não foi possível abrir: '+(d.error||r.status)); }
   catch(e){ alert('Erro: '+e.message); }
 }
+function _vencMark(id,bad){ var e=document.getElementById(id); if(e){ if(bad) e.classList.add('venc-bad'); else e.classList.remove('venc-bad'); } }
 async function vencSave(){
   var msg = document.getElementById('venc-msg');
+  ['venc-unidade','venc-nome','venc-data','venc-resp-email'].forEach(function(i){ _vencMark(i,false); });
   var unidade = (document.getElementById('venc-unidade').value||'').toUpperCase();
   var data = document.getElementById('venc-data').value;
   var lead = document.getElementById('venc-lead').value.split(',').map(function(s){return parseInt(s.trim(),10);}).filter(function(n){return !isNaN(n) && n>=0;});
@@ -2779,8 +2972,9 @@ async function vencSave(){
   var cargo = document.getElementById('venc-cargo').value.trim();
   var status = document.getElementById('venc-status').value;
   var pasta = document.getElementById('venc-pasta').value.trim();
-  if (!unidade) { msg.style.color='#b91c1c'; msg.textContent='Selecione a unidade.'; return; }
-  if (!data) { msg.style.color='#b91c1c'; msg.textContent='Data de vencimento é obrigatória.'; return; }
+  if (!unidade) { _vencMark('venc-unidade',true); msg.style.color='#b91c1c'; msg.textContent='Selecione a unidade.'; return; }
+  if (!data) { _vencMark('venc-data',true); msg.style.color='#b91c1c'; msg.textContent='Data de vencimento é obrigatória.'; return; }
+  if (respEmail && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(respEmail)) { _vencMark('venc-resp-email',true); msg.style.color='#b91c1c'; msg.textContent='E-mail do responsável inválido.'; return; }
   var fileInput = document.getElementById('venc-file');
   var files = (!_vencEditId && fileInput && !fileInput.disabled) ? Array.prototype.slice.call(fileInput.files) : [];
 
@@ -2797,7 +2991,7 @@ async function vencSave(){
     if (_vencEditId) {
       var idx=_vencDocs.findIndex(function(x){return x.id===_vencEditId;});
       var nome=document.getElementById('venc-nome').value.trim();
-      if(!nome){ msg.style.color='#b91c1c'; msg.textContent='Nome é obrigatório.'; return; }
+      if(!nome){ _vencMark('venc-nome',true); msg.style.color='#b91c1c'; msg.textContent='Nome é obrigatório.'; return; }
       if(idx>=0){ var cur=_vencDocs[idx];
         _vencDocs[idx]=Object.assign({},cur,{unidade:unidade,nome:nome,tipo:tipo,responsavel:resp,responsavelEmail:respEmail,cargo:cargo,dataVencimento:data,status:status,leadDays:lead,recipients:emails,pasta:pasta,updatedAt:new Date().toISOString()});
       }
@@ -2809,7 +3003,7 @@ async function vencSave(){
       }
     } else {
       var nome1=document.getElementById('venc-nome').value.trim();
-      if(!nome1){ msg.style.color='#b91c1c'; msg.textContent='Informe o nome do documento (ou anexe arquivos).'; return; }
+      if(!nome1){ _vencMark('venc-nome',true); msg.style.color='#b91c1c'; msg.textContent='Informe o nome do documento (ou anexe arquivos).'; return; }
       _vencDocs.push(baseDoc({ nome:nome1 }));
     }
     msg.textContent='Salvando…';
@@ -2866,6 +3060,21 @@ async function vencRunCheckNow(){
 <script>
 /* HISTÓRICO DE REVISÕES — fonte única (rodapé + Sobre). A cada alteração: nova entrada no topo + sobe a versão. */
 const REVISOES=[
+  {v:'2.55', data:'12/07/2026', autor:'Ayrton Ribeiro', itens:[
+    'NOVO MODULO — Condicionantes da LO (menu Gestao de documentos internos > Condicionantes LO): cadastro de licencas (validade + marco de renovacao 120 dias) e condicionantes com frequencia (unica/mensal/trimestral/semestral/anual/continua).',
+    'Condicionantes: importacao em lote (colar da planilha), painel com anel de cumprimento, KPIs clicaveis, regua de 90 dias, calendario anual de obrigacoes e dossie imprimivel para fiscalizacao/renovacao.',
+    'Condicionantes: avisos automaticos por e-mail no cron diario (7h30) — antecedencia conforme a frequencia (mensal 7/3/1; trimestral 15/7/1; demais 30/15/7/1); vencida = cobranca diaria com gestores da unidade a partir do 3o dia; alertas do marco de 120 dias da renovacao da LO.',
+    'Condicionantes: registro de cumprimento por link publico (cumprir.html, sem login) com data + protocolo + evidencia (anexo, link ou pasta padrao); proxima ocorrencia agendada automaticamente; link renovado apos cada uso.',
+    'Novas rotas: /api/condlo e /cumprir.html (publicas no middleware, com validacao por sessao/token).'
+  ]},
+  {v:'2.54', data:'12/07/2026', autor:'Ayrton Ribeiro', itens:[
+    'Documentos internos (Vencimentos): KPIs clicaveis (filtro rapido), busca sem acento, ordenacao por coluna, chips de filtros ativos com contador e "limpar tudo".',
+    'Documentos internos: farol de criticidade na linha, data em formato brasileiro, telas vazias distintas (sem cadastro vs sem resultado de filtro).',
+    'Documentos internos: nova visao "Matriz por unidade" (tipos x unidades; celula vazia indica possivel pendencia legal; clique filtra a lista).',
+    'Documentos internos: modal de cadastro reorganizado em secoes (Documento / Responsavel / Vencimento & alertas / Anexo) com validacao campo a campo; tipos PGR e PCMSO nas sugestoes.',
+    'Documentos internos: versao mobile em cartoes (tabela vira cards em telas estreitas).',
+    'Cron diario movido de 5h para 7h30 (Brasilia).'
+  ]},
   {v:'2.53', data:'23/06/2026', autor:'Ayrton Ribeiro', itens:[
     'SEGURANCA (backup): /api/backup nao confia mais em User-Agent vercel-cron (forjavel) — exige o segredo do cron (Authorization: Bearer CRON_SECRET). Antes era possivel baixar TODO o banco sem login.',
     'SEGURANCA (portal-cron): mesma correcao — exige o segredo do cron.',

@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Registrar cumprimento — Central SGI</title>
+<style>
+  *{box-sizing:border-box}
+  body{margin:0;font-family:'Segoe UI',system-ui,sans-serif;background:#f1f5f9;color:#0f172a;padding:20px 14px}
+  .card{max-width:560px;margin:0 auto;background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 4px 20px rgba(0,0,0,.08)}
+  .head{background:#0d2137;color:#fff;padding:18px 22px}
+  .head .t{font-size:15px;font-weight:700}
+  .head .s{font-size:12px;opacity:.75;margin-top:3px}
+  .body{padding:22px}
+  .info{background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:12px 14px;font-size:12.5px;color:#334155;line-height:1.7;margin-bottom:18px}
+  .info strong{color:#0d2137}
+  label{display:block;font-size:11.5px;color:#64748b;margin-bottom:12px}
+  input[type=date],input[type=text],input[type=url],textarea{width:100%;padding:9px 11px;border:1px solid #cbd5e1;border-radius:6px;margin-top:4px;font-size:13.5px;font-family:inherit}
+  textarea{resize:vertical;min-height:60px}
+  .ev-opt{display:flex;gap:8px;align-items:flex-start;border:1px solid #e2e8f0;border-radius:8px;padding:10px 12px;margin-top:8px;cursor:pointer}
+  .ev-opt.sel{border-color:#15803d;background:#f0fdf4}
+  .ev-opt input{margin-top:2px}
+  .ev-opt .tt{font-size:12.5px;font-weight:700;color:#0d2137}
+  .ev-opt .dd{font-size:11px;color:#64748b;margin-top:2px}
+  .ev-extra{margin:8px 0 0 26px;display:none}
+  .bad{border-color:#b91c1c !important;background:#fef2f2 !important}
+  button.go{width:100%;background:#15803d;color:#fff;border:0;border-radius:8px;padding:13px;font-size:14px;font-weight:700;cursor:pointer;margin-top:6px}
+  button.go:disabled{opacity:.6;cursor:default}
+  #msg{font-size:12px;min-height:18px;margin-top:10px;color:#64748b}
+  .ok-box{text-align:center;padding:30px 10px}
+  .ok-box .big{font-size:44px}
+  .ok-box h2{color:#15803d;margin:10px 0 6px}
+  .ok-box p{color:#64748b;font-size:13px;line-height:1.7}
+  .foot{text-align:center;font-size:11px;color:#94a3b8;margin-top:14px}
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="head">
+    <div class="t">✓ Registrar cumprimento de condicionante</div>
+    <div class="s" id="head-sub">Central SGI · carregando…</div>
+  </div>
+  <div class="body" id="body">
+    <div id="loading" style="text-align:center;color:#94a3b8;padding:30px">Carregando…</div>
+  </div>
+</div>
+<div class="foot">Central SGI — link individual e protegido. Em caso de dúvida, fale com o SGI.</div>
+
+<script>
+var qs=new URLSearchParams(location.search);
+var ID=qs.get('id')||'', TOKEN=qs.get('token')||'';
+var COND=null;
+function esc(s){ return String(s||'').replace(/[<>&"]/g,function(c){return {'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;'}[c];}); }
+function fmtBR(d){ var m=String(d||'').match(/^(\d{4})-(\d{2})-(\d{2})/); return m? m[3]+'/'+m[2]+'/'+m[1] : '—'; }
+
+async function load(){
+  var body=document.getElementById('body');
+  if(!ID||!TOKEN){ body.innerHTML='<div class="info" style="color:#b91c1c">Link incompleto. Use o botão do e-mail.</div>'; return; }
+  try{
+    var r=await fetch('/api/condlo?cumprir=1&id='+encodeURIComponent(ID)+'&token='+encodeURIComponent(TOKEN));
+    var d=await r.json();
+    if(!r.ok||!d.ok) throw new Error(d.error||('Erro '+r.status));
+    COND=d.cond;
+    document.getElementById('head-sub').textContent=(COND.licenca? (COND.licenca.numero+' · '+(COND.licenca.unidade||'')) : 'Central SGI');
+    var hoje=new Date().toISOString().slice(0,10);
+    body.innerHTML=''
+      +'<div class="info"><strong>Condicionante '+esc(COND.num||'')+'</strong> — '+esc(COND.descricao)
+      +'<br>Frequência: <strong>'+esc(COND.frequencia||'-')+'</strong>'
+      +(COND.proximoPrazo? ' · Prazo: <strong>'+fmtBR(COND.proximoPrazo)+'</strong>':'')
+      +(COND.responsavel? ' · Responsável: <strong>'+esc(COND.responsavel)+'</strong>':'')+'</div>'
+      +'<label>Data do cumprimento *<input type="date" id="f-data" value="'+hoje+'"></label>'
+      +'<label>Nº do protocolo / recibo no órgão *<input type="text" id="f-prot" placeholder="ex: Protocolo IAT 2026-08871"></label>'
+      +'<div style="font-size:11.5px;color:#64748b">Evidência * — escolha UMA forma:</div>'
+      +evOpt('anexo','📎 Anexar arquivo','O comprovante fica guardado no sistema (recomendado).', '<input type="file" id="f-file" style="font-size:12.5px">')
+      +evOpt('link','🔗 Link do arquivo ou pasta','Drive, SharePoint etc. Confira se o acesso está liberado.', '<input type="url" id="f-link" placeholder="https://drive.google.com/...">')
+      +(COND.pastaPadrao? evOpt('pasta','📂 Está na pasta padrão','Usa a pasta já cadastrada: '+esc(COND.pastaPadrao).slice(0,60)+'…','') : '')
+      +'<label style="margin-top:12px">Observação (opcional)<textarea id="f-obs" placeholder="ex: laudo dentro dos padrões"></textarea></label>'
+      +'<button class="go" id="go" onclick="enviar()">Salvar registro</button>'
+      +'<div id="msg"></div>';
+  }catch(e){ body.innerHTML='<div class="info" style="color:#b91c1c">'+esc(e.message)+'</div>'; }
+}
+function evOpt(val,tt,dd,extra){
+  return '<div class="ev-opt" id="opt-'+val+'" onclick="pick(\''+val+'\')">'
+    +'<input type="radio" name="ev" value="'+val+'" id="rd-'+val+'">'
+    +'<div style="flex:1"><div class="tt">'+tt+'</div><div class="dd">'+dd+'</div>'
+    +(extra? '<div class="ev-extra" id="ex-'+val+'">'+extra+'</div>':'')+'</div></div>';
+}
+function pick(v){
+  ['anexo','link','pasta'].forEach(function(x){
+    var o=document.getElementById('opt-'+x), r=document.getElementById('rd-'+x), e=document.getElementById('ex-'+x);
+    if(o) o.classList.toggle('sel',x===v);
+    if(r) r.checked=(x===v);
+    if(e) e.style.display=(x===v)?'block':'none';
+  });
+}
+async function enviar(){
+  var msg=document.getElementById('msg'), go=document.getElementById('go');
+  var data=document.getElementById('f-data'), prot=document.getElementById('f-prot');
+  [data,prot].forEach(function(e){e.classList.remove('bad');});
+  var ev=(document.querySelector('input[name=ev]:checked')||{}).value||'';
+  if(!data.value){ data.classList.add('bad'); msg.style.color='#b91c1c'; msg.textContent='Informe a data.'; return; }
+  if(!prot.value.trim()){ prot.classList.add('bad'); msg.style.color='#b91c1c'; msg.textContent='Informe o protocolo/recibo.'; return; }
+  if(!ev){ msg.style.color='#b91c1c'; msg.textContent='Escolha a forma da evidência.'; return; }
+  var fd=new FormData();
+  fd.append('data',data.value); fd.append('protocolo',prot.value.trim());
+  fd.append('obs',(document.getElementById('f-obs').value||'').trim()); fd.append('evTipo',ev);
+  if(ev==='anexo'){
+    var f=document.getElementById('f-file');
+    if(!f.files.length){ msg.style.color='#b91c1c'; msg.textContent='Anexe o comprovante.'; return; }
+    fd.append('file',f.files[0]);
+  }
+  if(ev==='link'){
+    var l=document.getElementById('f-link');
+    if(!/^https?:\/\//i.test(l.value.trim())){ l.classList.add('bad'); msg.style.color='#b91c1c'; msg.textContent='Cole um link válido (https://...).'; return; }
+    fd.append('evLink',l.value.trim());
+  }
+  go.disabled=true; msg.style.color='#64748b'; msg.textContent='Enviando…';
+  try{
+    var r=await fetch('/api/condlo?cumprir=1&id='+encodeURIComponent(ID)+'&token='+encodeURIComponent(TOKEN),{method:'POST',body:fd});
+    var d=await r.json();
+    if(!r.ok||!d.ok) throw new Error(d.error||('Erro '+r.status));
+    var prox = d.atendida ? 'Condicionante única: marcada como <strong>atendida</strong>.'
+      : (d.proximoPrazo ? 'Próxima ocorrência agendada para <strong>'+fmtBR(d.proximoPrazo)+'</strong> — você receberá novo aviso na hora certa.' : 'Registro salvo.');
+    document.getElementById('body').innerHTML='<div class="ok-box"><div class="big">✅</div><h2>Registro salvo!</h2><p>'+prox+'<br><br>Pode fechar esta página.</p></div>';
+  }catch(e){ go.disabled=false; msg.style.color='#b91c1c'; msg.textContent=e.message; }
+}
+load();
+</script>
+</body>
+</html>

@@ -4,7 +4,7 @@ const LOGIN_PAGE = '/login.html';
 // SEGURANCA: /api/save e /api/load NAO sao publicas — sao usadas apenas pelas paginas internas
 // (atras de login). Deixa-las publicas permitia ler/escrever QUALQUER chave do Redis sem sessao.
 // /api/backup fica publica por ser alvo de cron e ter autenticacao propria (segredo do cron).
-const PUBLIC_PATHS = ['/login.html', '/assets', '/api/auth', '/api/backup', '/api/renew_document', '/renew.html', '/rnc.html', '/favicon.ico', '/portal.html', '/portal_docs.html', '/api/portal-auth', '/api/portal-docs', '/api/portal-upload', '/api/portal-invite', '/api/portal-cron'];
+const PUBLIC_PATHS = ['/login.html', '/assets', '/api/auth', '/api/backup', '/api/renew_document', '/renew.html', '/rnc.html', '/favicon.ico', '/portal.html', '/portal_docs.html', '/api/portal-auth', '/api/portal-docs', '/api/portal-upload', '/api/portal-invite', '/api/portal-cron', '/cumprir.html', '/api/condlo'];
 
 const REDIS_URL   = (process.env.KV_REST_API_URL   || process.env.UPSTASH_REDIS_REST_URL   || '').trim().replace(/^["']|["']$/g, '');
 const REDIS_TOKEN = (process.env.KV_REST_API_TOKEN || process.env.UPSTASH_REDIS_REST_TOKEN || '').trim().replace(/^["']|["']$/g, '');

@@ -6,6 +6,7 @@
 const { Redis } = require('@upstash/redis');
 const { sendMail, gmailConfigured } = require('../lib/gmail');
 const { checkDocint } = require('../lib/docint');
+const { checkCondLo } = require('../lib/condlo');
 
 const REDIS_URL   = (process.env.KV_REST_API_URL   || process.env.UPSTASH_REDIS_REST_URL   || '').trim();
 const REDIS_TOKEN = (process.env.KV_REST_API_TOKEN || process.env.UPSTASH_REDIS_REST_TOKEN || '').trim();
@@ -163,5 +164,11 @@ module.exports = async function handler(req, res) {
   try { docint = await checkDocint(redis, { sendMail, gmailConfigured }, BASE_URL); }
   catch (e) { docint = { ok: false, error: e.message }; }
 
-  return res.status(200).json({ ok: true, fornecedores: report.fornecedores, internos: report.internos, erros: report.erros, detalhes: report.detalhes, docint: docint });
+  // Condicionantes da LO: avisos por frequencia + marco de renovacao (120 dias)
+  let condlo = null;
+  try { condlo = await checkCondLo(redis, { sendMail, gmailConfigured }, BASE_URL); }
+  catch (e) { condlo = { ok: false, error: e.message }; }
+
+  return res.status(200).json({ ok: true, fornecedores: report.fornecedores, internos: report.internos, erros: report.erros, detalhes: report.detalhes, docint: docint, condlo: condlo });
 };
+
