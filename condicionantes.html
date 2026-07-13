@@ -89,6 +89,7 @@
   <span class="logo">◈ METIS</span>
   <h1>Condicionantes da Licença de Operação</h1>
   <div class="acts">
+    <button class="btn btn-ghost" onclick="mOpen('m-ajuda')" title="Guia rápido de uso">❓ Como usar</button>
     <select id="sel-lic" onchange="render()" style="padding:7px 10px;border:1px solid var(--line);border-radius:6px;font-size:12px"></select>
     <button class="btn btn-ghost" id="b-lic" onclick="licOpen()">🏭 Licença</button>
     <button class="btn btn-ghost" id="b-imp" onclick="impOpen()">📥 Importar em lote</button>
@@ -247,6 +248,70 @@
 <div class="modal" id="m-hist"><div class="mc">
   <div class="mh"><b>Histórico de cumprimentos</b><button onclick="mClose('m-hist')">×</button></div>
   <div class="mb" id="hist-body"></div>
+</div></div>
+
+<!-- MODAL AJUDA / COMO USAR -->
+<div class="modal" id="m-ajuda"><div class="mc">
+  <div class="mh"><b>❓ Como usar a Gestão de Condicionantes</b><button onclick="mClose('m-ajuda')">×</button></div>
+  <div class="mb" style="gap:14px;font-size:12.5px;color:#334155;line-height:1.75">
+
+    <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:12px">
+      <strong style="color:var(--green)">A ideia em uma frase:</strong> você cadastra uma vez — depois o sistema
+      avisa por e-mail quem tem que agir, a pessoa registra o cumprimento em 1 minuto pelo próprio e-mail,
+      e este painel mostra a situação real da licença sem ninguém precisar cobrar ninguém.
+    </div>
+
+    <div>
+      <div class="venc-sec-title" style="font-size:11px;font-weight:700;color:var(--navy);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">1 · Comece pela licença</div>
+      Clique em <strong>🏭 Licença</strong> e preencha os dados da LO (nº, órgão, unidade, emissão e validade).
+      A validade alimenta a barra do topo e o alerta do <strong>marco de 120 dias</strong> — o prazo legal para
+      protocolar a renovação. Quando o pedido for protocolado, edite a licença e registre a data: os alertas de renovação param.
+    </div>
+
+    <div>
+      <div style="font-size:11px;font-weight:700;color:var(--navy);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">2 · Traga as condicionantes</div>
+      O caminho rápido é <strong>📥 Importar em lote</strong>: anexe o <strong>PDF da licença</strong> e clique em
+      <strong>🤖 Extrair do PDF</strong> — a IA lê o documento e preenche tudo (nº, descrição, frequência, prazo).
+      <strong>Confira as linhas antes de importar</strong> — frequência e prazo são responsabilidade sua.
+      Também dá para colar direto da planilha (uma linha por condicionante, campos separados por ponto-e-vírgula)
+      ou cadastrar uma a uma no <strong>＋ Condicionante</strong>.
+    </div>
+
+    <div>
+      <div style="font-size:11px;font-weight:700;color:var(--navy);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">3 · Deixe o robô trabalhar</div>
+      Todo dia às <strong>7h30</strong> o sistema confere os prazos e envia e-mail ao responsável
+      (mensal avisa com 7/3/1 dias; trimestral 15/7/1; semestral/anual/única 30/15/7/1).
+      Condicionante <strong>vencida</strong> recebe cobrança diária — e no 3º dia os gestores da unidade
+      entram no aviso. O botão <strong>▶ Verificar agora</strong> dispara a checagem na hora, sem esperar as 7h30.
+    </div>
+
+    <div>
+      <div style="font-size:11px;font-weight:700;color:var(--navy);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">4 · Registrar um cumprimento</div>
+      Quem recebeu o e-mail clica em <strong>“Registrar cumprimento”</strong> e informa data, nº do protocolo e a
+      evidência (anexo, link, ou “está na pasta padrão”) — <strong>sem precisar de login</strong>. O sistema agenda a
+      próxima ocorrência sozinho. Aqui no painel também dá: botão <strong>✓ Registrar</strong> no card.
+      O botão <strong>🔗</strong> copia o link público para mandar a alguém anexar o comprovante.
+    </div>
+
+    <div>
+      <div style="font-size:11px;font-weight:700;color:var(--navy);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">5 · Ler o painel em segundos</div>
+      <strong>Anel</strong> = quantas condicionantes estão em dia, do total. <strong>Cartões coloridos</strong> = clique
+      para filtrar (vermelho vencida · laranja vence em até 30 dias · azul em dia · verde atendida).
+      <strong>Régua</strong> = o que vence nos próximos 90 dias. <strong>Calendário</strong> = os meses de cada
+      obrigação recorrente no ano. <strong>📜 Histórico</strong> no card mostra cada cumprimento com protocolo e evidência.
+    </div>
+
+    <div>
+      <div style="font-size:11px;font-weight:700;color:var(--navy);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">6 · Fiscalização ou renovação chegou?</div>
+      <strong>📦 Dossiê</strong> gera uma página pronta para imprimir/PDF com todas as condicionantes,
+      status, responsáveis e o histórico completo de protocolos e evidências.
+    </div>
+
+    <div class="hint" style="border-top:1px dashed var(--line);padding-top:10px">
+      Quem pode o quê: <strong>ADM e SGI</strong> fazem tudo · <strong>Gestor</strong> edita e registra ·
+      demais usuários consultam. Dúvidas: fale com o SGI.
+    </div>
+  </div>
 </div></div>
 
 <script>
@@ -719,7 +784,7 @@ function dossie(){
 // ── modais ──
 function mOpen(id){ document.getElementById(id).style.display='flex'; }
 function mClose(id){ document.getElementById(id).style.display='none'; }
-['m-lic','m-cond','m-imp','m-cum','m-hist'].forEach(function(id){
+['m-lic','m-cond','m-imp','m-cum','m-hist','m-ajuda'].forEach(function(id){
   document.getElementById(id).addEventListener('click',function(e){ if(e.target===this) mClose(id); });
 });
 
