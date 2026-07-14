@@ -343,7 +343,7 @@
 try{ if(window.self!==window.top) document.body.classList.add('embedded'); }
 catch(e){ document.body.classList.add('embedded'); }
 
-var LICS=[], CONDS=[], ME={canEdit:false}, quick='', licEditId=null, condEditId=null, cumId=null;
+var LICS=[], CONDS=[], ME={canEdit:false}, SOLTPL=null, quick='', licEditId=null, condEditId=null, cumId=null;
 var FREQ_LBL={unica:'Única',mensal:'Mensal',trimestral:'Trimestral',semestral:'Semestral',anual:'Anual',continua:'Contínua'};
 
 function esc(s){ return String(s||'').replace(/[<>&"]/g,function(c){return {'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;'}[c];}); }
@@ -374,7 +374,7 @@ async function load(){
     var r=await fetch('/api/condlo',{credentials:'include'});
     var d=await r.json();
     if(!r.ok||!d.ok) throw new Error(d.error||('Erro '+r.status));
-    LICS=d.licencas||[]; CONDS=d.conds||[]; ME=d.me||{canEdit:false};
+    LICS=d.licencas||[]; CONDS=d.conds||[]; ME=d.me||{canEdit:false}; SOLTPL=d.solTemplate||null;
     if(!ME.canEdit){ ['b-lic','b-imp','b-new','b-check'].forEach(function(i){var e=document.getElementById(i); if(e) e.style.display='none';}); }
     fillLicSel(); render();
   }catch(e){
@@ -406,7 +406,7 @@ async function persist(extra){
   // recarrega estado canônico (tokens/históricos gerados no servidor)
   var r2=await fetch('/api/condlo',{credentials:'include'});
   var d2=await r2.json();
-  if(r2.ok&&d2.ok){ LICS=d2.licencas||[]; CONDS=d2.conds||[]; }
+  if(r2.ok&&d2.ok){ LICS=d2.licencas||[]; CONDS=d2.conds||[]; SOLTPL=d2.solTemplate||null; }
 }
 
 // ── render geral ──
@@ -832,10 +832,23 @@ async function solSave(){
     var r=await fetch('/api/condlo?solicitar=1',{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify({condId:solId,assunto:assunto,corpo:corpo})});
     var d=await r.json();
     if(!r.ok||!d.ok) throw new Error(d.error||('Erro '+r.status));
+    // salvar como modelo padrão: troca os dados desta condicionante de volta pelos campos automáticos
+    if(document.getElementById('sol-padrao').checked){
+      var c=CONDS.find(function(x){return x.id===solId;})||{};
+      var lic=LICS.find(function(l){return l.id===c.licencaId;})||{};
+      var v=solVals(c,lic);
+      var ta=assunto, tc=corpo;
+      Object.keys(v).map(function(k){return [v[k],'{'+k+'}'];})
+        .filter(function(p){return p[0]&&String(p[0]).length>2;})
+        .sort(function(a,b){return String(b[0]).length-String(a[0]).length;})
+        .forEach(function(p){ ta=ta.split(p[0]).join(p[1]); tc=tc.split(p[0]).join(p[1]); });
+      SOLTPL={assunto:ta,corpo:tc};
+      try{ await persist({solTemplate:SOLTPL}); }catch(e){}
+    }
     var r2=await fetch('/api/condlo',{credentials:'include'}); var d2=await r2.json();
-    if(r2.ok&&d2.ok){ LICS=d2.licencas||[]; CONDS=d2.conds||[]; }
+    if(r2.ok&&d2.ok){ LICS=d2.licencas||[]; CONDS=d2.conds||[]; SOLTPL=d2.solTemplate||SOLTPL; }
     mClose('m-sol'); render();
-    alert('Solicitação enviada para '+d.para+'.\nFicou registrada no histórico da condicionante.');
+    alert('Solicitação enviada para '+d.para+'.\nFicou registrada no histórico da condicionante.'+(document.getElementById('sol-padrao').checked?'\nMensagem salva como modelo padrão.':''));
   }catch(e){ msg.style.color='#b91c1c'; msg.textContent=e.message; }
   btn.disabled=false;
 }
