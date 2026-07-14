@@ -319,8 +319,10 @@
       <div style="font-size:11px;font-weight:700;color:var(--navy);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">5 · Ler o painel em segundos</div>
       <strong>Anel</strong> = quantas condicionantes estão em dia, do total. <strong>Cartões coloridos</strong> = clique
       para filtrar (vermelho vencida · laranja vence em até 30 dias · azul em dia · azul-petróleo <strong>em monitoramento</strong>
-      — qualquer condicionante <strong>sem prazo definido</strong> (contínua ou única declaratória): sem ação pendente,
-      use 📝 Anotar para deixar registro; para ela voltar a ser cobrada, basta editar e definir um prazo · verde atendida). Condicionante com empresa executora
+      — condicionante <strong>contínua ou única sem prazo</strong> (declaratória): sem ação pendente,
+      use 📝 Anotar para deixar registro; para ela voltar a ser cobrada, basta editar e definir um prazo · verde atendida).
+      Atenção: recorrente (mensal, trimestral, semestral, anual) <strong>sem data definida</strong> aparece em laranja
+      com o aviso “definir prazo” — ela exige agendamento, não entra em monitoramento. Condicionante com empresa executora
       cadastrada ganha o botão <strong>✉️ Solicitar</strong>: e-mail pronto para o laboratório, com o responsável em cópia.
       <strong>Régua</strong> = o que vence nos próximos 90 dias. <strong>Calendário</strong> = os meses de cada
       obrigação recorrente no ano. <strong>📜 Histórico</strong> no card mostra cada cumprimento com protocolo e evidência.
@@ -362,7 +364,11 @@ function curLic(){ var id=document.getElementById('sel-lic').value; return LICS.
 function statusOf(c){
   if(c.atendida) return 'atendida';
   var x=dias(c.proximoPrazo);
-  if(x===null) return 'monit'; // sem prazo definido = em monitoramento (contínua ou única declaratória)
+  if(x===null){
+    var f=String(c.frequencia||'').toLowerCase();
+    if(f==='continua'||f==='unica') return 'monit'; // declaratórias: em monitoramento
+    return 'atencao'; // recorrente (mensal/trimestral/semestral/anual) sem prazo = falta agendar!
+  }
   if(x<0) return 'vencida';
   if(x<=30) return 'atencao';
   return 'emdia';
@@ -531,7 +537,7 @@ function renderList(conds){
   if(!rows.length){ list.innerHTML='<div class="card empty" style="margin-top:10px">🔍 Nada com os filtros atuais.</div>'; return; }
   list.innerHTML=rows.map(function(c){
     var st=statusOf(c), cor=ST[st][1], d=dias(c.proximoPrazo);
-    var prazo=c.atendida?'cumprida':(c.proximoPrazo? fmtBR(c.proximoPrazo)+' <strong style="color:'+cor+'">('+(d<0?Math.abs(d)+'d vencida':d+'d')+')</strong>':(st==='monit'?'em monitoramento — sem prazo definido':'contínua'));
+    var prazo=c.atendida?'cumprida':(c.proximoPrazo? fmtBR(c.proximoPrazo)+' <strong style="color:'+cor+'">('+(d<0?Math.abs(d)+'d vencida':d+'d')+')</strong>':(st==='monit'?'em monitoramento — sem prazo definido':'<strong style="color:#c2410c">⚠ recorrente sem prazo — edite (✏️) e defina a data</strong>'));
     var h0=c.historico&&c.historico[0];
     var ult=h0?('Último: '+fmtBR(h0.data)+' · '+esc(h0.protocolo||String(h0.obs||'').slice(0,40)||'registro')):'Sem registro ainda';
     return '<div class="cond" style="border-left-color:'+cor+'">'
