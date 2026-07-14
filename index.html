@@ -508,7 +508,8 @@ body.dark #user-menu-header { background: #0f172a; }
       </div>
 
       <!-- MTE sub-item -->
-      <div class="nav-item-sub" id="nav-sub-mte-item" onclick="navigate('mte', this)">
+      <div class="nav-item-sub" onclick="navigate('cincos', this)"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M5 13l4 4L19 7"/></svg><span>5S</span></div>
+          <div class="nav-item-sub" id="nav-sub-mte-item" onclick="navigate('mte', this)">
         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3-4v4m0 0l-2-2m2 2l2-2"/></svg>
         <span>MTE</span>
       </div>
@@ -754,7 +755,8 @@ body.dark #user-menu-header { background: #0f172a; }
     </div>
 
     <!-- ══ PAGE: ESCOPO ══ -->
-    <div class="page" id="page-escopo" style="margin:0;height:calc(100vh - var(--header-h));overflow:hidden;">
+    <div class="page" id="page-cincos" style="margin:0;height:calc(100vh - var(--header-h));overflow:hidden;"><iframe id="cincos-frame" style="width:100%;height:100%;border:none;display:block;" allowfullscreen></iframe></div>
+  <div class="page" id="page-escopo" style="margin:0;height:calc(100vh - var(--header-h));overflow:hidden;">
       <iframe id="escopo-frame" style="width:100%;height:100%;border:none;display:block;" allowfullscreen></iframe>
     </div>
 
@@ -1202,7 +1204,8 @@ function buildRadar() {
 }
 
 // ── NAVIGATION ─────────────────────────────────────────────────────
-const pages = { home:'Dashboard', auditoria:'Auditoria Interna', mte:'Auditorias MTE', relatorios:'Relatórios', vencimentos:'Documentos · Vencimentos', condicionantes:'Documentos · Condicionantes da LO', escopo:'Escopo · Auditoria', mapa:'Mapa de Processos · IP & MCR', manual:'Manual', configuracoes:'Configurações' };
+const pages = {
+  cincos: '5S · Auditoria', home:'Dashboard', auditoria:'Auditoria Interna', mte:'Auditorias MTE', relatorios:'Relatórios', vencimentos:'Documentos · Vencimentos', condicionantes:'Documentos · Condicionantes da LO', escopo:'Escopo · Auditoria', mapa:'Mapa de Processos · IP & MCR', manual:'Manual', configuracoes:'Configurações' };
 
 // Botões de ação por página — chamam funções do iframe injetado
 const PAGE_ACTIONS = {
@@ -1332,7 +1335,7 @@ function navigate(pageId, navEl) {
     if (hg) hg.classList.add('open');
     if (hge) hge.classList.add('open');
   }
-  if (pageId === 'auditoria' || pageId === 'programa' || pageId === 'escopo') {
+  if (pageId === 'auditoria' || pageId === 'programa' || pageId === 'escopo' || pageId === 'cincos') {
     var g = document.getElementById('nav-sub-auditoria-group');
     var ge = document.getElementById('nav-expand-auditoria-group');
     if (g) g.classList.add('open');
@@ -1408,6 +1411,9 @@ function navigate(pageId, navEl) {
       frame.src = 'ip-mcr.html';
       frame.setAttribute('data-loaded', '1');
     }
+  } else if (pageId === 'cincos') {
+    var frame = document.getElementById('cincos-frame');
+    if (frame && !frame.getAttribute('data-loaded')) { frame.src = 'cincos.html'; frame.setAttribute('data-loaded', '1'); }
   } else if (pageId === 'escopo') {
     var frame = document.getElementById('escopo-frame');
     if (frame && !frame.getAttribute('data-loaded')) {
@@ -3060,6 +3066,14 @@ async function vencRunCheckNow(){
 <script>
 /* HISTÓRICO DE REVISÕES — fonte única (rodapé + Sobre). A cada alteração: nova entrada no topo + sobe a versão. */
 const REVISOES=[
+  {v:'2.64', data:'14/07/2026', autor:'Ayrton Ribeiro', itens:[
+    'Condicionantes da LO: correcao na regra do "Em monitoramento" — vale APENAS para continuas e unicas sem prazo (declaratorias). Recorrentes (mensal/trimestral/semestral/anual) sem data definida vao para Atencao (laranja) com o aviso "recorrente sem prazo — defina a data", pois exigem agendamento.'
+  ]},
+  {v:'2.63', data:'14/07/2026', autor:'Ayrton Ribeiro', itens:[
+    'NOVO MODULO — 5S (menu Auditoria > 5S): ronda por setor com nota 0-5 e regua de criterios editavel, fotos com compressao no celular, acao obrigatoria automatica em notas 0-2, dashboard com evolucao das medias, comparacao de rondas e cadastros (setores, unidades, matriz).',
+    '5S: acesso de campo por link sem senha (perfil CAMPO_5S), amarrado a um aparelho e a uma unidade; isolamento por unidade validado no servidor.',
+    'Novas chaves cincos_* em /api/save (guard5S), acoes campo-* em /api/auth e upload de fotos kind=cincos em /api/renew_document.'
+  ]},
   {v:'2.62', data:'13/07/2026', autor:'Ayrton Ribeiro', itens:[
     'Condicionantes da LO: modelo padrao do e-mail de solicitacao — ao enviar, marque "Salvar esta mensagem como modelo padrao" e as proximas solicitacoes (de qualquer condicionante) abrem com o seu texto, com numero, descricao, licenca, unidade, prazo e responsavel preenchidos automaticamente.'
   ]},
