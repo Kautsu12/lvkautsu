@@ -134,7 +134,7 @@
   <div class="sec-h">Condicionantes</div>
   <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
     <select id="f-status" onchange="render()" style="padding:7px 10px;border:1px solid var(--line);border-radius:6px;font-size:12px">
-      <option value="">Status (todos)</option><option value="vencida">Vencida</option><option value="atencao">Atenção (≤30d)</option><option value="emdia">Em dia</option><option value="atendida">Atendida</option>
+      <option value="">Status (todos)</option><option value="vencida">Vencida</option><option value="atencao">Atenção (≤30d)</option><option value="emdia">Em dia</option><option value="monit">Em monitoramento</option><option value="atendida">Atendida</option>
     </select>
     <select id="f-freq" onchange="render()" style="padding:7px 10px;border:1px solid var(--line);border-radius:6px;font-size:12px">
       <option value="">Frequência (todas)</option><option value="unica">Única</option><option value="mensal">Mensal</option><option value="trimestral">Trimestral</option><option value="semestral">Semestral</option><option value="anual">Anual</option><option value="continua">Contínua</option>
@@ -194,6 +194,10 @@
       <label>Responsável<input id="c-resp" type="text"></label>
       <label>E-mail do responsável (recebe os avisos)<input id="c-email" type="email" placeholder="responsavel@empresa.com"></label>
     </div>
+    <div class="row2">
+      <label>Empresa executora (laboratório/consultoria)<input id="c-emp" type="text" placeholder="ex: Laboratório AquaTest"></label>
+      <label>E-mail da empresa executora<input id="c-emp-email" type="email" placeholder="contato@laboratorio.com"><span class="hint">preenchido, o card ganha o botão ✉️ Solicitar</span></label>
+    </div>
     <label>Pasta padrão de evidências (Drive/SharePoint)<input id="c-pasta" type="url" placeholder="https://drive.google.com/..."></label>
     <div id="c-msg" class="hint" style="min-height:14px"></div>
     <div style="display:flex;gap:8px">
@@ -227,14 +231,14 @@
 
 <!-- MODAL REGISTRAR CUMPRIMENTO (painel) -->
 <div class="modal" id="m-cum"><div class="mc">
-  <div class="mh"><b>✓ Registrar cumprimento</b><button onclick="mClose('m-cum')">×</button></div>
+  <div class="mh"><b id="m-cum-t">✓ Registrar cumprimento</b><button onclick="mClose('m-cum')">×</button></div>
   <div class="mb">
     <div id="cum-info" class="hint" style="background:#f8fafc;border:1px solid var(--line);border-radius:8px;padding:10px 12px;font-size:12px;color:#334155"></div>
     <div class="row2">
-      <label>Data do cumprimento *<input id="cum-data" type="date"></label>
-      <label>Protocolo / recibo *<input id="cum-prot" type="text"></label>
+      <label>Data *<input id="cum-data" type="date"></label>
+      <label id="cum-prot-wrap">Protocolo / recibo *<input id="cum-prot" type="text"></label>
     </div>
-    <label>Evidência * <span class="hint">— para ANEXAR arquivo, use o link de cumprimento (botão 🔗 no card) ou o e-mail do aviso</span>
+    <label id="cum-ev-wrap">Evidência * <span class="hint">— para ANEXAR arquivo, use o link de cumprimento (botão 🔗 no card) ou o e-mail do aviso</span>
       <select id="cum-ev"><option value="link">Link do arquivo/pasta</option><option value="pasta">Está na pasta padrão da condicionante</option></select>
     </label>
     <label id="cum-link-wrap">Link<input id="cum-link" type="url" placeholder="https://..."></label>
@@ -248,6 +252,18 @@
 <div class="modal" id="m-hist"><div class="mc">
   <div class="mh"><b>Histórico de cumprimentos</b><button onclick="mClose('m-hist')">×</button></div>
   <div class="mb" id="hist-body"></div>
+</div></div>
+
+<!-- MODAL SOLICITAR COLETA/ANÁLISE -->
+<div class="modal" id="m-sol"><div class="mc">
+  <div class="mh"><b>✉️ Solicitar coleta / análise</b><button onclick="mClose('m-sol')">×</button></div>
+  <div class="mb">
+    <div id="sol-info" class="hint" style="background:#fffbeb;border:1px solid #fcd34d;border-radius:8px;padding:10px 12px;font-size:12px;color:#92400e"></div>
+    <label>Assunto<input id="sol-assunto" type="text"></label>
+    <label>Mensagem <span class="hint">— revise/ajuste à vontade antes de enviar</span><textarea id="sol-corpo" style="min-height:170px"></textarea></label>
+    <div id="sol-msg" class="hint" style="min-height:14px"></div>
+    <button class="btn" style="background:#92400e;color:#fff;padding:11px" id="sol-btn" onclick="solSave()">✉️ Enviar solicitação</button>
+  </div>
 </div></div>
 
 <!-- MODAL AJUDA / COMO USAR -->
@@ -298,7 +314,9 @@
     <div>
       <div style="font-size:11px;font-weight:700;color:var(--navy);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">5 · Ler o painel em segundos</div>
       <strong>Anel</strong> = quantas condicionantes estão em dia, do total. <strong>Cartões coloridos</strong> = clique
-      para filtrar (vermelho vencida · laranja vence em até 30 dias · azul em dia · verde atendida).
+      para filtrar (vermelho vencida · laranja vence em até 30 dias · azul em dia · azul-petróleo <strong>em monitoramento</strong>
+      — contínua, sem ação pendente, use 📝 Anotar para deixar registro · verde atendida). Condicionante com empresa executora
+      cadastrada ganha o botão <strong>✉️ Solicitar</strong>: e-mail pronto para o laboratório, com o responsável em cópia.
       <strong>Régua</strong> = o que vence nos próximos 90 dias. <strong>Calendário</strong> = os meses de cada
       obrigação recorrente no ano. <strong>📜 Histórico</strong> no card mostra cada cumprimento com protocolo e evidência.
     </div>
@@ -339,12 +357,12 @@ function curLic(){ var id=document.getElementById('sel-lic').value; return LICS.
 function statusOf(c){
   if(c.atendida) return 'atendida';
   var x=dias(c.proximoPrazo);
-  if(x===null) return 'emdia'; // contínua sem prazo
+  if(x===null) return (String(c.frequencia||'').toLowerCase()==='continua') ? 'monit' : 'emdia'; // contínua sem prazo = em monitoramento
   if(x<0) return 'vencida';
   if(x<=30) return 'atencao';
   return 'emdia';
 }
-var ST={vencida:['Vencida','#b91c1c'],atencao:['Atenção','#c2410c'],emdia:['Em dia','#1565c0'],atendida:['Atendida','#15803d']};
+var ST={vencida:['Vencida','#b91c1c'],atencao:['Atenção','#c2410c'],emdia:['Em dia','#1565c0'],monit:['👁 Em monitoramento','#0e7490'],atendida:['Atendida','#15803d']};
 
 async function load(){
   try{
@@ -416,15 +434,15 @@ function renderLoHead(lic){
     +(lic.arquivo?'<a href="'+esc(lic.arquivo)+'" target="_blank" class="btn btn-blue" style="text-decoration:none">📄 Ver licença</a>':'');
 }
 function renderKpis(conds){
-  var n={vencida:0,atencao:0,emdia:0,atendida:0};
+  var n={vencida:0,atencao:0,emdia:0,monit:0,atendida:0};
   conds.forEach(function(c){ n[statusOf(c)]++; });
-  var tot=conds.length, ok=n.emdia+n.atendida;
+  var tot=conds.length, ok=n.emdia+n.monit+n.atendida;
   var C=2*Math.PI*48, frac=tot?ok/tot:0;
   var ring=document.getElementById('ring');
   ring.setAttribute('stroke-dasharray',(C*frac)+' '+C);
   ring.setAttribute('stroke', n.vencida? '#c2410c':'#15803d');
   document.getElementById('ring-txt').textContent=tot? (ok+'/'+tot):'—';
-  var K=[['vencida','Vencidas','#b91c1c'],['atencao','Atenção (≤30d)','#c2410c'],['emdia','Em dia','#1565c0'],['atendida','Atendidas','#15803d']];
+  var K=[['vencida','Vencidas','#b91c1c'],['atencao','Atenção (≤30d)','#c2410c'],['emdia','Em dia','#1565c0'],['monit','Em monitoramento','#0e7490'],['atendida','Atendidas','#15803d']];
   document.getElementById('kpis').innerHTML=K.map(function(k){
     return '<div class="kpi'+(quick===k[0]?' active':'')+'" style="border-left-color:'+k[2]+'" onclick="kpiClick(\''+k[0]+'\')" title="Clique para filtrar"><div class="v">'+n[k[0]]+'</div><div class="l">'+k[1]+'</div></div>';
   }).join('');
@@ -496,7 +514,7 @@ function renderList(conds){
     if(fB && !norm((c.num||'')+' '+c.descricao+' '+(c.responsavel||'')+' '+(c.responsavelEmail||'')).includes(fB)) return false;
     return true;
   }).sort(function(a,b){
-    var o={vencida:0,atencao:1,emdia:2,atendida:3};
+    var o={vencida:0,atencao:1,emdia:2,monit:3,atendida:4};
     var d=o[statusOf(a)]-o[statusOf(b)];
     if(d) return d;
     var da=dias(a.proximoPrazo), db=dias(b.proximoPrazo);
@@ -508,8 +526,9 @@ function renderList(conds){
   if(!rows.length){ list.innerHTML='<div class="card empty" style="margin-top:10px">🔍 Nada com os filtros atuais.</div>'; return; }
   list.innerHTML=rows.map(function(c){
     var st=statusOf(c), cor=ST[st][1], d=dias(c.proximoPrazo);
-    var prazo=c.atendida?'cumprida':(c.proximoPrazo? fmtBR(c.proximoPrazo)+' <strong style="color:'+cor+'">('+(d<0?Math.abs(d)+'d vencida':d+'d')+')</strong>':'contínua');
-    var ult=(c.historico&&c.historico[0])?('Último: '+fmtBR(c.historico[0].data)+' · '+esc(c.historico[0].protocolo)):'Sem registro ainda';
+    var prazo=c.atendida?'cumprida':(c.proximoPrazo? fmtBR(c.proximoPrazo)+' <strong style="color:'+cor+'">('+(d<0?Math.abs(d)+'d vencida':d+'d')+')</strong>':(st==='monit'?'monitoramento contínuo — sem prazo':'contínua'));
+    var h0=c.historico&&c.historico[0];
+    var ult=h0?('Último: '+fmtBR(h0.data)+' · '+esc(h0.protocolo||String(h0.obs||'').slice(0,40)||'registro')):'Sem registro ainda';
     return '<div class="cond" style="border-left-color:'+cor+'">'
       +'<div style="display:flex;gap:10px;justify-content:space-between;flex-wrap:wrap;align-items:flex-start">'
       +'<div style="flex:1;min-width:220px"><div class="num">CONDICIONANTE '+esc(c.num||'—')+'</div><div class="desc">'+esc(c.descricao)+'</div></div>'
@@ -523,7 +542,10 @@ function renderList(conds){
       +'<span style="margin-left:auto;white-space:nowrap">'
       +(c.historico&&c.historico.length?'<button class="rowbtn" style="background:#f1f5f9;color:#334155" onclick="histOpen(\''+c.id+'\')">📜 Histórico</button>':'')
       +(c.pastaPadrao?'<a class="rowbtn" style="background:#e0f2fe;color:#075985;text-decoration:none;display:inline-block" target="_blank" href="'+esc(c.pastaPadrao)+'">📂</a>':'')
-      +(ME.canEdit&&!c.atendida?'<button class="rowbtn" style="background:#dcfce7;color:var(--green)" onclick="cumOpen(\''+c.id+'\')">✓ Registrar</button>':'')
+      +(ME.canEdit&&c.empresaEmail?'<button class="rowbtn" style="background:#fef3c7;color:#92400e" onclick="solOpen(\''+c.id+'\')" title="Enviar e-mail à empresa executora (responsável em cópia)">✉️ Solicitar</button>':'')
+      +(ME.canEdit&&!c.atendida?(st==='monit'
+        ?'<button class="rowbtn" style="background:#cffafe;color:#0e7490" onclick="cumOpen(\''+c.id+'\',true)" title="Deixar um registro no histórico, sem evidência">📝 Anotar</button>'
+        :'<button class="rowbtn" style="background:#dcfce7;color:var(--green)" onclick="cumOpen(\''+c.id+'\')">✓ Registrar</button>'):'')
       +(ME.canEdit?'<button class="rowbtn" style="background:#e0f2fe;color:#075985" onclick="copyLink(\''+c.id+'\')" title="Copiar link público de cumprimento (permite anexar arquivo)">🔗</button>':'')
       +(ME.canEdit?'<button class="rowbtn" style="background:#dbeafe;color:#1e40af" onclick="condOpen(\''+c.id+'\')">✏️</button>':'')
       +'</span></div></div>';
@@ -591,7 +613,7 @@ function condOpen(id){
   var c=id? CONDS.find(function(x){return x.id===id;}) : null;
   document.getElementById('m-cond-t').textContent=c?'Editar condicionante':'Nova condicionante';
   document.getElementById('c-del').style.display=c?'':'none';
-  ['c-num','c-desc','c-prazo','c-resp','c-email','c-pasta'].forEach(function(i){var e=document.getElementById(i); e.value=''; e.classList.remove('bad');});
+  ['c-num','c-desc','c-prazo','c-resp','c-email','c-emp','c-emp-email','c-pasta'].forEach(function(i){var e=document.getElementById(i); e.value=''; e.classList.remove('bad');});
   document.getElementById('c-freq').value='unica';
   if(c){
     document.getElementById('c-num').value=c.num||'';
@@ -600,6 +622,8 @@ function condOpen(id){
     document.getElementById('c-prazo').value=c.proximoPrazo||'';
     document.getElementById('c-resp').value=c.responsavel||'';
     document.getElementById('c-email').value=c.responsavelEmail||'';
+    document.getElementById('c-emp').value=c.empresa||'';
+    document.getElementById('c-emp-email').value=c.empresaEmail||'';
     document.getElementById('c-pasta').value=c.pastaPadrao||'';
   }
   document.getElementById('c-msg').textContent='';
@@ -611,6 +635,9 @@ async function condSave(){
   [desc,email].forEach(function(e){e.classList.remove('bad');});
   if(!desc.value.trim()){ desc.classList.add('bad'); msg.style.color='#b91c1c'; msg.textContent='Descreva a condicionante.'; return; }
   if(email.value.trim() && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email.value.trim())){ email.classList.add('bad'); msg.style.color='#b91c1c'; msg.textContent='E-mail inválido.'; return; }
+  var empEmail=document.getElementById('c-emp-email');
+  empEmail.classList.remove('bad');
+  if(empEmail.value.trim() && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(empEmail.value.trim())){ empEmail.classList.add('bad'); msg.style.color='#b91c1c'; msg.textContent='E-mail da empresa executora inválido.'; return; }
   var lic=curLic();
   var rec={
     id: condEditId||genId('cond'), licencaId: lic.id,
@@ -620,6 +647,8 @@ async function condSave(){
     proximoPrazo:document.getElementById('c-prazo').value||null,
     responsavel:document.getElementById('c-resp').value.trim(),
     responsavelEmail:email.value.trim().toLowerCase(),
+    empresa:document.getElementById('c-emp').value.trim(),
+    empresaEmail:empEmail.value.trim().toLowerCase(),
     pastaPadrao:document.getElementById('c-pasta').value.trim(),
     atendida:false
   };
@@ -695,15 +724,19 @@ async function impRun(){
 }
 
 // ── registrar cumprimento (painel) ──
-function cumOpen(id){
+var cumNota=false;
+function cumOpen(id,nota){
   var c=CONDS.find(function(x){return x.id===id;}); if(!c) return;
-  cumId=id;
-  document.getElementById('cum-info').innerHTML='<strong>'+esc((c.num?c.num+' — ':'')+c.descricao)+'</strong><br>'+esc(FREQ_LBL[String(c.frequencia||'').toLowerCase()]||'')+(c.proximoPrazo?' · prazo '+fmtBR(c.proximoPrazo):'');
+  cumId=id; cumNota=!!nota;
+  document.getElementById('m-cum-t').textContent=cumNota?'📝 Anotar observação (monitoramento)':'✓ Registrar cumprimento';
+  document.getElementById('cum-info').innerHTML='<strong>'+esc((c.num?c.num+' — ':'')+c.descricao)+'</strong><br>'+esc(FREQ_LBL[String(c.frequencia||'').toLowerCase()]||'')+(c.proximoPrazo?' · prazo '+fmtBR(c.proximoPrazo):'')+(cumNota?' — registro simples, sem evidência':'');
   document.getElementById('cum-data').value=new Date().toISOString().slice(0,10);
   document.getElementById('cum-prot').value=''; document.getElementById('cum-link').value=''; document.getElementById('cum-obs').value='';
+  document.getElementById('cum-prot-wrap').style.display=cumNota?'none':'';
+  document.getElementById('cum-ev-wrap').style.display=cumNota?'none':'';
   var sel=document.getElementById('cum-ev');
   sel.innerHTML='<option value="link">Link do arquivo/pasta</option>'+(c.pastaPadrao?'<option value="pasta">Está na pasta padrão da condicionante</option>':'');
-  sel.onchange=function(){ document.getElementById('cum-link-wrap').style.display=(sel.value==='link')?'':'none'; };
+  sel.onchange=function(){ document.getElementById('cum-link-wrap').style.display=(!cumNota&&sel.value==='link')?'':'none'; };
   sel.onchange();
   document.getElementById('cum-msg').textContent='';
   mOpen('m-cum');
@@ -712,11 +745,21 @@ async function cumSave(){
   var msg=document.getElementById('cum-msg');
   var data=document.getElementById('cum-data').value, prot=document.getElementById('cum-prot').value.trim();
   var ev=document.getElementById('cum-ev').value, link=document.getElementById('cum-link').value.trim();
+  var obs=document.getElementById('cum-obs').value.trim();
+  if(cumNota){
+    if(!data||!obs){ msg.style.color='#b91c1c'; msg.textContent='Data e observação são obrigatórias.'; return; }
+    msg.style.color='#64748b'; msg.textContent='Salvando…';
+    try{
+      await persist({cumprimento:{condId:cumId,data:data,protocolo:'',evTipo:'nota',evLink:'',obs:obs}});
+      mClose('m-cum'); render();
+    }catch(e){ msg.style.color='#b91c1c'; msg.textContent=e.message; }
+    return;
+  }
   if(!data||!prot){ msg.style.color='#b91c1c'; msg.textContent='Data e protocolo são obrigatórios.'; return; }
   if(ev==='link'&&!/^https?:\/\//i.test(link)){ msg.style.color='#b91c1c'; msg.textContent='Cole um link válido (https://...).'; return; }
   msg.style.color='#64748b'; msg.textContent='Salvando…';
   try{
-    await persist({cumprimento:{condId:cumId,data:data,protocolo:prot,evTipo:ev,evLink:link,obs:document.getElementById('cum-obs').value.trim()}});
+    await persist({cumprimento:{condId:cumId,data:data,protocolo:prot,evTipo:ev,evLink:link,obs:obs}});
     mClose('m-cum'); render();
   }catch(e){ msg.style.color='#b91c1c'; msg.textContent=e.message; }
 }
@@ -731,6 +774,8 @@ function histOpen(id){
       var evi='';
       if(r.evidencia){
         if(r.evidencia.tipo==='anexo') evi='<a href="#" onclick="openEv(\''+encodeURIComponent(r.evidencia.valor)+'\');return false;" style="color:var(--blue)">📎 '+esc(r.evidencia.nome||'arquivo')+'</a>';
+        else if(r.evidencia.tipo==='nota') evi='📝 anotação de monitoramento';
+        else if(r.evidencia.tipo==='solicitacao') evi='✉️ solicitação enviada para '+esc(r.evidencia.valor);
         else evi='<a href="'+esc(r.evidencia.valor)+'" target="_blank" style="color:var(--blue)">'+(r.evidencia.tipo==='pasta'?'📂 pasta padrão':'🔗 link')+'</a>';
       }
       return '<div style="border:1px solid var(--line);border-radius:8px;padding:10px 12px;font-size:12px;line-height:1.7">'
@@ -743,6 +788,45 @@ function histOpen(id){
 async function openEv(pathEnc){
   try{ var r=await fetch('/api/condlo?file='+pathEnc,{credentials:'include'}); var d=await r.json(); if(d.url) window.open(d.url,'_blank'); else alert('Não foi possível abrir: '+(d.error||r.status)); }
   catch(e){ alert('Erro: '+e.message); }
+}
+
+// ── solicitar coleta/análise ──
+var solId=null;
+function solOpen(id){
+  var c=CONDS.find(function(x){return x.id===id;}); if(!c||!c.empresaEmail) return;
+  solId=id;
+  var lic=LICS.find(function(l){return l.id===c.licencaId;})||{};
+  document.getElementById('sol-info').innerHTML='Para: <strong>'+esc((c.empresa?c.empresa+' — ':'')+c.empresaEmail)+'</strong>'
+    +'<br>Cópia: '+esc(c.responsavelEmail||'(condicionante sem responsável com e-mail)')+' e você.';
+  document.getElementById('sol-assunto').value='Solicitação de coleta/análise — Condicionante '+(c.num||'')+' · '+(lic.numero||'');
+  document.getElementById('sol-corpo').value=
+    'Prezados,\n\n'
+    +'Solicitamos a realização da coleta/análise referente à condicionante abaixo:\n\n'
+    +'Condicionante: '+(c.num?c.num+' — ':'')+(c.descricao||'')+'\n'
+    +'Licença: '+(lic.numero||'')+(lic.orgao?' ('+lic.orgao+')':'')+'\n'
+    +'Unidade: '+(lic.unidade||'')+'\n'
+    +(c.proximoPrazo?('Prazo da condicionante: '+fmtBR(c.proximoPrazo)+'\n'):'')
+    +'\nFavor confirmar a data prevista para a execução e, após a conclusão, encaminhar o laudo/relatório.\n\n'
+    +'Atenciosamente,\n'+(c.responsavel||'')+'\nCentral SGI';
+  document.getElementById('sol-msg').textContent='';
+  mOpen('m-sol');
+}
+async function solSave(){
+  var msg=document.getElementById('sol-msg'), btn=document.getElementById('sol-btn');
+  var assunto=document.getElementById('sol-assunto').value.trim();
+  var corpo=document.getElementById('sol-corpo').value.trim();
+  if(!assunto||!corpo){ msg.style.color='#b91c1c'; msg.textContent='Assunto e mensagem são obrigatórios.'; return; }
+  btn.disabled=true; msg.style.color='#64748b'; msg.textContent='Enviando…';
+  try{
+    var r=await fetch('/api/condlo?solicitar=1',{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify({condId:solId,assunto:assunto,corpo:corpo})});
+    var d=await r.json();
+    if(!r.ok||!d.ok) throw new Error(d.error||('Erro '+r.status));
+    var r2=await fetch('/api/condlo',{credentials:'include'}); var d2=await r2.json();
+    if(r2.ok&&d2.ok){ LICS=d2.licencas||[]; CONDS=d2.conds||[]; }
+    mClose('m-sol'); render();
+    alert('Solicitação enviada para '+d.para+'.\nFicou registrada no histórico da condicionante.');
+  }catch(e){ msg.style.color='#b91c1c'; msg.textContent=e.message; }
+  btn.disabled=false;
 }
 
 // ── link público / verificar / dossiê ──
@@ -797,7 +881,7 @@ function dossie(){
 // ── modais ──
 function mOpen(id){ document.getElementById(id).style.display='flex'; }
 function mClose(id){ document.getElementById(id).style.display='none'; }
-['m-lic','m-cond','m-imp','m-cum','m-hist','m-ajuda'].forEach(function(id){
+['m-lic','m-cond','m-imp','m-cum','m-hist','m-ajuda','m-sol'].forEach(function(id){
   document.getElementById(id).addEventListener('click',function(e){ if(e.target===this) mClose(id); });
 });
 

@@ -3060,6 +3060,10 @@ async function vencRunCheckNow(){
 <script>
 /* HISTÓRICO DE REVISÕES — fonte única (rodapé + Sobre). A cada alteração: nova entrada no topo + sobe a versão. */
 const REVISOES=[
+  {v:'2.60', data:'13/07/2026', autor:'Ayrton Ribeiro', itens:[
+    'Condicionantes da LO: novo status "Em monitoramento" para condicionantes continuas sem prazo (badge azul-petroleo, cartao proprio nos indicadores, filtro e ordenacao) — sem cobranca por e-mail; botao "Anotar" registra observacao no historico sem exigir protocolo/evidencia.',
+    'Condicionantes da LO: campos "empresa executora" (nome + e-mail) no cadastro; botao "Solicitar" no card envia e-mail pronto (editavel) ao laboratorio/consultoria com o responsavel e o solicitante em copia; envio fica registrado no historico da condicionante. Rota consolidada: POST /api/condlo?solicitar=1.'
+  ]},
   {v:'2.59', data:'13/07/2026', autor:'Ayrton Ribeiro', itens:[
     'Condicionantes da LO: opcao "+ Nova licenca..." no seletor do topo — permite cadastrar varias licencas (uma por unidade, por exemplo), cada uma com suas proprias condicionantes. Antes o botao Licenca so editava a existente.'
   ]},
