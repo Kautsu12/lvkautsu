@@ -170,6 +170,66 @@ module.exports = async function handler(req, res) {
     return res.status(405).json({ error: 'Método não permitido' });
   }
 
+  // ── 5S: upload/visualizacao de fotos da ronda (kind=cincos) ──────────────────
+  // Autenticado por SESSAO (nao por token de registro), pois o campo usa a sessao CAMPO_5S.
+  // Podem ENVIAR: ADM/SGI (todas as unidades), Gestor/CAMPO_5S (so a[s] sua[s]); Usuario e'
+  // somente-leitura. A unidade fica no caminho (cincos/<unidade>/...) e o acesso e' validado
+  // no servidor contra a sessao — tanto no upload quanto na visualizacao (URL assinada curta).
+  if (req.query && req.query.kind === 'cincos') {
+    const { getSession } = require('../lib/session');
+    const session = await getSession(req);
+    if (!session) return res.status(401).json({ error: 'Nao autenticado' });
+    if (!SUPABASE_URL || !SUPABASE_SERVICE_KEY) return res.status(500).json({ error: 'Storage nao configurado' });
+
+    const seesAll = session.role === 'ADM' || session.role === 'SGI';
+    const podeUnidade = function (u) { return seesAll || (Array.isArray(session.unidades) && session.unidades.indexOf(u) !== -1); };
+    const unidadeDoPath = function (p) { const m = String(p || '').match(/^cincos\/([^/]+)\//); if (!m) return null; try { return decodeURIComponent(m[1]).toUpperCase(); } catch (_) { return null; } };
+
+    // Visualizar foto: gera URL assinada curta, apos checar acesso a unidade do caminho.
+    if (req.method === 'GET' && req.query.fileview) {
+      const fpath = String(req.query.fileview);
+      // Estrutura exata cincos/<unidade>/<rondaId>/<setor>/<arquivo> + sem segmentos '.'/'..'
+      // (bloqueia path traversal — o Supabase normalizaria '..' e escaparia da unidade).
+      if (!/^cincos\/[^/]+\/[A-Za-z0-9_-]{1,64}\/[^/]+\/[^/]+$/.test(fpath)
+          || fpath.split('/').some(function (s) { return s === '.' || s === '..'; })) {
+        return res.status(400).json({ error: 'Caminho invalido.' });
+      }
+      const u = unidadeDoPath(fpath);
+      if (u === null || !podeUnidade(u)) return res.status(403).json({ error: 'Unidade fora do seu acesso.' });
+      const sg = await fetch(`${SUPABASE_URL}/storage/v1/object/sign/${BUCKET}/${fpath}`, { method: 'POST', headers: { 'Authorization': `Bearer ${SUPABASE_SERVICE_KEY}`, 'apikey': SUPABASE_SERVICE_KEY, 'Content-Type': 'application/json' }, body: JSON.stringify({ expiresIn: 600 }) });
+      if (!sg.ok) return res.status(500).json({ error: 'Falha ao gerar link' });
+      const sj = await sg.json();
+      const signed = sj.signedURL || sj.signedUrl || '';
+      return res.status(200).json({ ok: true, url: signed ? `${SUPABASE_URL}/storage/v1${signed}` : '' });
+    }
+
+    // Enviar foto (multipart). Usuario e' somente-leitura.
+    if (req.method === 'POST') {
+      if (session.role === 'Usuario') return res.status(403).json({ error: 'Seu perfil pode apenas visualizar as rondas.' });
+      const ctRawC = req.headers['content-type'] || '';
+      if (!ctRawC.toLowerCase().includes('multipart/form-data')) return res.status(400).json({ error: 'Envio invalido (use multipart/form-data).' });
+      const bmC = ctRawC.match(/boundary=(.+)/i); // boundary e' case-sensitive: usa o header original
+      const partsC = bmC ? parseMultipart(await readRaw(req), bmC[1].trim().replace(/^"|"$/g, '')) : [];
+      const fpC = partsC.find(function (x) { return x.filename && x.name === 'file'; });
+      const campo = function (n) { const p = partsC.find(function (x) { return x.name === n && !x.filename; }); return p ? p.data.toString() : ''; };
+      const unidade = campo('unidade').trim().toUpperCase();
+      const rondaId = campo('rondaId').trim();
+      const setorId = campo('setorId').trim();
+      if (!fpC || !fpC.filename) return res.status(400).json({ error: 'Arquivo nao encontrado.' });
+      if (!unidade || !podeUnidade(unidade)) return res.status(403).json({ error: 'Unidade fora do seu acesso.' });
+      if (!/^[A-Za-z0-9_-]{1,64}$/.test(rondaId)) return res.status(400).json({ error: 'rondaId invalido.' });
+      if (setorId && !/^[A-Za-z0-9_-]{1,64}$/.test(setorId)) return res.status(400).json({ error: 'setorId invalido.' });
+      if (!/^image\//i.test(fpC.contentType || '')) return res.status(400).json({ error: 'Apenas imagens sao aceitas.' });
+      const safe = sanit(fpC.filename, 'foto');
+      const path = `cincos/${encodeURIComponent(unidade)}/${rondaId}/${setorId || 'geral'}/${Date.now()}_${safe}`;
+      const up = await fetch(`${SUPABASE_URL}/storage/v1/object/${BUCKET}/${path}`, { method: 'POST', headers: { 'Authorization': `Bearer ${SUPABASE_SERVICE_KEY}`, 'apikey': SUPABASE_SERVICE_KEY, 'Content-Type': fpC.contentType || 'application/octet-stream', 'x-upsert': 'false', 'cache-control': '3600' }, body: fpC.data });
+      if (!up.ok) { const t = await up.text().catch(function () { return ''; }); return res.status(500).json({ error: `Falha no upload (${up.status}): ${t.slice(0, 150)}` }); }
+      return res.status(200).json({ ok: true, path, fileName: fpC.filename });
+    }
+
+    return res.status(405).json({ error: 'Metodo nao permitido' });
+  }
+
   const ct = (req.headers['content-type'] || '').toLowerCase();
   const isMultipart = ct.includes('multipart/form-data');
 
