@@ -3060,6 +3060,9 @@ async function vencRunCheckNow(){
 <script>
 /* HISTÓRICO DE REVISÕES — fonte única (rodapé + Sobre). A cada alteração: nova entrada no topo + sobe a versão. */
 const REVISOES=[
+  {v:'2.61', data:'13/07/2026', autor:'Ayrton Ribeiro', itens:[
+    'Condicionantes da LO: regra do status simplificada — QUALQUER condicionante sem prazo definido (continua ou unica declaratoria) fica "Em monitoramento" automaticamente. Regra pratica: tem prazo, o sistema cobra; nao tem prazo, esta em monitoramento. Para voltar a ser cobrada, basta editar e definir um prazo.'
+  ]},
   {v:'2.60', data:'13/07/2026', autor:'Ayrton Ribeiro', itens:[
     'Condicionantes da LO: novo status "Em monitoramento" para condicionantes continuas sem prazo (badge azul-petroleo, cartao proprio nos indicadores, filtro e ordenacao) — sem cobranca por e-mail; botao "Anotar" registra observacao no historico sem exigir protocolo/evidencia.',
     'Condicionantes da LO: campos "empresa executora" (nome + e-mail) no cadastro; botao "Solicitar" no card envia e-mail pronto (editavel) ao laboratorio/consultoria com o responsavel e o solicitante em copia; envio fica registrado no historico da condicionante. Rota consolidada: POST /api/condlo?solicitar=1.'

@@ -261,6 +261,10 @@
     <div id="sol-info" class="hint" style="background:#fffbeb;border:1px solid #fcd34d;border-radius:8px;padding:10px 12px;font-size:12px;color:#92400e"></div>
     <label>Assunto<input id="sol-assunto" type="text"></label>
     <label>Mensagem <span class="hint">— revise/ajuste à vontade antes de enviar</span><textarea id="sol-corpo" style="min-height:170px"></textarea></label>
+    <label style="display:flex;gap:8px;align-items:flex-start;font-size:12px;color:#334155;cursor:pointer">
+      <input type="checkbox" id="sol-padrao" style="margin-top:2px">
+      <span>💾 <strong>Salvar esta mensagem como modelo padrão</strong> — as próximas solicitações (de qualquer condicionante) abrirão com este texto, com nº, descrição, licença, unidade, prazo e responsável preenchidos automaticamente.</span>
+    </label>
     <div id="sol-msg" class="hint" style="min-height:14px"></div>
     <button class="btn" style="background:#92400e;color:#fff;padding:11px" id="sol-btn" onclick="solSave()">✉️ Enviar solicitação</button>
   </div>
@@ -315,7 +319,8 @@
       <div style="font-size:11px;font-weight:700;color:var(--navy);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">5 · Ler o painel em segundos</div>
       <strong>Anel</strong> = quantas condicionantes estão em dia, do total. <strong>Cartões coloridos</strong> = clique
       para filtrar (vermelho vencida · laranja vence em até 30 dias · azul em dia · azul-petróleo <strong>em monitoramento</strong>
-      — contínua, sem ação pendente, use 📝 Anotar para deixar registro · verde atendida). Condicionante com empresa executora
+      — qualquer condicionante <strong>sem prazo definido</strong> (contínua ou única declaratória): sem ação pendente,
+      use 📝 Anotar para deixar registro; para ela voltar a ser cobrada, basta editar e definir um prazo · verde atendida). Condicionante com empresa executora
       cadastrada ganha o botão <strong>✉️ Solicitar</strong>: e-mail pronto para o laboratório, com o responsável em cópia.
       <strong>Régua</strong> = o que vence nos próximos 90 dias. <strong>Calendário</strong> = os meses de cada
       obrigação recorrente no ano. <strong>📜 Histórico</strong> no card mostra cada cumprimento com protocolo e evidência.
@@ -357,7 +362,7 @@ function curLic(){ var id=document.getElementById('sel-lic').value; return LICS.
 function statusOf(c){
   if(c.atendida) return 'atendida';
   var x=dias(c.proximoPrazo);
-  if(x===null) return (String(c.frequencia||'').toLowerCase()==='continua') ? 'monit' : 'emdia'; // contínua sem prazo = em monitoramento
+  if(x===null) return 'monit'; // sem prazo definido = em monitoramento (contínua ou única declaratória)
   if(x<0) return 'vencida';
   if(x<=30) return 'atencao';
   return 'emdia';
@@ -526,7 +531,7 @@ function renderList(conds){
   if(!rows.length){ list.innerHTML='<div class="card empty" style="margin-top:10px">🔍 Nada com os filtros atuais.</div>'; return; }
   list.innerHTML=rows.map(function(c){
     var st=statusOf(c), cor=ST[st][1], d=dias(c.proximoPrazo);
-    var prazo=c.atendida?'cumprida':(c.proximoPrazo? fmtBR(c.proximoPrazo)+' <strong style="color:'+cor+'">('+(d<0?Math.abs(d)+'d vencida':d+'d')+')</strong>':(st==='monit'?'monitoramento contínuo — sem prazo':'contínua'));
+    var prazo=c.atendida?'cumprida':(c.proximoPrazo? fmtBR(c.proximoPrazo)+' <strong style="color:'+cor+'">('+(d<0?Math.abs(d)+'d vencida':d+'d')+')</strong>':(st==='monit'?'em monitoramento — sem prazo definido':'contínua'));
     var h0=c.historico&&c.historico[0];
     var ult=h0?('Último: '+fmtBR(h0.data)+' · '+esc(h0.protocolo||String(h0.obs||'').slice(0,40)||'registro')):'Sem registro ainda';
     return '<div class="cond" style="border-left-color:'+cor+'">'
@@ -792,22 +797,28 @@ async function openEv(pathEnc){
 
 // ── solicitar coleta/análise ──
 var solId=null;
+var SOL_DEF={
+  assunto:'Solicitação de coleta/análise — Condicionante {numero} · {licenca}',
+  corpo:'Prezados,\n\nSolicitamos a realização da coleta/análise referente à condicionante abaixo:\n\nCondicionante: {numero} — {descricao}\nLicença: {licenca} ({orgao})\nUnidade: {unidade}\nPrazo da condicionante: {prazo}\n\nFavor confirmar a data prevista para a execução e, após a conclusão, encaminhar o laudo/relatório.\n\nAtenciosamente,\n{responsavel}\nCentral SGI'
+};
+function solVals(c,lic){
+  return { numero:c.num||'', descricao:c.descricao||'', licenca:lic.numero||'', orgao:lic.orgao||'',
+           unidade:lic.unidade||'', prazo:c.proximoPrazo?fmtBR(c.proximoPrazo):'—',
+           responsavel:c.responsavel||'', empresa:c.empresa||'' };
+}
+function solFill(t,v){ return String(t||'').replace(/\{(numero|descricao|licenca|orgao|unidade|prazo|responsavel|empresa)\}/g,function(_,k){ return v[k]||''; }); }
 function solOpen(id){
   var c=CONDS.find(function(x){return x.id===id;}); if(!c||!c.empresaEmail) return;
   solId=id;
   var lic=LICS.find(function(l){return l.id===c.licencaId;})||{};
+  var v=solVals(c,lic);
+  var tpl=(SOLTPL&&SOLTPL.corpo)?SOLTPL:SOL_DEF;
   document.getElementById('sol-info').innerHTML='Para: <strong>'+esc((c.empresa?c.empresa+' — ':'')+c.empresaEmail)+'</strong>'
-    +'<br>Cópia: '+esc(c.responsavelEmail||'(condicionante sem responsável com e-mail)')+' e você.';
-  document.getElementById('sol-assunto').value='Solicitação de coleta/análise — Condicionante '+(c.num||'')+' · '+(lic.numero||'');
-  document.getElementById('sol-corpo').value=
-    'Prezados,\n\n'
-    +'Solicitamos a realização da coleta/análise referente à condicionante abaixo:\n\n'
-    +'Condicionante: '+(c.num?c.num+' — ':'')+(c.descricao||'')+'\n'
-    +'Licença: '+(lic.numero||'')+(lic.orgao?' ('+lic.orgao+')':'')+'\n'
-    +'Unidade: '+(lic.unidade||'')+'\n'
-    +(c.proximoPrazo?('Prazo da condicionante: '+fmtBR(c.proximoPrazo)+'\n'):'')
-    +'\nFavor confirmar a data prevista para a execução e, após a conclusão, encaminhar o laudo/relatório.\n\n'
-    +'Atenciosamente,\n'+(c.responsavel||'')+'\nCentral SGI';
+    +'<br>Cópia: '+esc(c.responsavelEmail||'(condicionante sem responsável com e-mail)')+' e você.'
+    +((SOLTPL&&SOLTPL.corpo)?'<br><span style="font-size:10.5px">usando seu modelo padrão salvo</span>':'');
+  document.getElementById('sol-assunto').value=solFill(tpl.assunto,v);
+  document.getElementById('sol-corpo').value=solFill(tpl.corpo,v);
+  document.getElementById('sol-padrao').checked=false;
   document.getElementById('sol-msg').textContent='';
   mOpen('m-sol');
 }
