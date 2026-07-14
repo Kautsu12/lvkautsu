@@ -546,5 +546,110 @@ module.exports = async function handler(req, res) {
     }
   }
 
+  // ── ACESSO DE CAMPO 5S (perfil CAMPO_5S, sem senha do site) ──────────────────
+  // Link unico por unidade, amarrado a UM aparelho. Gerar/listar/revogar: somente ADM.
+  // A abertura (campo-abrir) e' publica: valida o token, amarra o aparelho no 1o uso e
+  // cria uma sessao limitada CAMPO_5S (escopo minimo — so a sua unidade). Cofre: cincos_campo
+  // (chave SENSITIVE em api/save.js, nunca exposta ao proprio campo).
+  if (action === 'campo-gerar' || action === 'campo-listar' || action === 'campo-revogar') {
+    if (!(await getUser(req))) return res.status(401).json({ error: 'Não autenticado' });
+    const me = await currentRecord(req);
+    if (!me || me.role !== 'ADM') return res.status(403).json({ error: 'Apenas o administrador (ADM) pode gerenciar os links de campo.' });
+    const redis = getRedis();
+    let cofre = {};
+    try { const raw = await redis.get('cincos_campo'); cofre = (typeof raw === 'string' ? JSON.parse(raw) : raw) || {}; } catch (_) { cofre = {}; }
+
+    if (action === 'campo-listar') {
+      // Nunca devolve deviceId nem o token de sessao — so o necessario para a tela do ADM.
+      const links = Object.keys(cofre).map(function (t) {
+        const r = cofre[t] || {};
+        return { token: t, nome: r.nome || '', unidade: r.unidade || '', status: r.status || 'novo', criadoEm: r.criadoEm || null, amarradoEm: r.amarradoEm || null };
+      });
+      return res.status(200).json({ ok: true, links });
+    }
+
+    if (action === 'campo-gerar') {
+      const b = await readBody(req);
+      const nome = String(b.nome || '').trim().slice(0, 80);
+      const unidade = String(b.unidade || '').trim().toUpperCase().slice(0, 60);
+      if (nome.length < 2 || !unidade) return res.status(400).json({ error: 'Informe o nome (min. 2 letras) e a unidade.' });
+      // A unidade tem de existir e estar ativa no cadastro do modulo (cincos_unidades).
+      let unidadeOk = false;
+      try {
+        const raw = await redis.get('cincos_unidades');
+        const arr = typeof raw === 'string' ? JSON.parse(raw) : raw;
+        unidadeOk = Array.isArray(arr) && arr.some(function (u) { return u && u.ativo !== false && String(u.nome || '').toUpperCase() === unidade; });
+      } catch (_) {}
+      if (!unidadeOk) return res.status(400).json({ error: 'Unidade nao cadastrada ou inativa no modulo 5S.' });
+      const token = crypto.randomBytes(24).toString('hex'); // 48 hex
+      const next = {}; for (const k in cofre) next[k] = cofre[k];
+      next[token] = { nome, unidade, criadoPor: me.email, criadoEm: new Date().toISOString(), status: 'novo', deviceId: null, amarradoEm: null };
+      await redis.set('cincos_campo', JSON.stringify(next));
+      await logEvent({ byEmail: me.email, byNome: me.nome, action: 'Gerou link de campo 5S', modulo: '5S', item: nome + ' · ' + unidade });
+      return res.status(200).json({ ok: true, token, path: '/campo5s.html?c=' + token });
+    }
+
+    if (action === 'campo-revogar') {
+      const b = await readBody(req);
+      const token = String(b.token || '').trim();
+      if (!cofre[token]) return res.status(404).json({ error: 'Link nao encontrado.' });
+      const next = {}; for (const k in cofre) next[k] = cofre[k];
+      next[token] = Object.assign({}, next[token], { status: 'revogado', deviceId: null });
+      await redis.set('cincos_campo', JSON.stringify(next));
+      await logEvent({ byEmail: me.email, byNome: me.nome, action: 'Revogou link de campo 5S', modulo: '5S', item: (cofre[token].nome || '') + ' · ' + (cofre[token].unidade || '') });
+      return res.status(200).json({ ok: true });
+    }
+  }
+
+  // Abertura do link de campo (PUBLICA, mas amarrada ao token + aparelho). Cria sessao CAMPO_5S.
+  if (action === 'campo-abrir') {
+    if (req.method !== 'POST') return res.status(405).json({ error: 'Método não permitido' });
+    // Anti-forca-bruta proprio (namespace separado do login admin para nao se bloquearem entre si).
+    const rlKey = 'campo5s|' + getIp(req);
+    const limit = await checkLimit(rlKey);
+    if (limit.blocked) return res.status(429).json({ error: `Muitas tentativas. Tente em ${limit.remainingMin} minuto(s).` });
+    const b = await readBody(req);
+    const token = String(b.token || '').trim();
+    if (!/^[a-f0-9]{48}$/.test(token)) { await registerFail(rlKey); return res.status(400).json({ error: 'Link invalido.' }); }
+    const redis = getRedis();
+    let cofre = {};
+    try { const raw = await redis.get('cincos_campo'); cofre = (typeof raw === 'string' ? JSON.parse(raw) : raw) || {}; } catch (_) { cofre = {}; }
+    const rec = cofre[token];
+    if (!rec || rec.status === 'revogado') { await registerFail(rlKey); return res.status(403).json({ error: 'Link invalido ou revogado. Peca um novo ao administrador.' }); }
+
+    // Revalida que a unidade do link ainda existe e esta ativa (o ADM pode te-la desativado).
+    let unidadeAtiva = false;
+    try {
+      const rawU = await redis.get('cincos_unidades');
+      const arrU = typeof rawU === 'string' ? JSON.parse(rawU) : rawU;
+      unidadeAtiva = Array.isArray(arrU) && arrU.some(function (u) { return u && u.ativo !== false && String(u.nome || '').toUpperCase() === String(rec.unidade).toUpperCase(); });
+    } catch (_) {}
+    if (!unidadeAtiva) { await registerFail(rlKey); return res.status(403).json({ error: 'Unidade inativa. Peca um novo link ao administrador.' }); }
+
+    const cookieDevice = parseCookies(req)['cincos_device'] || '';
+    let deviceId = cookieDevice;
+    if (rec.status === 'novo' || !rec.deviceId) {
+      // 1a abertura: amarra ao aparelho atual (gera deviceId e grava no cofre).
+      deviceId = crypto.randomBytes(16).toString('hex');
+      const next = {}; for (const k in cofre) next[k] = cofre[k];
+      next[token] = Object.assign({}, rec, { status: 'ativo', deviceId, amarradoEm: new Date().toISOString() });
+      await redis.set('cincos_campo', JSON.stringify(next));
+    } else {
+      // Reabertura: somente do MESMO aparelho. Aparelho diferente -> ADM tem de gerar link novo.
+      if (!cookieDevice || cookieDevice !== rec.deviceId) {
+        await registerFail(rlKey);
+        return res.status(403).json({ error: 'Este link ja esta em uso em outro aparelho. Peca um novo ao administrador.' });
+      }
+    }
+    await clearLimit(rlKey);
+    const CAMPO_TTL = 60 * 60 * 12; // 12h de sessao de campo
+    const sess = await createSession({ user: 'CAMPO', email: '', role: 'CAMPO_5S', unidades: [rec.unidade], nome: rec.nome, deviceId, scope: 'campo5s', campoToken: token, ttl: CAMPO_TTL });
+    res.setHeader('Set-Cookie', [
+      sessionCookie(sess, CAMPO_TTL),
+      `cincos_device=${deviceId}; HttpOnly; Secure; SameSite=Lax; Path=/; Max-Age=${60 * 60 * 24 * 365}`,
+    ]);
+    return res.status(200).json({ ok: true, nome: rec.nome, unidade: rec.unidade });
+  }
+
   return res.status(400).json({ error: 'Ação inválida' });
 };
