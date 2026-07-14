@@ -90,7 +90,7 @@
   <h1>Condicionantes da Licença de Operação</h1>
   <div class="acts">
     <button class="btn btn-ghost" onclick="mOpen('m-ajuda')" title="Guia rápido de uso">❓ Como usar</button>
-    <select id="sel-lic" onchange="render()" style="padding:7px 10px;border:1px solid var(--line);border-radius:6px;font-size:12px"></select>
+    <select id="sel-lic" onchange="licSelChange()" style="padding:7px 10px;border:1px solid var(--line);border-radius:6px;font-size:12px"></select>
     <button class="btn btn-ghost" id="b-lic" onclick="licOpen()">🏭 Licença</button>
     <button class="btn btn-ghost" id="b-imp" onclick="impOpen()">📥 Importar em lote</button>
     <button class="btn btn-ghost" onclick="dossie()">📦 Dossiê</button>
@@ -266,6 +266,8 @@
       Clique em <strong>🏭 Licença</strong> e preencha os dados da LO (nº, órgão, unidade, emissão e validade).
       A validade alimenta a barra do topo e o alerta do <strong>marco de 120 dias</strong> — o prazo legal para
       protocolar a renovação. Quando o pedido for protocolado, edite a licença e registre a data: os alertas de renovação param.
+      <br><strong>Tem mais de uma LO?</strong> No seletor do topo, escolha <strong>“＋ Nova licença…”</strong> — cada licença
+      tem suas próprias condicionantes, e o seletor alterna entre elas.
     </div>
 
     <div>
@@ -358,8 +360,19 @@ async function load(){
 }
 function fillLicSel(){
   var sel=document.getElementById('sel-lic'), cur=sel.value;
-  sel.innerHTML=LICS.map(function(l){return '<option value="'+l.id+'">'+esc(l.numero||'(sem nº)')+' · '+esc(l.unidade||'')+'</option>';}).join('');
-  if(cur && LICS.find(function(l){return l.id===cur;})) sel.value=cur;
+  sel.innerHTML=LICS.map(function(l){return '<option value="'+l.id+'">'+esc(l.numero||'(sem nº)')+' · '+esc(l.unidade||'')+'</option>';}).join('')
+    +(ME.canEdit?'<option value="__nova__">＋ Nova licença…</option>':'');
+  if(cur && cur!=='__nova__' && LICS.find(function(l){return l.id===cur;})) sel.value=cur;
+  else if(LICS.length) sel.value=LICS[0].id;
+}
+function licSelChange(){
+  var sel=document.getElementById('sel-lic');
+  if(sel.value==='__nova__'){
+    if(LICS.length) sel.value=LICS[0].id;
+    licOpen(true);
+    return;
+  }
+  render();
 }
 async function persist(extra){
   var body={licencas:LICS,conds:CONDS};
@@ -518,8 +531,8 @@ function renderList(conds){
 }
 
 // ── licença ──
-function licOpen(){
-  var lic=curLic(); licEditId=lic?lic.id:null;
+function licOpen(nova){
+  var lic=nova?null:curLic(); licEditId=lic?lic.id:null;
   document.getElementById('m-lic-t').textContent=lic?'Editar licença':'Nova licença';
   document.getElementById('l-del').style.display=lic?'':'none';
   ['l-numero','l-orgao','l-processo','l-atividade','l-emissao','l-validade','l-arquivo','l-ren-data','l-ren-prot'].forEach(function(i){document.getElementById(i).value='';});
