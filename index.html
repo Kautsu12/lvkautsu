@@ -3066,6 +3066,10 @@ async function vencRunCheckNow(){
 <script>
 /* HISTÓRICO DE REVISÕES — fonte única (rodapé + Sobre). A cada alteração: nova entrada no topo + sobe a versão. */
 const REVISOES=[
+  {v:'2.65', data:'14/07/2026', autor:'Ayrton Ribeiro', itens:[
+    'Condicionantes da LO: sinal de vida do robo — o painel mostra a data/hora da ultima verificacao automatica (verde = rodou nas ultimas 26h; vermelho = alerta de robo parado, com orientacao). Elimina o risco de falha silenciosa nos avisos por e-mail.',
+    'Verificado: a chave condicionantes_lo ja e coberta pelo backup diario (/api/backup exporta todas as chaves do Redis).'
+  ]},
   {v:'2.64', data:'14/07/2026', autor:'Ayrton Ribeiro', itens:[
     'Condicionantes da LO: correcao na regra do "Em monitoramento" — vale APENAS para continuas e unicas sem prazo (declaratorias). Recorrentes (mensal/trimestral/semestral/anual) sem data definida vao para Atencao (laranja) com o aviso "recorrente sem prazo — defina a data", pois exigem agendamento.'
   ]},
